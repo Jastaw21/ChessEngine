@@ -19,7 +19,9 @@ add_executable(Chess ${PROJECT_SOURCE_DIR}/src/main.cpp
         include/DrawableEntity.h
         src/PieceGUI.cpp
         include/PieceGUI.h
-        include/Fen.h)
+        include/Fen.h
+        src/Vec2D.cpp
+        include/Vec2D.h)
 
 include_directories(include)
 

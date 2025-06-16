@@ -9,10 +9,8 @@
 int main(int argc, char **argv) {
     auto gui = ChessGui();
 
-    constexpr auto boardSize = SDLVec2D(800, 800);
-    auto board = BoardGUI(boardSize, &gui);
+    constexpr auto boardSize = Vec2D(800.f, 800.f);
 
-    gui.registerEntity(&board);
     gui.loop();
 
     return 0;

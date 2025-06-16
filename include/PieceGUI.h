@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include <SDL3/SDL.h>
+#include "Vec2D.h"
 
 #include "Fen.h"
 
@@ -19,25 +20,31 @@ class ChessGui;
 
 class PieceGUI final : public DrawableEntity {
 public:
-    PieceGUI(std::shared_ptr<SDL_Texture> texture, int rank, int file, const SDL_FPoint &squareSize);
+    PieceGUI(std::shared_ptr<SDL_Texture> texture, int rank, int file, const Vec2D &squareSize);
 
     void draw(SDL_Renderer *renderer) override;
+
+    Vec2D location_;
+    int test = 0;
+
+    void setLocation(const Vec2D &location);
+
+    bool logChanged = false;
 
 private:
     std::shared_ptr<SDL_Texture> texture_;
     SDL_FRect srcRect{};
-    SDL_FRect destRect{};
+    Vec2D size_;
 };
 
 
 class VisualPieceBuilder {
 public:
-    explicit VisualPieceBuilder(const SDL_FPoint &squareSize, ChessGui *gui);
+    explicit VisualPieceBuilder(const Vec2D &squareSize, ChessGui *gui);
 
-    std::vector<std::shared_ptr<PieceGUI> > FromFEN(
-        const std::string &FEN = Fen::STARTING_FEN);
+    std::vector<std::shared_ptr<PieceGUI>> FromFEN(const std::string &FEN = Fen::STARTING_FEN);
 
-    SDL_FPoint squareSize;
+    Vec2D squareSize;
 
 private:
     std::string source_path = "C:/Users/jacks/source/repos/Chess/pieces/pieces-basic-png/";

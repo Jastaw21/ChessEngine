@@ -4,12 +4,15 @@
 
 #ifndef BOARDBACKGROUND_H
 #define BOARDBACKGROUND_H
-#include "gui.h"
+
 #include "DrawableEntity.h"
 #include "PieceGUI.h"
 #include <memory>
+#include <optional>
 
+#include "Vec2D.h"
 
+class Gui;
 
 class BoardSquare final : public DrawableEntity {
 public:
@@ -28,17 +31,21 @@ private:
 
 class BoardGUI final : public DrawableEntity {
 public:
-    void build_background(SDL_FPoint square_size);
+    void build_background(const Vec2D &square_size);
 
-    explicit BoardGUI(const SDLVec2D &boardSizePixels, ChessGui *gui);
+    BoardGUI(const Vec2D &boardSizePixels, ChessGui *gui);
 
-    SDLVec2D boardSize;
+    Vec2D boardSize;
 
     void draw(SDL_Renderer *renderer) override;
 
+    std::shared_ptr<PieceGUI> pieceAtLocation(int rank, int file);
+
+    Vec2D squareSize() const;
+
 private:
     std::vector<BoardSquare> squares_;
-    std::vector<std::shared_ptr<PieceGUI>> pieces_;
+    std::vector<std::shared_ptr<PieceGUI>> pieces_{};
 
     ChessGui *parent_;
 };

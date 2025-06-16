@@ -22,27 +22,37 @@ const inline std::map<const char, std::string> pieceFileSuffixes = {
 
 
 PieceGUI::PieceGUI(std::shared_ptr<SDL_Texture> texture, const int rank, const int file,
-                   const SDL_FPoint &squareSize) {
+                   const Vec2D &squareSize) {
     texture_ = std::move(texture);
 
+    // put it in its default place
     const int inverseRank = rank;
-
-    destRect = SDL_FRect{
-        static_cast<float>(file) * static_cast<float>(squareSize.x),
-        static_cast<float>(inverseRank) * static_cast<float>(squareSize.y),
-        static_cast<float>(squareSize.x),
-        static_cast<float>(squareSize.y)
+    location_ = {
+        .x = static_cast<float>(file) * static_cast<float>(squareSize.x),
+        .y = static_cast<float>(inverseRank) * static_cast<float>(squareSize.y)
     };
 
+    size_ = squareSize;
+
     srcRect = SDL_FRect(0.f, 0.f, 128.f, 128.f);
+
+    ;
 }
 
 void PieceGUI::draw(SDL_Renderer *renderer) {
     const auto text = texture_.get();
+    const auto destRect = SDL_FRect{location_.x, location_.y, size_.x, size_.y};
     SDL_RenderTexture(renderer, text, &srcRect, &destRect);
+
+
 }
 
-VisualPieceBuilder::VisualPieceBuilder(const SDL_FPoint &squareSize, ChessGui *gui) : squareSize(squareSize), gui(gui) {
+void PieceGUI::setLocation(const Vec2D &location) {
+
+    location_ = location;
+}
+
+VisualPieceBuilder::VisualPieceBuilder(const Vec2D &squareSize, ChessGui *gui) : squareSize(squareSize), gui(gui) {
 }
 
 std::vector<std::shared_ptr<PieceGUI> > VisualPieceBuilder::FromFEN(const std::string &FEN) {
@@ -69,9 +79,8 @@ std::vector<std::shared_ptr<PieceGUI> > VisualPieceBuilder::FromFEN(const std::s
             std::string path = source_path + (isWhite ? "white" : "black") + pieceFileSuffixes.at(type);
             SDL_Texture *rawPieceTexture = IMG_LoadTexture(gui->getRenderer(), path.c_str());
             auto uniqueTexture = std::shared_ptr<SDL_Texture>(rawPieceTexture, SDL_DestroyTexture);
-
-
-            pieces.push_back(std::make_unique<PieceGUI>(uniqueTexture, rank, file, squareSize));
+            auto piece = std::make_shared<PieceGUI>(uniqueTexture, rank, file, squareSize);
+            pieces.push_back(piece);
             file++;
         }
     }
