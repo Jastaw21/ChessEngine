@@ -18,23 +18,30 @@
 class ChessGui;
 
 
-class PieceGUI final : public DrawableEntity {
+class VisualPiece final : public DrawableEntity {
 public:
-    PieceGUI(std::shared_ptr<SDL_Texture> texture, int rank, int file, const Vec2D &squareSize);
+    VisualPiece(std::shared_ptr<SDL_Texture> texture, int rank, int file, const Vec2D &squareSize, const char type);
+    ~VisualPiece() override;
 
     void draw(SDL_Renderer *renderer) override;
 
-    Vec2D location_;
+
     int test = 0;
 
     void setLocation(const Vec2D &location);
+    const Vec2D& getLocation() const { return location_; }
 
     bool logChanged = false;
+
+    const char getType() const { return type_; }
 
 private:
     std::shared_ptr<SDL_Texture> texture_;
     SDL_FRect srcRect{};
     Vec2D size_;
+    Vec2D location_;
+
+    const char type_;
 };
 
 
@@ -42,7 +49,7 @@ class VisualPieceBuilder {
 public:
     explicit VisualPieceBuilder(const Vec2D &squareSize, ChessGui *gui);
 
-    std::vector<std::shared_ptr<PieceGUI>> FromFEN(const std::string &FEN = Fen::STARTING_FEN);
+    std::vector<std::shared_ptr<VisualPiece> > FromFEN(const std::string &FEN = Fen::STARTING_FEN);
 
     Vec2D squareSize;
 

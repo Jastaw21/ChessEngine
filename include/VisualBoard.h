@@ -6,7 +6,7 @@
 #define BOARDBACKGROUND_H
 
 #include "DrawableEntity.h"
-#include "PieceGUI.h"
+#include "VisualPiece.h"
 #include <memory>
 #include <optional>
 
@@ -22,30 +22,37 @@ public:
 
     void draw(SDL_Renderer *renderTarget) override;
 
+    bool isDrawn() const { return bIsDrawn; };
+    void setIsDrawn(const bool value) { bIsDrawn = value; };
+
 private:
     int rank;
     int file;
     SDL_FRect rect_;
+
+    bool bIsDrawn = true;
 };
 
 
-class BoardGUI final : public DrawableEntity {
+class VisualBoard final : public DrawableEntity {
 public:
-    void build_background(const Vec2D &square_size);
+    VisualBoard(const Vec2D &boardSizePixels, ChessGui *gui);
 
-    BoardGUI(const Vec2D &boardSizePixels, ChessGui *gui);
+    ~VisualBoard();
+
+    void build_background(const Vec2D &square_size);
 
     Vec2D boardSize;
 
     void draw(SDL_Renderer *renderer) override;
 
-    std::shared_ptr<PieceGUI> pieceAtLocation(int rank, int file);
+    std::shared_ptr<VisualPiece> pieceAtLocation(int rank, int file);
 
     Vec2D squareSize() const;
 
 private:
     std::vector<BoardSquare> squares_;
-    std::vector<std::shared_ptr<PieceGUI>> pieces_{};
+    std::vector<std::shared_ptr<VisualPiece> > pieces_{};
 
     ChessGui *parent_;
 };

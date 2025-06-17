@@ -2,21 +2,32 @@
 
 #include <iostream>
 
-#include "BoardGUI.h"
+#include "VisualBoard.h"
 #include "DrawableEntity.h"
+#include "EngineBase.h"
 
 
 ChessGui::ChessGui() {
     window = SDL_CreateWindow("Chess", 800, 800, 0);
     renderer = SDL_CreateRenderer(window, nullptr);
     running = true;
-    board_background_ = new BoardGUI(Vec2D(800, 800), this);
+    board_background_ = new VisualBoard(Vec2D(800, 800), this);
     registerEntity(board_background_);
 
     SDL_Init(SDL_INIT_VIDEO);
 }
 
-bool ChessGui::wasInit() {
+ChessGui::ChessGui(EngineBase *engine) : engine_(engine) {
+    window = SDL_CreateWindow("Chess", 800, 800, 0);
+    renderer = SDL_CreateRenderer(window, nullptr);
+    running = true;
+    board_background_ = new VisualBoard(Vec2D(800, 800), this);
+    registerEntity(board_background_);
+
+    SDL_Init(SDL_INIT_VIDEO);
+}
+
+bool ChessGui::wasInit() const {
     return window != nullptr && renderer != nullptr;
 }
 
@@ -54,7 +65,8 @@ void ChessGui::registerEntity(DrawableEntity *entity) {
     drawables.push_back(entity);
 }
 
-SDL_Renderer *ChessGui::getRenderer() {
+
+SDL_Renderer *ChessGui::getRenderer() const {
     return renderer;
 }
 
@@ -66,30 +78,34 @@ void ChessGui::handleMouseDown(const Uint8 button) {
             const int file = static_cast<int>(x / (board_background_->boardSize.x / 8.f));
             const int rank = static_cast<int>(y / (board_background_->boardSize.y / 8.f));
             heldPiece = board_background_->pieceAtLocation(rank, file);
-
-
-
         }
         default:
             break;
     }
 }
 
-void ChessGui::handleMouseUp(const Uint8 button) {
+void ChessGui::handleMouseUp(const Uint8 button) const {
     switch (button) {
         case SDL_BUTTON_LEFT: {
             float x, y;
             SDL_GetMouseState(&x, &y);
             const Vec2D squareSize = board_background_->boardSize / 8.f;
+
+            // need to effectively round down to the nearest rank/file
             const int file = static_cast<int>(x / (board_background_->boardSize.x / 8.f));
             const int rank = static_cast<int>(y / (board_background_->boardSize.y / 8.f));
+
+            // exit if the mouse is outside the board, or if the move is illegal
+            if (file < 0 || rank < 0 || file > 7 || rank > 7) { return; }
+            if (!engine_->checkMove("test move")) { return; }
+
+
             const Vec2D newLocation = {
                 .x = file * squareSize.x,
                 .y = rank * squareSize.y
             };
 
             if (heldPiece) {
-
                 heldPiece->setLocation(newLocation); // Modify the shared_ptr's contents directly
             }
             break;

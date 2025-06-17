@@ -2,7 +2,7 @@
 // Created by jacks on 12/06/2025.
 //
 
-#include "PieceGUI.h"
+#include "VisualPiece.h"
 
 #include <map>
 #include <iostream>
@@ -21,8 +21,8 @@ const inline std::map<const char, std::string> pieceFileSuffixes = {
 };
 
 
-PieceGUI::PieceGUI(std::shared_ptr<SDL_Texture> texture, const int rank, const int file,
-                   const Vec2D &squareSize) {
+VisualPiece::VisualPiece(std::shared_ptr<SDL_Texture> texture, const int rank, const int file,
+                         const Vec2D &squareSize, const char type) : type_(type) {
     texture_ = std::move(texture);
 
     // put it in its default place
@@ -34,29 +34,29 @@ PieceGUI::PieceGUI(std::shared_ptr<SDL_Texture> texture, const int rank, const i
 
     size_ = squareSize;
 
-    srcRect = SDL_FRect(0.f, 0.f, 128.f, 128.f);
-
-    ;
+    srcRect = SDL_FRect(0.f, 0.f, 128.f, 128.f);;
 }
 
-void PieceGUI::draw(SDL_Renderer *renderer) {
+VisualPiece::~VisualPiece() {
+    SDL_DestroyTexture(texture_.get());
+    texture_.reset();
+}
+
+void VisualPiece::draw(SDL_Renderer *renderer) {
     const auto text = texture_.get();
     const auto destRect = SDL_FRect{location_.x, location_.y, size_.x, size_.y};
     SDL_RenderTexture(renderer, text, &srcRect, &destRect);
-
-
 }
 
-void PieceGUI::setLocation(const Vec2D &location) {
-
+void VisualPiece::setLocation(const Vec2D &location) {
     location_ = location;
 }
 
 VisualPieceBuilder::VisualPieceBuilder(const Vec2D &squareSize, ChessGui *gui) : squareSize(squareSize), gui(gui) {
 }
 
-std::vector<std::shared_ptr<PieceGUI> > VisualPieceBuilder::FromFEN(const std::string &FEN) {
-    std::vector<std::shared_ptr<PieceGUI> > pieces;
+std::vector<std::shared_ptr<VisualPiece> > VisualPieceBuilder::FromFEN(const std::string &FEN) {
+    std::vector<std::shared_ptr<VisualPiece> > pieces;
 
     int rank = 0;
     int file = 0;
@@ -79,7 +79,7 @@ std::vector<std::shared_ptr<PieceGUI> > VisualPieceBuilder::FromFEN(const std::s
             std::string path = source_path + (isWhite ? "white" : "black") + pieceFileSuffixes.at(type);
             SDL_Texture *rawPieceTexture = IMG_LoadTexture(gui->getRenderer(), path.c_str());
             auto uniqueTexture = std::shared_ptr<SDL_Texture>(rawPieceTexture, SDL_DestroyTexture);
-            auto piece = std::make_shared<PieceGUI>(uniqueTexture, rank, file, squareSize);
+            auto piece = std::make_shared<VisualPiece>(uniqueTexture, rank, file, squareSize, type);
             pieces.push_back(piece);
             file++;
         }
