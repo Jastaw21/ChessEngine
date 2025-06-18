@@ -13,23 +13,27 @@ find_package(SDL3_image REQUIRED CONFIG)
 
 
 add_executable(Chess ${PROJECT_SOURCE_DIR}/src/main.cpp
-        src/gui.cpp
-        include/gui.h
-        src/VisualBoard.cpp
-        include/VisualBoard.h
-        src/DrawableEntity.cpp
-        include/DrawableEntity.h
-        src/VisualPiece.cpp
-        include/VisualPiece.h
-        include/Fen.h
-        src/Vec2D.cpp
-        include/Vec2D.h
-        src/EngineBase.cpp
-        include/EngineBase.h
-        src/TestEngine.cpp
-        include/TestEngine.h
-        include/BitBoards.cpp
-        include/BitBoards.h)
+        src/GUI/gui.cpp
+        include/GUI/gui.h
+        src/GUI/VisualBoard.cpp
+        include/GUI/VisualBoard.h
+        src/GUI/DrawableEntity.cpp
+        include/GUI/DrawableEntity.h
+        src/GUI/VisualPiece.cpp
+        include/GUI/VisualPiece.h
+        include/Utility/Fen.h
+        src/Utility/Vec2D.cpp
+        include/Utility/Vec2D.h
+        src/Engine/EngineBase.cpp
+        include/Engine/EngineBase.h
+        src/Engine/TestEngine.cpp
+        include/Engine/TestEngine.h
+        src/BoardManager/BitBoards.cpp
+        include/BoardManager/BitBoards.h
+        src/BoardManager/BoardManager.cpp
+        include/BoardManager/BoardManager.h
+        include/Engine/Piece.cpp
+        include/Engine/Piece.h)
 
 include_directories(include)
 

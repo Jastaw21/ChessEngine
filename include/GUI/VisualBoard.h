@@ -10,7 +10,7 @@
 #include <memory>
 #include <optional>
 
-#include "Vec2D.h"
+#include "Utility/Vec2D.h"
 
 class Gui;
 
@@ -29,6 +29,8 @@ private:
     int rank;
     int file;
     SDL_FRect rect_;
+
+
 
     bool bIsDrawn = true;
 };
@@ -53,6 +55,8 @@ public:
 private:
     std::vector<BoardSquare> squares_;
     std::vector<std::shared_ptr<VisualPiece> > pieces_{};
+
+    void updatePieceLocations();
 
     ChessGui *parent_;
 };

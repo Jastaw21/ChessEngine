@@ -2,11 +2,9 @@
 // Created by jacks on 05/06/2025.
 //
 
-#include "../include/VisualBoard.h"
-
-#include <iostream>
-
-#include "VisualPiece.h"
+#include "GUI/VisualBoard.h"
+#include "GUI/VisualPiece.h"
+#include "GUI/gui.h"
 
 
 BoardSquare::BoardSquare(const bool isWhite_p, const int rank_p, const int file_p, const SDL_FRect &rect)
@@ -87,7 +85,8 @@ std::shared_ptr<VisualPiece> VisualBoard::pieceAtLocation(int rank, const int fi
         // Iterate over shared_ptr<VisualPiece>
         const bool xMatch = (starting_x <= piece->getLocation().x) && (piece->getLocation().x <= end_x);
 
-        if (const bool yMatch = (starting_y <= piece->getLocation().y) && (piece->getLocation().y <= end_y); xMatch && yMatch) {
+        if (const bool yMatch = (starting_y <= piece->getLocation().y) && (piece->getLocation().y <= end_y);
+            xMatch && yMatch) {
             return piece; // Return the shared_ptr
         }
     }
@@ -98,5 +97,6 @@ Vec2D VisualBoard::squareSize() const {
     const Vec2D local_size = boardSize / 8.f;
     return local_size;
 }
+
 
 std::vector<std::shared_ptr<VisualPiece> > pieces_{};

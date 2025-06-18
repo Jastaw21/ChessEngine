@@ -2,7 +2,7 @@
 // Created by jacks on 12/06/2025.
 //
 
-#include "DrawableEntity.h"
+#include "GUI/DrawableEntity.h"
 
 
 DrawableEntity::DrawableEntity() {

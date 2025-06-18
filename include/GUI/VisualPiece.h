@@ -7,41 +7,43 @@
 
 #include <memory>
 
-#include "DrawableEntity.h"
+
 #include <string>
 #include <vector>
 #include <SDL3/SDL.h>
-#include "Vec2D.h"
 
-#include "Fen.h"
+#include "Utility/Vec2D.h"
+#include "Utility/Fen.h"
+#include "DrawableEntity.h"
+#include "Engine/Piece.h"
 
 class ChessGui;
 
 
 class VisualPiece final : public DrawableEntity {
 public:
-    VisualPiece(std::shared_ptr<SDL_Texture> texture, int rank, int file, const Vec2D &squareSize, const char type);
     ~VisualPiece() override;
+
+    [[nodiscard]] Piece& getPiece() const;
+
+    VisualPiece(std::shared_ptr<SDL_Texture> texture,
+                int rank, int file,
+                const Vec2D &squareSize,
+                std::shared_ptr<ConcretePiece> piece);
 
     void draw(SDL_Renderer *renderer) override;
 
+    void setLocation(int rank, int file);
 
-    int test = 0;
+    [[nodiscard]] Vec2D getLocation() const;
 
-    void setLocation(const Vec2D &location);
-    const Vec2D& getLocation() const { return location_; }
-
-    bool logChanged = false;
-
-    const char getType() const { return type_; }
+    [[nodiscard]] int getRank() const { return concretePiece_->rank; }
+    [[nodiscard]] int getFile() const { return concretePiece_->file; }
 
 private:
     std::shared_ptr<SDL_Texture> texture_;
-    SDL_FRect srcRect{};
-    Vec2D size_;
-    Vec2D location_;
-
-    const char type_;
+    Vec2D squareSize_{};
+    std::shared_ptr<ConcretePiece> concretePiece_;
 };
 
 

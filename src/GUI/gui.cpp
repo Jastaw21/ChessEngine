@@ -1,10 +1,11 @@
-#include "gui.h"
+
 
 #include <iostream>
 
-#include "VisualBoard.h"
-#include "DrawableEntity.h"
-#include "EngineBase.h"
+#include "GUI/VisualBoard.h"
+#include "GUI/DrawableEntity.h"
+#include "GUI/gui.h"
+#include "Engine/EngineBase.h"
 
 
 ChessGui::ChessGui() {
@@ -65,6 +66,10 @@ void ChessGui::registerEntity(DrawableEntity *entity) {
     drawables.push_back(entity);
 }
 
+EngineBase *ChessGui::getEngine() const {
+    return engine_;
+}
+
 
 SDL_Renderer *ChessGui::getRenderer() const {
     return renderer;
@@ -84,7 +89,7 @@ void ChessGui::handleMouseDown(const Uint8 button) {
     }
 }
 
-void ChessGui::handleMouseUp(const Uint8 button) const {
+void ChessGui::handleMouseUp(const Uint8 button) {
     switch (button) {
         case SDL_BUTTON_LEFT: {
             float x, y;
@@ -93,21 +98,23 @@ void ChessGui::handleMouseUp(const Uint8 button) const {
 
             // need to effectively round down to the nearest rank/file
             const int file = static_cast<int>(x / (board_background_->boardSize.x / 8.f));
-            const int rank = static_cast<int>(y / (board_background_->boardSize.y / 8.f));
+            const int rank = static_cast<int>(8 - (y / (board_background_->boardSize.y / 8.f)));
 
-            // exit if the mouse is outside the board, or if the move is illegal
-            if (file < 0 || rank < 0 || file > 7 || rank > 7) { return; }
-            if (!engine_->checkMove("test move")) { return; }
+            if (!heldPiece) { return; }
 
-
-            const Vec2D newLocation = {
-                .x = file * squareSize.x,
-                .y = rank * squareSize.y
+            const auto move = Move{
+                .piece = heldPiece->getPiece(),
+                .rankFrom = heldPiece->getRank(),
+                .fileFrom = heldPiece->getFile(),
+                .rankTo = rank, .fileTo = file
             };
 
-            if (heldPiece) {
-                heldPiece->setLocation(newLocation); // Modify the shared_ptr's contents directly
-            }
+            if (!manager_.checkMove(move)) { return; }
+
+
+            heldPiece->setLocation(rank, file);
+            heldPiece.reset();
+
             break;
         }
         default:

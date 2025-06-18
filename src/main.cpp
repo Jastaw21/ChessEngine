@@ -1,21 +1,22 @@
 #include <bitset>
 
-#include "gui.h"
+#include "GUI/gui.h"
 #include <SDL3/SDL.h>
 #include "SDL3/SDL_main.h"
-#include "VisualBoard.h"
-#include "TestEngine.h"
-#include "BitBoards.h"
+#include "GUI/VisualBoard.h"
+#include "Engine/TestEngine.h"
+#include "BoardManager/BitBoards.h"
 
 
 int main(int argc, char **argv) {
     auto engine = TestEngine();
     auto gui = ChessGui(&engine);
 
-    auto bb = BitBoards();
-    bb.loadFEN(Fen::STARTING_FEN);
+    auto eng = gui.getEngine();
+    int i = 1+ 8;
 
-    std::cout <<  bb.toFEN();
+    auto bb = gui.getBoardManager()->getBitboards();
+    bb->loadFEN(Fen::STARTING_FEN);
 
 
 
