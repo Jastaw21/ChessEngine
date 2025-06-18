@@ -39,24 +39,28 @@ private:
 class VisualBoard final : public DrawableEntity {
 public:
     VisualBoard(const Vec2D &boardSizePixels, ChessGui *gui);
-
     ~VisualBoard();
-
-    void build_background(const Vec2D &square_size);
-
-    Vec2D boardSize;
 
     void draw(SDL_Renderer *renderer) override;
 
+    Vec2D squareSize() const;
+
+    void build_background(const Vec2D &square_size);
+
+
+    [[nodiscard]] const Vec2D & boardSize() const{ return boardSize_; }
+
+
     std::shared_ptr<VisualPiece> pieceAtLocation(int rank, int file);
 
-    Vec2D squareSize() const;
+
 
 private:
     std::vector<BoardSquare> squares_;
     std::vector<std::shared_ptr<VisualPiece> > pieces_{};
 
     void updatePieceLocations();
+    Vec2D boardSize_;
 
     ChessGui *parent_;
 };

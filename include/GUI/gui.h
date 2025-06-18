@@ -17,6 +17,7 @@ class EngineBase;
 
 class ChessGui {
 public:
+
     ChessGui();
 
     explicit ChessGui(EngineBase *engine);
@@ -30,15 +31,15 @@ public:
     [[nodiscard]] EngineBase *getEngine() const;
     [[nodiscard]] SDL_Renderer *getRenderer() const;
 
-    inline void setBoardBackground(VisualBoard *background) { board_background_ = background; }
+    inline void setBoardBackground(VisualBoard *background){ board_background_ = background; }
 
-    BoardManager* getBoardManager(){return &manager_;};
-    [[nodiscard]] inline VisualBoard *getBoardBackground() const { return board_background_; }
+    BoardManager *getBoardManager(){ return &manager_; };
+    [[nodiscard]] inline VisualBoard *getBoardBackground() const{ return board_background_; }
 
 private:
+
     // loop stuff
     bool running;
-
     void pollEvents();
 
     // drawing

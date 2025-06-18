@@ -5,7 +5,7 @@
 #include "BoardManager/BoardManager.h"
 #include "BoardManager/BitBoards.h"
 
-std::string Move::toUCI() const {
+std::string Move::toUCI() const{
     std::string uci;
     const char fileFromChar = 'a' + fileFrom;
     uci += fileFromChar;
@@ -17,14 +17,11 @@ std::string Move::toUCI() const {
     return uci;
 }
 
-BoardManager::BoardManager() {
-}
+BoardManager::BoardManager(){}
 
-bool BoardManager::moveIsLegal(const Move &move) {
-    return true;
-}
+bool BoardManager::moveIsLegal(const Move &move){ return true; }
 
-bool BoardManager::moveIsPossible(const Move &move) {
+bool BoardManager::moveIsPossible(const Move &move){
     const auto moveString = move.toUCI();
     std::cout << "Move: " << moveString << std::endl;
     const bool fileInBounds = move.fileTo < 8 && move.fileTo >= 0;
@@ -44,9 +41,7 @@ bool BoardManager::moveIsPossible(const Move &move) {
         return false;
     }
 
-
     std::cout << "Move is possible" << std::endl;
-
 
     return fileInBounds && rankInBounds && squareEmpty;
 }

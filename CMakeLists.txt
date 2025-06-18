@@ -32,7 +32,7 @@ add_executable(Chess ${PROJECT_SOURCE_DIR}/src/main.cpp
         include/BoardManager/BitBoards.h
         src/BoardManager/BoardManager.cpp
         include/BoardManager/BoardManager.h
-        include/Engine/Piece.cpp
+        src/Engine/Piece.cpp
         include/Engine/Piece.h)
 
 include_directories(include)

@@ -12,13 +12,13 @@
 #include "GUI/VisualPiece.h"
 
 const inline std::map<const char, std::string> pieceFileSuffixes = {
-    {'p', "-pawn.png"},
-    {'n', "-knight.png"},
-    {'b', "-bishop.png"},
-    {'r', "-rook.png"},
-    {'q', "-queen.png"},
-    {'k', "-king.png"}
-};
+            {'p', "-pawn.png"},
+            {'n', "-knight.png"},
+            {'b', "-bishop.png"},
+            {'r', "-rook.png"},
+            {'q', "-queen.png"},
+            {'k', "-king.png"}
+        };
 
 inline constexpr auto SRC_RECT_128_128 = SDL_FRect{0, 0, 128, 128};
 
@@ -28,41 +28,37 @@ VisualPiece::VisualPiece(std::shared_ptr<SDL_Texture> texture,
                          const Vec2D &squareSize,
                          std::shared_ptr<ConcretePiece> piece)
 
-    : texture_(std::move(texture)), squareSize_(squareSize), concretePiece_(std::move(piece)) {
-}
+    : texture_(std::move(texture)), squareSize_(squareSize), concretePiece_(std::move(piece)){}
 
-VisualPiece::~VisualPiece() {
+VisualPiece::~VisualPiece(){
     SDL_DestroyTexture(texture_.get());
     texture_.reset();
 }
 
-Piece& VisualPiece::getPiece() const {
-    return concretePiece_->piece;
-}
+Piece &VisualPiece::getPiece() const{ return concretePiece_->piece; }
 
-void VisualPiece::draw(SDL_Renderer *renderer) {
+void VisualPiece::draw(SDL_Renderer *renderer){
     const auto text = texture_.get();
     const auto destRect = SDL_FRect{getLocation().x, getLocation().y, squareSize_.x, squareSize_.y};
     SDL_RenderTexture(renderer, text, &SRC_RECT_128_128, &destRect);
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
-void VisualPiece::setLocation(const int rank, const int file) {
+void VisualPiece::setLocation(const int rank, const int file){
     concretePiece_->rank = rank;
     concretePiece_->file = file;
 }
 
-Vec2D VisualPiece::getLocation() const {
+Vec2D VisualPiece::getLocation() const{
     return Vec2D{
-        .x = static_cast<float>(concretePiece_->file) * static_cast<float>(squareSize_.x),
-        .y = static_cast<float>(concretePiece_->rank) * static_cast<float>(squareSize_.y)
-    };
+                .x = static_cast<float>(concretePiece_->file) * static_cast<float>(squareSize_.x),
+                .y = static_cast<float>(concretePiece_->rank) * static_cast<float>(squareSize_.y)
+            };
 }
 
-VisualPieceBuilder::VisualPieceBuilder(const Vec2D &squareSize, ChessGui *gui) : squareSize(squareSize), gui(gui) {
-}
+VisualPieceBuilder::VisualPieceBuilder(const Vec2D &squareSize, ChessGui *gui) : squareSize(squareSize), gui(gui){}
 
-std::vector<std::shared_ptr<VisualPiece> > VisualPieceBuilder::FromFEN(const std::string &FEN) {
+std::vector<std::shared_ptr<VisualPiece> > VisualPieceBuilder::FromFEN(const std::string &FEN){
     std::vector<std::shared_ptr<VisualPiece> > pieces;
 
     int rank = 0;

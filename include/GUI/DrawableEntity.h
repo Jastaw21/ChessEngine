@@ -24,17 +24,18 @@ struct RenderInfo {
 
 class DrawableEntity {
 public:
+
     virtual ~DrawableEntity() = default;
     DrawableEntity();
-    explicit DrawableEntity(const RenderInfo& render_info);
+    explicit DrawableEntity(const RenderInfo &render_info);
 
-    virtual RenderInfo& getRenderInfo();
-    virtual void draw(SDL_Renderer* renderer) = 0;
+    virtual RenderInfo &getRenderInfo();
+    virtual void draw(SDL_Renderer *renderer) = 0;
 
 protected:
+
     RenderInfo renderInfo{};
 };
-
 
 
 #endif //DRAWABLEENTITY_H

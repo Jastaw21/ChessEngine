@@ -8,18 +8,15 @@
 #include "BoardManager/BitBoards.h"
 
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv){
     auto engine = TestEngine();
     auto gui = ChessGui(&engine);
 
     auto eng = gui.getEngine();
-    int i = 1+ 8;
+    int i = 1 + 8;
 
     auto bb = gui.getBoardManager()->getBitboards();
     bb->loadFEN(Fen::STARTING_FEN);
-
-
-
 
     gui.loop();
     return 0;

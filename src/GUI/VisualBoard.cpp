@@ -42,7 +42,7 @@ void VisualBoard::build_background(const Vec2D &square_size) {
     }
 }
 
-VisualBoard::VisualBoard(const Vec2D &boardSizePixels, ChessGui *gui): boardSize(boardSizePixels),
+VisualBoard::VisualBoard(const Vec2D &boardSizePixels, ChessGui *gui): boardSize_(boardSizePixels),
                                                                        parent_(gui) {
     // set the builder up
     const auto square_size = Vec2D(boardSizePixels.x / 8.f, boardSizePixels.y / 8.f);
@@ -94,7 +94,7 @@ std::shared_ptr<VisualPiece> VisualBoard::pieceAtLocation(int rank, const int fi
 }
 
 Vec2D VisualBoard::squareSize() const {
-    const Vec2D local_size = boardSize / 8.f;
+    const Vec2D local_size = boardSize_ / 8.f;
     return local_size;
 }
 

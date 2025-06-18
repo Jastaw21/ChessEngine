@@ -1,14 +1,10 @@
-
-
 #include <iostream>
 
 #include "GUI/VisualBoard.h"
 #include "GUI/DrawableEntity.h"
 #include "GUI/gui.h"
-#include "Engine/EngineBase.h"
 
-
-ChessGui::ChessGui() {
+ChessGui::ChessGui(){
     window = SDL_CreateWindow("Chess", 800, 800, 0);
     renderer = SDL_CreateRenderer(window, nullptr);
     running = true;
@@ -18,7 +14,7 @@ ChessGui::ChessGui() {
     SDL_Init(SDL_INIT_VIDEO);
 }
 
-ChessGui::ChessGui(EngineBase *engine) : engine_(engine) {
+ChessGui::ChessGui(EngineBase *engine) : engine_(engine){
     window = SDL_CreateWindow("Chess", 800, 800, 0);
     renderer = SDL_CreateRenderer(window, nullptr);
     running = true;
@@ -28,15 +24,11 @@ ChessGui::ChessGui(EngineBase *engine) : engine_(engine) {
     SDL_Init(SDL_INIT_VIDEO);
 }
 
-bool ChessGui::wasInit() const {
-    return window != nullptr && renderer != nullptr;
-}
+bool ChessGui::wasInit() const{ return window != nullptr && renderer != nullptr; }
 
 
-void ChessGui::loop() {
-    if (!wasInit()) {
-        return;
-    }
+void ChessGui::loop(){
+    if (!wasInit()) { return; }
 
     while (running) {
         pollEvents();
@@ -48,40 +40,32 @@ void ChessGui::loop() {
     SDL_Quit();
 }
 
-void ChessGui::render() {
+void ChessGui::render(){
     // draw black
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(renderer);
 
     // do the entities
-    for (const auto &drawable: drawables) {
-        drawable->draw(renderer);
-    }
+    for (const auto &drawable: drawables) { drawable->draw(renderer); }
 
     // flip it
     SDL_RenderPresent(renderer);
 }
 
-void ChessGui::registerEntity(DrawableEntity *entity) {
-    drawables.push_back(entity);
-}
+void ChessGui::registerEntity(DrawableEntity *entity){ drawables.push_back(entity); }
 
-EngineBase *ChessGui::getEngine() const {
-    return engine_;
-}
+EngineBase *ChessGui::getEngine() const{ return engine_; }
 
 
-SDL_Renderer *ChessGui::getRenderer() const {
-    return renderer;
-}
+SDL_Renderer *ChessGui::getRenderer() const{ return renderer; }
 
-void ChessGui::handleMouseDown(const Uint8 button) {
+void ChessGui::handleMouseDown(const Uint8 button){
     switch (button) {
         case SDL_BUTTON_LEFT: {
             float x, y;
             SDL_GetMouseState(&x, &y);
-            const int file = static_cast<int>(x / (board_background_->boardSize.x / 8.f));
-            const int rank = static_cast<int>(y / (board_background_->boardSize.y / 8.f));
+            const int file = static_cast<int>(x / (board_background_->boardSize().x / 8.f));
+            const int rank = static_cast<int>(y / (board_background_->boardSize().y / 8.f));
             heldPiece = board_background_->pieceAtLocation(rank, file);
         }
         default:
@@ -89,28 +73,26 @@ void ChessGui::handleMouseDown(const Uint8 button) {
     }
 }
 
-void ChessGui::handleMouseUp(const Uint8 button) {
+void ChessGui::handleMouseUp(const Uint8 button){
     switch (button) {
         case SDL_BUTTON_LEFT: {
             float x, y;
             SDL_GetMouseState(&x, &y);
-            const Vec2D squareSize = board_background_->boardSize / 8.f;
 
             // need to effectively round down to the nearest rank/file
-            const int file = static_cast<int>(x / (board_background_->boardSize.x / 8.f));
-            const int rank = static_cast<int>(8 - (y / (board_background_->boardSize.y / 8.f)));
+            const int file = static_cast<int>(x / (board_background_->boardSize().x / 8.f));
+            const int rank = static_cast<int>(8 - (y / (board_background_->boardSize().y / 8.f)));
 
             if (!heldPiece) { return; }
 
             const auto move = Move{
-                .piece = heldPiece->getPiece(),
-                .rankFrom = heldPiece->getRank(),
-                .fileFrom = heldPiece->getFile(),
-                .rankTo = rank, .fileTo = file
-            };
+                        .piece = heldPiece->getPiece(),
+                        .rankFrom = heldPiece->getRank(),
+                        .fileFrom = heldPiece->getFile(),
+                        .rankTo = rank, .fileTo = file
+                    };
 
             if (!manager_.checkMove(move)) { return; }
-
 
             heldPiece->setLocation(rank, file);
             heldPiece.reset();
@@ -122,7 +104,7 @@ void ChessGui::handleMouseUp(const Uint8 button) {
     }
 }
 
-void ChessGui::pollEvents() {
+void ChessGui::pollEvents(){
     SDL_Event event;
 
     SDL_PollEvent(&event);
@@ -149,7 +131,7 @@ void ChessGui::pollEvents() {
     }
 }
 
-void ChessGui::handleKeypress(const SDL_Keycode keycode) {
+void ChessGui::handleKeypress(const SDL_Keycode keycode){
     switch (keycode) {
         case SDLK_ESCAPE:
             running = false;

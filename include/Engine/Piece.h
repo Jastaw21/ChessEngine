@@ -14,34 +14,34 @@ enum Piece {
 };
 
 inline std::unordered_map<char, Piece> pieceMap = {
-    {'P', WP}, {'N', WN}, {'B', WB}, {'R', WR}, {'Q', WQ}, {'K', WK},
-    {'p', BP}, {'n', BN}, {'b', BB}, {'r', BR}, {'q', BQ}, {'k', BK},
-};
+            {'P', WP}, {'N', WN}, {'B', WB}, {'R', WR}, {'Q', WQ}, {'K', WK},
+            {'p', BP}, {'n', BN}, {'b', BB}, {'r', BR}, {'q', BQ}, {'k', BK},
+        };
 inline std::unordered_map<Piece, char> reversePieceMap = {
-    {WP, 'P'}, {WN, 'N'}, {WB, 'B'}, {WR, 'R'}, {WQ, 'Q'}, {WK, 'K'},
-    {BP, 'p'}, {BN, 'n'}, {BB, 'b'}, {BR, 'r'}, {BQ, 'q'}, {BK, 'k'},
-};
+            {WP, 'P'}, {WN, 'N'}, {WB, 'B'}, {WR, 'R'}, {WQ, 'Q'}, {WK, 'K'},
+            {BP, 'p'}, {BN, 'n'}, {BB, 'b'}, {BR, 'r'}, {BQ, 'q'}, {BK, 'k'},
+        };
 
 inline std::unordered_map<Piece, std::string> pieceNames = {
-    {WP, "White Pawn"},
-    {WN, "White Knight"},
-    {WB, "White Bishop"},
-    {WR, "White Rook"},
-    {WQ, "White Queen"},
-    {WK, "White King"},
-    {BP, "Black Pawn"},
-    {BN, "Black Knight"},
-    {BB, "Black Bishop"},
-    {BR, "Black Rook"},
-    {BQ, "Black Queen"},
-    {BK, "Black King"},
-};
+            {WP, "White Pawn"},
+            {WN, "White Knight"},
+            {WB, "White Bishop"},
+            {WR, "White Rook"},
+            {WQ, "White Queen"},
+            {WK, "White King"},
+            {BP, "Black Pawn"},
+            {BN, "Black Knight"},
+            {BB, "Black Bishop"},
+            {BR, "Black Rook"},
+            {BQ, "Black Queen"},
+            {BK, "Black King"},
+        };
 
 
 class ConcretePiece {
 public:
-    ConcretePiece(const Piece piece, const int rank, const int file) : piece(piece), rank(rank), file(file) {
-    }
+
+    ConcretePiece(const Piece piece, const int rank, const int file) : piece(piece), rank(rank), file(file){}
 
     Piece piece;
 

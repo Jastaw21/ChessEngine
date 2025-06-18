@@ -9,10 +9,10 @@
 
 class TestEngine final : public EngineBase {
 public:
+
     TestEngine();
 
     void evaluate() override;
-
     void search() override;
 };
 
