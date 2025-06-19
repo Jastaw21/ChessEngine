@@ -12,20 +12,43 @@
 
 #include "Engine/Piece.h"
 
+namespace Comparisons {
+    constexpr uint64_t buildFileBoard(const char file){
+        const int index = (file) - 'a';
+        uint64_t result = 0ULL;
+        for (int i = 0; i < 8; ++i) { result |= 1ULL << (index + 8 * i); }
+        return result;
+    }
 
-constexpr uint64_t buildFileBoard(const char file){
-    const int index = tolower(file) - 'a';
-    uint64_t result = 0ULL;
-    for (int i = 0; i < 8; ++i) { result |= 1ULL << (index + 8 * i); }
-    return result;
-}
+    constexpr uint64_t buildRankBoard(const int rank){
+        uint64_t result = 0ULL;
+        const int base = (rank - 1) * 8;
 
-inline constexpr uint64_t buildRankBoard(const int rank){
-    uint64_t result = 0ULL;
-    const int base = (rank - 1) * 8;
+        for (int i = 0; i < 8; ++i) { result |= 1ULL << (base + i); }
+        return result;
+    }
 
-    for (int i = 0; i < 8; ++i) { result |= 1ULL << (base + i); }
-    return result;
+    constexpr std::array<uint64_t, 8> files = {
+                buildFileBoard('a'),
+                buildFileBoard('b'),
+                buildFileBoard('c'),
+                buildFileBoard('d'),
+                buildFileBoard('e'),
+                buildFileBoard('f'),
+                buildFileBoard('g'),
+                buildFileBoard('h')
+            };
+
+    constexpr std::array<uint64_t, 8> ranks = {
+                buildRankBoard(1),
+                buildRankBoard(2),
+                buildRankBoard(3),
+                buildRankBoard(4),
+                buildRankBoard(5),
+                buildRankBoard(6),
+                buildRankBoard(7),
+                buildRankBoard(8)
+            };
 }
 
 
@@ -34,10 +57,10 @@ public:
 
     BitBoards();
 
-    void loadFEN(const std::string &fen);
+    void loadFEN(const std::string& fen);
     std::string &toFEN();
 
-    [[nodiscard]] uint64_t getBitboard(const Piece &piece) const;
+    [[nodiscard]] uint64_t getBitboard(const Piece& piece) const;
     uint64_t &operator[](const Piece piece){ return bitboards[piece]; }
     void printBitboard() const;
 
