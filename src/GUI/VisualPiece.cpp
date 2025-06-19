@@ -43,6 +43,12 @@ void VisualPiece::draw(SDL_Renderer* renderer){
     SDL_RenderTexture(renderer, text, &SRC_RECT_128_128, &destRect);
 }
 
+void VisualPiece::draw(SDL_Renderer* renderer, const SDL_FRect& destRect){
+    const auto text = texture_.get();
+    SDL_RenderTexture(renderer, text, &SRC_RECT_128_128, &destRect);
+
+}
+
 // ReSharper disable once CppMemberFunctionMayBeConst
 void VisualPiece::setLocation(const int rank, const int file){
     concretePiece_->rank = rank;
@@ -100,6 +106,34 @@ std::vector<std::shared_ptr<VisualPiece> > VisualPieceBuilder::FromFEN(const std
             pieces.push_back(piece);
             file++;
         }
+    }
+
+    return pieces;
+}
+
+std::vector<std::shared_ptr<VisualPiece> > VisualPieceBuilder::buildInstances(){
+    std::vector<std::shared_ptr<VisualPiece> > pieces;
+    for (int piece = 0; piece < Piece::PIECE_N; piece++) {
+        const auto pieceType = static_cast<Piece>(piece);
+
+        auto concretePiece = std::make_shared<ConcretePiece>(pieceType, 0, 0);
+
+        const bool isWhite = pieceColours[pieceType] == "White";
+        char fenStyleString = tolower(reversePieceMap.at(pieceType));
+        // where is the piece saved?
+        std::string path = source_path +
+                           (isWhite ? "white" : "black") +
+                           pieceFileSuffixes.at(fenStyleString);
+
+        // load the texture and make a pointer of it
+        SDL_Texture* rawPieceTexture = IMG_LoadTexture(gui->getRenderer(), path.c_str());
+        auto uniqueTexture = std::shared_ptr<SDL_Texture>(rawPieceTexture, SDL_DestroyTexture);
+
+        // construct the piece
+        auto visualPiece = std::make_shared<VisualPiece>(uniqueTexture, 0, 0, squareSize, concretePiece);
+
+        // add it and move on
+        pieces.push_back(visualPiece);
     }
 
     return pieces;

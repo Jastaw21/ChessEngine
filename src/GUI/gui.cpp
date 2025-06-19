@@ -69,12 +69,12 @@ void ChessGui::handleMouseDown(const Uint8 button){
             const char clickedFile = 'a' + file;
             std::cout << "Clicked on:" << clickedFile << rank << std::endl;
 
-            heldPiece = board_background_->pieceAtLocation(rank, file);
-            if (heldPiece != nullptr) {
-                const char pieceFile = 'a' + heldPiece->getFile();
-                const auto pieceType = pieceNames.at(heldPiece->getPiece());
-                std::cout << "Piece at: " << pieceFile << rank << "is: " << pieceType << std::endl;
+            int candidateClickedSquare = 1 + ((rank - 1) * 8 + (file - 1));
+
+            if (boardManager_.getBitboards()->getPiece(rank, file).has_value()) {
+                clickedSquare = candidateClickedSquare;
             }
+            std::cout << "Clicked on:" << clickedFile << rank << "Square: " << candidateClickedSquare << std::endl;
         }
         default:
             break;
@@ -91,27 +91,30 @@ void ChessGui::handleMouseUp(const Uint8 button){
             const int file = static_cast<int>(x / (board_background_->boardSize().x / 8.f));
             const int rank = 1 + static_cast<int>(8 - (y / (board_background_->boardSize().y / 8.f)));
 
-            if (!heldPiece) { return; }
+            if (clickedSquare == -1) { return; }
+
+            int clickedRank = (clickedSquare / 8) + 1;
+            int clickedFile = (clickedSquare % 8);
+
+            auto candidateMovePiece = boardManager_.getBitboards()->getPiece(clickedRank, clickedFile);
+
+            if (!candidateMovePiece.has_value()) { return; }
 
             const auto move = Move{
-                        .piece = heldPiece->getPiece(),
-                        .rankFrom = heldPiece->getRank(),
-                        .fileFrom = heldPiece->getFile(),
+                        .piece = candidateMovePiece.value(),
+                        .rankFrom = clickedRank,
+                        .fileFrom = clickedFile,
                         .rankTo = rank, .fileTo = file
                     };
 
             std::cout << "Move: " << move.toUCI() << std::endl;
 
             if (!boardManager_.tryMove(move)) {
-                const auto pieceType = pieceNames.at(heldPiece->getPiece());
-                std::cout << "Dropped Piece: " << pieceType << std::endl;
-
-                heldPiece.reset();
+                clickedSquare = -1;
                 return;
             }
 
-            board_background_->set_board_dirty(true);
-            heldPiece.reset();
+            clickedSquare = -1;
 
             break;
         }

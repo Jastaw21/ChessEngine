@@ -12,6 +12,7 @@
 
 #include "Utility/Vec2D.h"
 
+class BitBoards;
 class Gui;
 
 class BoardSquare final : public DrawableEntity {
@@ -40,18 +41,16 @@ private:
 class VisualBoard final : public DrawableEntity {
 public:
 
+    ~VisualBoard() override;
+
     VisualBoard(const Vec2D& boardSizePixels, ChessGui* gui);
-    ~VisualBoard();
+    void build_background(const Vec2D& square_size);
+
 
     virtual void draw(SDL_Renderer* renderer) override;
 
     Vec2D squareSize() const;
-
-    void build_background(const Vec2D& square_size);
-
-
     [[nodiscard]] const Vec2D &boardSize() const{ return boardSize_; }
-
 
     std::shared_ptr<VisualPiece> pieceAtLocation(int rank, int file) const;
     void updatePieceLocation(Piece piece, size_t index);
@@ -71,7 +70,8 @@ private:
 
     bool boardDirty = true;
 
-    std::optional<std::shared_ptr<VisualPiece>> getFirstPieceOfType(const Piece piece_) const;
+    std::optional<std::shared_ptr<VisualPiece> > getFirstPieceOfType(const Piece piece_) const;
+    std::unordered_map<Piece, VisualPiece> pieceInstances;
 };
 
 

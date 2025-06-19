@@ -22,44 +22,51 @@ class ChessGui;
 
 class VisualPiece final : public DrawableEntity {
 public:
+
     ~VisualPiece() override;
 
-    [[nodiscard]] Piece& getPiece() const;
+    [[nodiscard]] Piece &getPiece() const;
 
     VisualPiece(std::shared_ptr<SDL_Texture> texture,
                 int rank, int file,
-                const Vec2D &squareSize,
+                const Vec2D& squareSize,
                 std::shared_ptr<ConcretePiece> piece);
 
-    void draw(SDL_Renderer *renderer) override;
+    virtual void draw(SDL_Renderer* renderer) override;
+    void draw(SDL_Renderer* renderer, const SDL_FRect& destRect);
 
     void setLocation(int rank, int file);
 
     [[nodiscard]] Vec2D getLocation() const;
 
-    [[nodiscard]] int getRank() const { return concretePiece_->rank; }
-    [[nodiscard]] int getFile() const { return concretePiece_->file; }
+    [[nodiscard]] int getRank() const{ return concretePiece_->rank; }
+    [[nodiscard]] int getFile() const{ return concretePiece_->file; }
 
 private:
+
     std::shared_ptr<SDL_Texture> texture_;
     Vec2D squareSize_{};
     std::shared_ptr<ConcretePiece> concretePiece_;
 
-    const Piece& getPieceType() const;
+    const Piece &getPieceType() const;
 };
 
 
 class VisualPieceBuilder {
 public:
-    explicit VisualPieceBuilder(const Vec2D &squareSize, ChessGui *gui);
 
-    std::vector<std::shared_ptr<VisualPiece> > FromFEN(const std::string &FEN = Fen::STARTING_FEN);
+    explicit VisualPieceBuilder(const Vec2D& squareSize, ChessGui* gui);
+
+    std::vector<std::shared_ptr<VisualPiece> > FromFEN(const std::string& FEN = Fen::STARTING_FEN);
 
     Vec2D squareSize;
 
+    std::vector<std::shared_ptr<VisualPiece>> buildInstances();
+
 private:
+
     std::string source_path = "C:/Users/jacks/source/repos/Chess/pieces/pieces-basic-png/";
-    ChessGui *gui;
+    ChessGui* gui;
 };
 
 

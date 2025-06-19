@@ -58,6 +58,8 @@ private:
     void handleKeypress(SDL_Keycode keycode);
     std::shared_ptr<VisualPiece> heldPiece;
 
+    int clickedSquare = -1;
+
     void makeMove(const Move &move);
 };
 
