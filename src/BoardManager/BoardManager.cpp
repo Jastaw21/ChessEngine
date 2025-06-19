@@ -17,6 +17,10 @@ std::string Move::toUCI() const{
     return uci;
 }
 
+int Move::toSquare(){}
+int Move::fromSquare(){}
+
+
 BoardManager::BoardManager(){}
 
 bool BoardManager::moveIsLegal(const Move &move){ return true; }
@@ -54,4 +58,18 @@ bool BoardManager::moveIsPossible(const Move &move){
 
     std::cout << "Move is possible" << std::endl;
     return true;
+}
+
+void BoardManager::makeMove(const Move &move){
+    // set the from bit to zero
+
+    auto squareFrom = (move.rankFrom -2) * 8 + (8-move.fileFrom);
+     bitboards[move.piece] &= ~(1ULL << squareFrom);
+
+    // set the to bit to one
+
+    auto squareTo = (move.rankTo-2) * 8 + (8- move.fileTo);
+    bitboards[move.piece] |= (1ULL << squareTo);
+
+    std::cout << "Move made" << std::endl;
 }

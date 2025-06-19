@@ -33,7 +33,7 @@ public:
 
     inline void setBoardBackground(VisualBoard *background){ board_background_ = background; }
 
-    BoardManager *getBoardManager(){ return &manager_; };
+    BoardManager *getBoardManager(){ return &boardManager_; };
     [[nodiscard]] inline VisualBoard *getBoardBackground() const{ return board_background_; }
 
 private:
@@ -50,7 +50,7 @@ private:
 
     // chess engine
     EngineBase *engine_;
-    BoardManager manager_;
+    BoardManager boardManager_;
 
     // event handling
     void handleMouseDown(Uint8 button);

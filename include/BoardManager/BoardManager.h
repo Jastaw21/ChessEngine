@@ -13,11 +13,13 @@ class BitBoards;
 struct Move {
     Piece piece;
     int rankFrom;
-    char fileFrom;
+    int fileFrom;
     int rankTo;
-    char fileTo;
+    int fileTo;
 
-    std::string toUCI() const;
+    [[nodiscard]] std::string toUCI() const;
+    int toSquare();
+    int fromSquare();
 };
 
 
@@ -31,6 +33,7 @@ public:
     bool moveIsLegal(const Move &move);
     bool moveIsPossible(const Move &move);
     bool checkMove(const Move &move){ return (moveIsLegal(move) && moveIsPossible(move)); }
+    void makeMove(const Move & move);
 
 private:
 

@@ -100,12 +100,12 @@ void ChessGui::handleMouseUp(const Uint8 button){
                         .rankTo = rank, .fileTo = file
                     };
 
-            if (!manager_.checkMove(move)) {
+            if (!boardManager_.checkMove(move)) {
                 heldPiece.reset();
                 return;
             }
 
-            heldPiece->setLocation(rank, file);
+           makeMove(move);
             heldPiece.reset();
 
             break;
@@ -157,5 +157,8 @@ void ChessGui::handleKeypress(const SDL_Keycode keycode){
 }
 
 void ChessGui::makeMove(const Move &move){
+
+    heldPiece->setLocation(move.rankTo, move.fileTo);
+    boardManager_.makeMove(move);
 
 }
