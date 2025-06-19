@@ -64,21 +64,11 @@ void VisualBoard::draw(SDL_Renderer *renderer){
 }
 
 
-std::shared_ptr<VisualPiece> VisualBoard::pieceAtLocation(int rank, const int file){
-    const float starting_x = file * squareSize().x;
-    const float end_x = starting_x + squareSize().x;
-
-    const float starting_y = (8 - rank) * squareSize().y;
-    const float end_y = starting_y + squareSize().y;
-
+std::shared_ptr<VisualPiece> VisualBoard::pieceAtLocation(const int rank, const int file) const{
     for (const auto &piece: pieces_) {
-        // Iterate over shared_ptr<VisualPiece>
-        const bool xMatch = (starting_x <= piece->getLocation().x) && (piece->getLocation().x <= end_x);
-
-        if (const bool yMatch = (starting_y <= piece->getLocation().y) && (piece->getLocation().y <= end_y);
-            xMatch && yMatch) {
-            return piece; // Return the shared_ptr
-        }
+        const bool fileMatch = piece->getFile() == file;
+        const bool rankMatch = piece->getRank() == rank;
+        if (fileMatch && rankMatch) { return piece; }
     }
     return nullptr;
 }

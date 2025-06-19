@@ -7,19 +7,13 @@
 #include "Engine/Piece.h"
 
 
-BitBoards::BitBoards() {
+BitBoards::BitBoards(){
     bitboards.fill(0ULL);
 
-    // build the ranks and files for comparison
-    for (int i = 0; i < 8; i++) {
-        ranks[i] = buildRankBoard(i + 1);
-    }
-    for (char c = 'a'; c <= 'h'; c++) {
-        files[c] = buildFileBoard(c);
-    }
+
 }
 
-void BitBoards::loadFEN(const std::string &fen) {
+void BitBoards::loadFEN(const std::string& fen){
     fen_ = fen;
     bitboards.fill(0ULL);
     // starting from a8, h8 is 63
@@ -49,11 +43,9 @@ void BitBoards::loadFEN(const std::string &fen) {
     }
 }
 
-uint64_t BitBoards::getBitboard(const Piece &piece) const {
-    return bitboards[piece];
-}
+uint64_t BitBoards::getBitboard(const Piece& piece) const{ return bitboards[piece]; }
 
-void BitBoards::printBitboard() const {
+void BitBoards::printBitboard() const{
     for (int i = 0; i < Piece::PIECE_N; ++i) {
         const auto piece = static_cast<Piece>(i);
         std::bitset<64> bits = bitboards[i];
@@ -61,7 +53,23 @@ void BitBoards::printBitboard() const {
     }
 }
 
-std::string &BitBoards::toFEN() {
+std::optional<Piece> BitBoards::getPiece(const int rank, const int file) const{
+    const int toSquare = (rank - 1) * 8 + file;
+
+    // Check if the destination square is empty
+
+    for (int pieceIndex = 0; pieceIndex < Piece::PIECE_N; ++pieceIndex) {
+        auto piece = static_cast<Piece>(pieceIndex);
+        if ((bitboards[piece] & (1ULL << toSquare)) != 0) {
+
+            const auto pieceOccupyingSquare = pieceNames[piece];
+            return {piece};
+        }
+    }
+    return {};
+}
+
+std::string &BitBoards::toFEN(){
     fen_ = "";
     // rank by rank
     for (int rank = 7; rank >= 0; --rank) {
@@ -76,7 +84,7 @@ std::string &BitBoards::toFEN() {
             bool isPieceHere = false;
 
             // check each piece
-            for (const auto &[key, value]: pieceMap) {
+            for (const auto& [key, value]: pieceMap) {
                 // if the bit is in the bitboard, and-ed with the square, then we have a piece here
                 if (bitboards[value] & (1ULL << square)) {
                     isPieceHere = true;
@@ -95,7 +103,6 @@ std::string &BitBoards::toFEN() {
         if (!rank == 0)
             fen_ += '/';
     }
-
 
     return fen_;
 }

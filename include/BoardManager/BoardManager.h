@@ -17,9 +17,9 @@ struct Move {
     int rankTo;
     int fileTo;
 
-    [[nodiscard]] std::string toUCI() const;
-    int toSquare();
-    int fromSquare();
+    bool isTakingMove = false;
+
+    std::string toUCI() const;
 };
 
 
@@ -29,11 +29,17 @@ public:
     explicit BoardManager();
 
     BitBoards *getBitboards(){ return &bitboards; }
+    [[nodiscard]] bool checkMove(const Move& move) const;
+    bool tryMove(const Move& move);
 
-    bool moveIsLegal(const Move &move);
-    bool moveIsPossible(const Move &move);
-    bool checkMove(const Move &move){ return (moveIsLegal(move) && moveIsPossible(move)); }
-    void makeMove(const Move & move);
+private:
+
+    static bool moveIsLegal(const Move& move);
+    static bool moveIsPossible(const Move& move);
+    [[nodiscard]] bool moveDestinationIsEmpty(const Move& move) const;
+    [[nodiscard]] bool moveDestinationIsOccupiedWithOpponent(const Move& move) const;
+
+    void makeMove(const Move& move);
 
 private:
 

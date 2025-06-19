@@ -37,6 +37,20 @@ inline std::unordered_map<Piece, std::string> pieceNames = {
             {BK, "Black King"},
         };
 
+inline std::unordered_map<Piece, std::string> pieceColours = {
+            {WP, "White"},
+            {WN, "White"},
+            {WB, "White"},
+            {WR, "White"},
+            {WQ, "White"},
+            {WK, "White"},
+            {BP, "Black"},
+            {BN, "Black"},
+            {BB, "Black"},
+            {BR, "Black"},
+            {BQ, "Black"},
+            {BK, "Black"},
+        };
 
 class ConcretePiece {
 public:

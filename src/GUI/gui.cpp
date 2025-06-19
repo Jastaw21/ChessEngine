@@ -14,7 +14,7 @@ ChessGui::ChessGui(){
     SDL_Init(SDL_INIT_VIDEO);
 }
 
-ChessGui::ChessGui(EngineBase *engine) : engine_(engine){
+ChessGui::ChessGui(EngineBase* engine) : engine_(engine){
     window = SDL_CreateWindow("Chess", 800, 800, 0);
     renderer = SDL_CreateRenderer(window, nullptr);
     running = true;
@@ -46,13 +46,13 @@ void ChessGui::render(){
     SDL_RenderClear(renderer);
 
     // do the entities
-    for (const auto &drawable: drawables) { drawable->draw(renderer); }
+    for (const auto& drawable: drawables) { drawable->draw(renderer); }
 
     // flip it
     SDL_RenderPresent(renderer);
 }
 
-void ChessGui::registerEntity(DrawableEntity *entity){ drawables.push_back(entity); }
+void ChessGui::registerEntity(DrawableEntity* entity){ drawables.push_back(entity); }
 
 EngineBase *ChessGui::getEngine() const{ return engine_; }
 
@@ -95,17 +95,22 @@ void ChessGui::handleMouseUp(const Uint8 button){
 
             const auto move = Move{
                         .piece = heldPiece->getPiece(),
-                        .rankFrom =heldPiece->getRank(),
+                        .rankFrom = heldPiece->getRank(),
                         .fileFrom = heldPiece->getFile(),
                         .rankTo = rank, .fileTo = file
                     };
 
-            if (!boardManager_.checkMove(move)) {
+            std::cout << "Move: " << move.toUCI() << std::endl;
+
+            if (!boardManager_.tryMove(move)) {
+                const auto pieceType = pieceNames.at(heldPiece->getPiece());
+                std::cout << "Dropped Piece: " << pieceType << std::endl;
+
                 heldPiece.reset();
                 return;
             }
 
-           makeMove(move);
+            makeMove(move);
             heldPiece.reset();
 
             break;
@@ -156,9 +161,4 @@ void ChessGui::handleKeypress(const SDL_Keycode keycode){
     }
 }
 
-void ChessGui::makeMove(const Move &move){
-
-    heldPiece->setLocation(move.rankTo, move.fileTo);
-    boardManager_.makeMove(move);
-
-}
+void ChessGui::makeMove(const Move& move){ heldPiece->setLocation(move.rankTo, move.fileTo); }

@@ -51,7 +51,7 @@ public:
     [[nodiscard]] const Vec2D & boardSize() const{ return boardSize_; }
 
 
-    std::shared_ptr<VisualPiece> pieceAtLocation(int rank, int file);
+    std::shared_ptr<VisualPiece> pieceAtLocation(int rank, int file) const;
 
 
 

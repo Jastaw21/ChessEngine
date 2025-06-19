@@ -17,17 +17,49 @@ std::string Move::toUCI() const{
     return uci;
 }
 
-int Move::toSquare(){}
-int Move::fromSquare(){}
 
+BoardManager::BoardManager() = default;
 
-BoardManager::BoardManager(){}
+bool BoardManager::moveIsLegal(const Move& move){
+    const int whiteRanksPossible = move.rankFrom == 2 ? 2 : 1;
+    const int blackRanksPossible = move.rankFrom == 7 ? 2 : 1;
+    const int deltaRank = move.rankTo - move.rankFrom;
+    const int deltaFile = move.fileTo - move.fileFrom;
 
-bool BoardManager::moveIsLegal(const Move &move){ return true; }
+    switch (move.piece) {
+        case Piece::WP:
+            return move.rankTo <= move.rankFrom + whiteRanksPossible && move.fileFrom == move.fileTo;
 
-bool BoardManager::moveIsPossible(const Move &move){
+        case Piece::BP:
+            return move.rankTo >= move.rankFrom - blackRanksPossible && move.fileFrom == move.fileTo;
+
+        case Piece::WR:
+        case Piece::BR:
+            return move.rankFrom == move.rankTo || move.fileFrom == move.fileTo;
+
+        case Piece::WB:
+        case Piece::BB:
+            return abs(deltaRank) == abs(deltaFile);
+
+        case Piece::WQ:
+        case Piece::BQ:
+            return true;
+
+        case Piece::WK:
+        case Piece::BK:
+            return abs(deltaRank) == 1 || abs(deltaFile) == 1;
+
+        case Piece::WN:
+        case Piece::BN:
+            return abs(deltaRank) == 2 && abs(deltaFile) == 1 || abs(deltaRank) == 1 && abs(deltaFile) == 2;
+
+        default:
+            return true;
+    };
+}
+
+bool BoardManager::moveIsPossible(const Move& move){
     const auto moveString = move.toUCI();
-    std::cout << "Move: " << moveString << std::endl;
 
     const bool fileInBounds = move.fileTo < 8 && move.fileTo >= 0;
     const bool rankInBounds = move.rankTo < 8 && move.rankTo >= 0;
@@ -37,38 +69,53 @@ bool BoardManager::moveIsPossible(const Move &move){
         return false;
     }
 
-    const int toSquare = (move.rankTo - 1) * 8 + move.fileTo;
-
-    // Check if the destination square is empty
-    bool squareEmpty = true;
-    for (int pieceIndex = 0; pieceIndex < Piece::PIECE_N; ++pieceIndex) {
-        auto piece = static_cast<Piece>(pieceIndex);
-        if ((bitboards[piece] & (1ULL << toSquare)) != 0) {
-            squareEmpty = false;
-            const auto pieceOccupyingSquare = pieceNames[piece];
-            std::cout << "Piece occupying square: " << pieceOccupyingSquare << std::endl;
-            break;
-        }
-    }
-
-    if (!squareEmpty) {
-        std::cout << "Destination square is occupied" << std::endl;
-        return false;
-    }
-
-    std::cout << "Move is possible" << std::endl;
     return true;
 }
 
-void BoardManager::makeMove(const Move &move){
+bool BoardManager::moveDestinationIsEmpty(const Move& move) const{
+    auto test = bitboards.getPiece(move.rankTo, move.fileTo);
+    return !test.has_value();
+}
+
+bool BoardManager::moveDestinationIsOccupiedWithOpponent(const Move& move) const{
+    const auto test = bitboards.getPiece(move.rankTo, move.fileTo);
+    if (!test.has_value()) { return false; }
+
+    const auto otherPiece = test.value();
+    const bool coloursMatch = pieceColours[otherPiece] == pieceColours[move.piece];
+    if (coloursMatch) {
+        std::cout << "colours match" << std::endl;
+        return false;
+    }
+
+    std::cout << "colours don't match" << std::endl;
+    return true;
+}
+
+bool BoardManager::tryMove(const Move& move){
+    if (!checkMove(move)) { return false; }
+    makeMove(move);
+    return true;
+}
+
+bool BoardManager::checkMove(const Move& move) const{
+    return moveIsLegal(move) &&
+           moveIsPossible(move) &&
+           (
+               moveDestinationIsEmpty(move)
+               || moveDestinationIsOccupiedWithOpponent(move)
+           );
+}
+
+void BoardManager::makeMove(const Move& move){
     // set the from bit to zero
 
-    auto squareFrom = (move.rankFrom -2) * 8 + (8-move.fileFrom);
-     bitboards[move.piece] &= ~(1ULL << squareFrom);
+    auto squareFrom = (move.rankFrom - 1) * 8 + (move.fileFrom);
+    bitboards[move.piece] &= ~(1ULL << squareFrom);
 
     // set the to bit to one
 
-    auto squareTo = (move.rankTo-2) * 8 + (8- move.fileTo);
+    auto squareTo = (move.rankTo - 1) * 8 + (move.fileTo);
     bitboards[move.piece] |= (1ULL << squareTo);
 
     std::cout << "Move made" << std::endl;

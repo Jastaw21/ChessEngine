@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <array>
 #include <iostream>
+#include <optional>
 
 #include "Engine/Piece.h"
 
@@ -64,8 +65,7 @@ public:
     uint64_t &operator[](const Piece piece){ return bitboards[piece]; }
     void printBitboard() const;
 
-    std::array<uint64_t, 8> files;
-    std::array<uint64_t, 8> ranks;
+    std::optional<Piece> getPiece(const int rank, const int file) const;
 
 private:
 

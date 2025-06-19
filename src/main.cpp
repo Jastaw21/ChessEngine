@@ -15,8 +15,7 @@ int main(int argc, char **argv){
     auto eng = gui.getEngine();
     int i = 1 + 8;
 
-    auto bb = gui.getBoardManager()->getBitboards();
-    bb->loadFEN(Fen::STARTING_FEN);
+    gui.getBoardManager()->getBitboards()->loadFEN(Fen::STARTING_FEN);
 
     gui.loop();
     return 0;
