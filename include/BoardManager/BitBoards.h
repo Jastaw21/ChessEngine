@@ -5,11 +5,10 @@
 #ifndef BITBOARDS_H
 #define BITBOARDS_H
 
-#include <string>
-#include <cstdint>
 #include <array>
-#include <iostream>
+#include <cstdint>
 #include <optional>
+#include <string>
 
 #include "Engine/Piece.h"
 
@@ -63,7 +62,6 @@ public:
 
     [[nodiscard]] uint64_t getBitboard(const Piece& piece) const;
     uint64_t &operator[](const Piece piece){ return bitboards[piece]; }
-    void printBitboard() const;
 
     std::optional<Piece> getPiece(const int rank, const int file) const;
 

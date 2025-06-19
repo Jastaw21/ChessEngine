@@ -64,10 +64,8 @@ bool BoardManager::moveIsPossible(const Move& move){
     const bool fileInBounds = move.fileTo < 8 && move.fileTo >= 0;
     const bool rankInBounds = move.rankTo < 8 && move.rankTo >= 0;
 
-    if (!fileInBounds || !rankInBounds) {
-        std::cout << "Move is out of bounds" << std::endl;
+    if (!fileInBounds || !rankInBounds)
         return false;
-    }
 
     return true;
 }
@@ -83,12 +81,9 @@ bool BoardManager::moveDestinationIsOccupiedWithOpponent(const Move& move) const
 
     const auto otherPiece = test.value();
     const bool coloursMatch = pieceColours[otherPiece] == pieceColours[move.piece];
-    if (coloursMatch) {
-        std::cout << "colours match" << std::endl;
+    if (coloursMatch)
         return false;
-    }
 
-    std::cout << "colours don't match" << std::endl;
     return true;
 }
 
@@ -117,6 +112,4 @@ void BoardManager::makeMove(const Move& move){
 
     auto squareTo = (move.rankTo - 1) * 8 + (move.fileTo);
     bitboards[move.piece] |= (1ULL << squareTo);
-
-    std::cout << "Move made" << std::endl;
 }

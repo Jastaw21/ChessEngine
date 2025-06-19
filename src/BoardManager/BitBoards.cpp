@@ -45,13 +45,7 @@ void BitBoards::loadFEN(const std::string& fen){
 
 uint64_t BitBoards::getBitboard(const Piece& piece) const{ return bitboards[piece]; }
 
-void BitBoards::printBitboard() const{
-    for (int i = 0; i < Piece::PIECE_N; ++i) {
-        const auto piece = static_cast<Piece>(i);
-        std::bitset<64> bits = bitboards[i];
-        std::cout << "Piece " << pieceNames[piece] << bits << "\n";
-    }
-}
+
 
 std::optional<Piece> BitBoards::getPiece(const int rank, const int file) const{
     const int toSquare = (rank - 1) * 8 + file;
