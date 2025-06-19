@@ -44,6 +44,8 @@ private:
     std::shared_ptr<SDL_Texture> texture_;
     Vec2D squareSize_{};
     std::shared_ptr<ConcretePiece> concretePiece_;
+
+    const Piece& getPieceType() const;
 };
 
 

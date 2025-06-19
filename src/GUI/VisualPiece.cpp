@@ -25,7 +25,7 @@ inline constexpr auto SRC_RECT_128_128 = SDL_FRect{0, 0, 128, 128};
 
 VisualPiece::VisualPiece(std::shared_ptr<SDL_Texture> texture,
                          const int rank, const int file,
-                         const Vec2D &squareSize,
+                         const Vec2D& squareSize,
                          std::shared_ptr<ConcretePiece> piece)
 
     : texture_(std::move(texture)), squareSize_(squareSize), concretePiece_(std::move(piece)){}
@@ -37,7 +37,7 @@ VisualPiece::~VisualPiece(){
 
 Piece &VisualPiece::getPiece() const{ return concretePiece_->piece; }
 
-void VisualPiece::draw(SDL_Renderer *renderer){
+void VisualPiece::draw(SDL_Renderer* renderer){
     const auto text = texture_.get();
     const auto destRect = SDL_FRect{getLocation().x, getLocation().y, squareSize_.x, squareSize_.y};
     SDL_RenderTexture(renderer, text, &SRC_RECT_128_128, &destRect);
@@ -56,9 +56,10 @@ Vec2D VisualPiece::getLocation() const{
             };
 }
 
-VisualPieceBuilder::VisualPieceBuilder(const Vec2D &squareSize, ChessGui *gui) : squareSize(squareSize), gui(gui){}
+const Piece &VisualPiece::getPieceType() const{ return concretePiece_->piece; }
+VisualPieceBuilder::VisualPieceBuilder(const Vec2D& squareSize, ChessGui* gui) : squareSize(squareSize), gui(gui){}
 
-std::vector<std::shared_ptr<VisualPiece> > VisualPieceBuilder::FromFEN(const std::string &FEN){
+std::vector<std::shared_ptr<VisualPiece> > VisualPieceBuilder::FromFEN(const std::string& FEN){
     std::vector<std::shared_ptr<VisualPiece> > pieces;
 
     int rank = 8;
@@ -89,7 +90,7 @@ std::vector<std::shared_ptr<VisualPiece> > VisualPieceBuilder::FromFEN(const std
             std::string path = source_path + (isWhite ? "white" : "black") + pieceFileSuffixes.at(fenType);
 
             // load the texture and make a pointer of it
-            SDL_Texture *rawPieceTexture = IMG_LoadTexture(gui->getRenderer(), path.c_str());
+            SDL_Texture* rawPieceTexture = IMG_LoadTexture(gui->getRenderer(), path.c_str());
             auto uniqueTexture = std::shared_ptr<SDL_Texture>(rawPieceTexture, SDL_DestroyTexture);
 
             // construct the piece

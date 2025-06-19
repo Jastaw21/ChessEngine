@@ -110,7 +110,7 @@ void ChessGui::handleMouseUp(const Uint8 button){
                 return;
             }
 
-            makeMove(move);
+            board_background_->set_board_dirty(true);
             heldPiece.reset();
 
             break;
