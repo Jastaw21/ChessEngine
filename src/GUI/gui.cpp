@@ -65,8 +65,16 @@ void ChessGui::handleMouseDown(const Uint8 button){
             float x, y;
             SDL_GetMouseState(&x, &y);
             const int file = static_cast<int>(x / (board_background_->boardSize().x / 8.f));
-            const int rank = static_cast<int>(y / (board_background_->boardSize().y / 8.f));
+            const int rank = 1 + static_cast<int>(8 - (y / (board_background_->boardSize().y / 8.f)));
+            const char clickedFile = 'a' + file;
+            std::cout << "Clicked on:" << clickedFile << rank << std::endl;
+
             heldPiece = board_background_->pieceAtLocation(rank, file);
+            if (heldPiece != nullptr) {
+                const char pieceFile = 'a' + heldPiece->getFile();
+                const auto pieceType = pieceNames.at(heldPiece->getPiece());
+                std::cout << "Piece at: " << pieceFile << rank << "is: " << pieceType << std::endl;
+            }
         }
         default:
             break;
@@ -81,18 +89,21 @@ void ChessGui::handleMouseUp(const Uint8 button){
 
             // need to effectively round down to the nearest rank/file
             const int file = static_cast<int>(x / (board_background_->boardSize().x / 8.f));
-            const int rank = static_cast<int>(8 - (y / (board_background_->boardSize().y / 8.f)));
+            const int rank = 1 + static_cast<int>(8 - (y / (board_background_->boardSize().y / 8.f)));
 
             if (!heldPiece) { return; }
 
             const auto move = Move{
                         .piece = heldPiece->getPiece(),
-                        .rankFrom = heldPiece->getRank(),
+                        .rankFrom =heldPiece->getRank(),
                         .fileFrom = heldPiece->getFile(),
                         .rankTo = rank, .fileTo = file
                     };
 
-            if (!manager_.checkMove(move)) { return; }
+            if (!manager_.checkMove(move)) {
+                heldPiece.reset();
+                return;
+            }
 
             heldPiece->setLocation(rank, file);
             heldPiece.reset();
@@ -143,4 +154,8 @@ void ChessGui::handleKeypress(const SDL_Keycode keycode){
         default:
             break;
     }
+}
+
+void ChessGui::makeMove(const Move &move){
+
 }

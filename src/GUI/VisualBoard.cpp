@@ -11,11 +11,9 @@ BoardSquare::BoardSquare(const bool isWhite_p, const int rank_p, const int file_
     : isWhite(isWhite_p),
       rank(rank_p),
       file(file_p),
-      rect_(rect) {
-    renderInfo.color = isWhite ? SDL_Color(255, 242, 204, 255) : SDL_Color(51, 48, 40, 255);
-}
+      rect_(rect){ renderInfo.color = isWhite ? SDL_Color(255, 242, 204, 255) : SDL_Color(51, 48, 40, 255); }
 
-void BoardSquare::draw(SDL_Renderer *renderTarget) {
+void BoardSquare::draw(SDL_Renderer *renderTarget){
     if (!bIsDrawn)
         return;
     SDL_Color &color = renderInfo.color;
@@ -23,7 +21,7 @@ void BoardSquare::draw(SDL_Renderer *renderTarget) {
     SDL_RenderFillRect(renderTarget, &rect_);
 }
 
-void VisualBoard::build_background(const Vec2D &square_size) {
+void VisualBoard::build_background(const Vec2D &square_size){
     bool isWhite = true;
 
     for (int rank = 0; rank < 8; rank++) {
@@ -43,43 +41,35 @@ void VisualBoard::build_background(const Vec2D &square_size) {
 }
 
 VisualBoard::VisualBoard(const Vec2D &boardSizePixels, ChessGui *gui): boardSize_(boardSizePixels),
-                                                                       parent_(gui) {
+                                                                       parent_(gui){
     // set the builder up
     const auto square_size = Vec2D(boardSizePixels.x / 8.f, boardSizePixels.y / 8.f);
-
 
     build_background(square_size);
 
     auto builder = VisualPieceBuilder(square_size, gui);
     auto created_pieces = builder.FromFEN();
-    for (auto &piece: created_pieces) {
-        pieces_.push_back(piece);
-    }
+    for (auto &piece: created_pieces) { pieces_.push_back(piece); }
 }
 
-VisualBoard::~VisualBoard() {
+VisualBoard::~VisualBoard(){
     while (!pieces_.empty()) { pieces_.pop_back(); };
     while (!squares_.empty()) { squares_.pop_back(); };
 }
 
-void VisualBoard::draw(SDL_Renderer *renderer) {
-    for (auto &square: squares_) {
-        square.draw(renderer);
-    }
+void VisualBoard::draw(SDL_Renderer *renderer){
+    for (auto &square: squares_) { square.draw(renderer); }
 
-    for (auto &piece: pieces_) {
-        piece->draw(renderer);
-    }
+    for (auto &piece: pieces_) { piece->draw(renderer); }
 }
 
 
-std::shared_ptr<VisualPiece> VisualBoard::pieceAtLocation(int rank, const int file) {
+std::shared_ptr<VisualPiece> VisualBoard::pieceAtLocation(int rank, const int file){
     const float starting_x = file * squareSize().x;
     const float end_x = starting_x + squareSize().x;
 
-    const float starting_y = rank * squareSize().y;
+    const float starting_y = (8 - rank) * squareSize().y;
     const float end_y = starting_y + squareSize().y;
-
 
     for (const auto &piece: pieces_) {
         // Iterate over shared_ptr<VisualPiece>
@@ -93,7 +83,7 @@ std::shared_ptr<VisualPiece> VisualBoard::pieceAtLocation(int rank, const int fi
     return nullptr;
 }
 
-Vec2D VisualBoard::squareSize() const {
+Vec2D VisualBoard::squareSize() const{
     const Vec2D local_size = boardSize_ / 8.f;
     return local_size;
 }

@@ -57,6 +57,8 @@ private:
     void handleMouseUp(Uint8 button);
     void handleKeypress(SDL_Keycode keycode);
     std::shared_ptr<VisualPiece> heldPiece;
+
+    void makeMove(const Move &move);
 };
 
 

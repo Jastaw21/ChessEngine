@@ -52,7 +52,7 @@ void VisualPiece::setLocation(const int rank, const int file){
 Vec2D VisualPiece::getLocation() const{
     return Vec2D{
                 .x = static_cast<float>(concretePiece_->file) * static_cast<float>(squareSize_.x),
-                .y = static_cast<float>(concretePiece_->rank) * static_cast<float>(squareSize_.y)
+                .y = static_cast<float>(8 - concretePiece_->rank) * static_cast<float>(squareSize_.y)
             };
 }
 
@@ -61,13 +61,13 @@ VisualPieceBuilder::VisualPieceBuilder(const Vec2D &squareSize, ChessGui *gui) :
 std::vector<std::shared_ptr<VisualPiece> > VisualPieceBuilder::FromFEN(const std::string &FEN){
     std::vector<std::shared_ptr<VisualPiece> > pieces;
 
-    int rank = 0;
+    int rank = 8;
     int file = 0;
 
     for (const char c: FEN) {
         if (c == ' ') break;
         if (c == '/') {
-            rank++;
+            rank--;
             file = 0;
             continue;
         }
@@ -82,7 +82,7 @@ std::vector<std::shared_ptr<VisualPiece> > VisualPieceBuilder::FromFEN(const std
             // reverse the char to get the piece type
             char fenType = tolower(c);
 
-            Piece pieceEnum = pieceMap.at(fenType);
+            Piece pieceEnum = pieceMap.at(c);
             auto concretePiece = std::make_shared<ConcretePiece>(pieceEnum, rank, file);
 
             // where is the piece saved?

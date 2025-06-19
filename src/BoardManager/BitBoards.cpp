@@ -23,22 +23,27 @@ void BitBoards::loadFEN(const std::string &fen) {
     fen_ = fen;
     bitboards.fill(0ULL);
     // starting from a8, h8 is 63
-    int square = 56;
+
+    int rank = 7;
+    int file = 0;
     size_t i = 0;
 
     while (i < fen.size() && fen[i] != ' ') {
         char c = fen[i];
 
-        if (c == '/')
-            square -= 16; // Move to the next rank
+        if (c == '/') {
+            rank--;
+            file = 0;
+        } // Move to the next rank
         else if (isdigit(c))
-            square += (c - '0'); // Skip that many empty squares
+            file += (c - '0'); // Skip that many empty squares
         else {
             auto it = pieceMap.find(c);
             if (it != pieceMap.end()) {
+                int square = rank * 8 + file;
                 bitboards[it->second] |= (1ULL << square);
             }
-            square++;
+            file++;
         }
         i++;
     }

@@ -24,24 +24,34 @@ bool BoardManager::moveIsLegal(const Move &move){ return true; }
 bool BoardManager::moveIsPossible(const Move &move){
     const auto moveString = move.toUCI();
     std::cout << "Move: " << moveString << std::endl;
+
     const bool fileInBounds = move.fileTo < 8 && move.fileTo >= 0;
     const bool rankInBounds = move.rankTo < 8 && move.rankTo >= 0;
 
-    const uint64_t toSquare = move.rankTo * 8 + move.fileTo;
+    if (!fileInBounds || !rankInBounds) {
+        std::cout << "Move is out of bounds" << std::endl;
+        return false;
+    }
 
+    const int toSquare = (move.rankTo - 1) * 8 + move.fileTo;
+
+    // Check if the destination square is empty
     bool squareEmpty = true;
     for (int pieceIndex = 0; pieceIndex < Piece::PIECE_N; ++pieceIndex) {
         auto piece = static_cast<Piece>(pieceIndex);
-        if ((bitboards[piece] & (1ULL << toSquare)) != 0)
+        if ((bitboards[piece] & (1ULL << toSquare)) != 0) {
             squareEmpty = false;
+            const auto pieceOccupyingSquare = pieceNames[piece];
+            std::cout << "Piece occupying square: " << pieceOccupyingSquare << std::endl;
+            break;
+        }
     }
 
-    if (!(fileInBounds && rankInBounds && squareEmpty)) {
-        std::cout << "Move is not possible" << std::endl;
+    if (!squareEmpty) {
+        std::cout << "Destination square is occupied" << std::endl;
         return false;
     }
 
     std::cout << "Move is possible" << std::endl;
-
-    return fileInBounds && rankInBounds && squareEmpty;
+    return true;
 }

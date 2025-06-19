@@ -13,9 +13,9 @@ class BitBoards;
 struct Move {
     Piece piece;
     int rankFrom;
-    int fileFrom;
+    char fileFrom;
     int rankTo;
-    int fileTo;
+    char fileTo;
 
     std::string toUCI() const;
 };
