@@ -76,24 +76,47 @@ bool BoardManager::moveDestinationIsEmpty(const Move& move) const{
 }
 
 bool BoardManager::moveDestinationIsOccupiedWithOpponent(const Move& move) const{
-    const auto test = bitboards.getPiece(move.rankTo, move.fileTo);
-    if (!test.has_value()) { return false; }
+    const auto pieceThere = bitboards.getPiece(move.rankTo, move.fileTo);
+    if (!pieceThere.has_value()) { return false; }
 
-    const auto otherPiece = test.value();
-    const bool coloursMatch = pieceColours[otherPiece] == pieceColours[move.piece];
-    if (coloursMatch)
+    if (pieceColours[pieceThere.value()] == pieceColours[move.piece])
         return false;
 
     return true;
 }
 
-bool BoardManager::tryMove(const Move& move){
-    if (!checkMove(move)) { return false; }
+bool BoardManager::moveDestOccupiedByColour(const std::string& testColour, const Move& move) const{
+    const auto test = bitboards.getPiece(move.rankTo, move.fileTo);
+    // the square is empty
+    if (!test.has_value()) { return false; }
+
+    if ((pieceColours[test.value()] == testColour))
+        return true;
+
+    return false;
+}
+
+bool BoardManager::tryMove(Move& move){
+    if (!prelimCheckMove(move)) {
+        move.result = MoveResult::ILLEGAL_MOVE;
+        return false;
+    }
+
+    const auto pieceColour = pieceColours[move.piece];
+    const auto testColour = pieceColour == "White" ? "Black" : "White";
+
+    // check if is capture
+    if (moveDestOccupiedByColour(testColour, move)) {
+        move.result = MoveResult::PIECE_CAPTURE;
+        makeMove(move);
+        return true;
+    }
+    move.result = MoveResult::MOVE_TO_EMPTY_SQUARE;
     makeMove(move);
     return true;
 }
 
-bool BoardManager::checkMove(const Move& move) const{
+bool BoardManager::prelimCheckMove(Move& move) const{
     return moveIsLegal(move) &&
            moveIsPossible(move) &&
            (
@@ -104,12 +127,16 @@ bool BoardManager::checkMove(const Move& move) const{
 
 void BoardManager::makeMove(const Move& move){
     // set the from bit to zero
-
     auto squareFrom = (move.rankFrom - 1) * 8 + (move.fileFrom);
     bitboards[move.piece] &= ~(1ULL << squareFrom);
 
-    // set the to bit to one
+    // if it was a capture, set that piece to zero
+    if (move.result == MoveResult::PIECE_CAPTURE)
+        bitboards.setZero(move.rankTo, move.fileTo,move);
 
+    // set the to bit to one
     auto squareTo = (move.rankTo - 1) * 8 + (move.fileTo);
     bitboards[move.piece] |= (1ULL << squareTo);
+
+
 }

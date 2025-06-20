@@ -10,6 +10,12 @@
 
 class BitBoards;
 
+enum MoveResult {
+    MOVE_TO_EMPTY_SQUARE,
+    ILLEGAL_MOVE,
+    PIECE_CAPTURE
+};
+
 struct Move {
     Piece piece;
     int rankFrom;
@@ -17,7 +23,7 @@ struct Move {
     int rankTo;
     int fileTo;
 
-    bool isTakingMove = false;
+    MoveResult result;
 
     std::string toUCI() const;
 };
@@ -29,8 +35,8 @@ public:
     explicit BoardManager();
 
     BitBoards *getBitboards(){ return &bitboards; }
-    [[nodiscard]] bool checkMove(const Move& move) const;
-    bool tryMove(const Move& move);
+    [[nodiscard]] bool prelimCheckMove(Move& move) const;
+    bool tryMove(Move& move);
 
 private:
 
@@ -38,6 +44,7 @@ private:
     static bool moveIsPossible(const Move& move);
     [[nodiscard]] bool moveDestinationIsEmpty(const Move& move) const;
     [[nodiscard]] bool moveDestinationIsOccupiedWithOpponent(const Move& move) const;
+    bool moveDestOccupiedByColour(const std::string& testColour, const Move& move) const;
 
     void makeMove(const Move& move);
 

@@ -26,7 +26,7 @@ public:
     [[nodiscard]] bool wasInit() const;
 
     void loop();
-    void render();
+    void render() const;
     void registerEntity(DrawableEntity *entity);
     [[nodiscard]] EngineBase *getEngine() const;
     [[nodiscard]] SDL_Renderer *getRenderer() const;

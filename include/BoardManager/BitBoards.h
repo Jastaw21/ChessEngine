@@ -12,6 +12,8 @@
 
 #include "Engine/Piece.h"
 
+struct Move;
+
 namespace Comparisons {
     constexpr uint64_t buildFileBoard(const char file){
         const int index = (file) - 'a';
@@ -64,6 +66,7 @@ public:
     uint64_t &operator[](const Piece piece){ return bitboards[piece]; }
 
     std::optional<Piece> getPiece(const int rank, const int file) const;
+    void setZero(const int rank, const int file, const Move& move);
 
 private:
 

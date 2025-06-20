@@ -40,7 +40,7 @@ void ChessGui::loop(){
     SDL_Quit();
 }
 
-void ChessGui::render(){
+void ChessGui::render() const{
     // draw black
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(renderer);
@@ -67,7 +67,6 @@ void ChessGui::handleMouseDown(const Uint8 button){
             const int file = static_cast<int>(x / (board_background_->boardSize().x / 8.f));
             const int rank = 1 + static_cast<int>(8 - (y / (board_background_->boardSize().y / 8.f)));
             const char clickedFile = 'a' + file;
-            std::cout << "Clicked on:" << clickedFile << rank << std::endl;
 
             int candidateClickedSquare = 1 + ((rank - 1) * 8 + (file - 1));
 
@@ -100,7 +99,7 @@ void ChessGui::handleMouseUp(const Uint8 button){
 
             if (!candidateMovePiece.has_value()) { return; }
 
-            const auto move = Move{
+            auto move = Move{
                         .piece = candidateMovePiece.value(),
                         .rankFrom = clickedRank,
                         .fileFrom = clickedFile,
@@ -114,6 +113,7 @@ void ChessGui::handleMouseUp(const Uint8 button){
                 return;
             }
 
+            std::cout << move.result << std::endl;
             clickedSquare = -1;
 
             break;
@@ -163,5 +163,3 @@ void ChessGui::handleKeypress(const SDL_Keycode keycode){
             break;
     }
 }
-
-void ChessGui::makeMove(const Move& move){ heldPiece->setLocation(move.rankTo, move.fileTo); }

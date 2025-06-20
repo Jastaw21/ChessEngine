@@ -3,15 +3,15 @@
 //
 
 #include "BoardManager/BitBoards.h"
+
+#include <algorithm>
 #include <bitset>
+
+#include "BoardManager/BoardManager.h"
 #include "Engine/Piece.h"
 
 
-BitBoards::BitBoards(){
-    bitboards.fill(0ULL);
-
-
-}
+BitBoards::BitBoards(){ bitboards.fill(0ULL); }
 
 void BitBoards::loadFEN(const std::string& fen){
     fen_ = fen;
@@ -46,7 +46,6 @@ void BitBoards::loadFEN(const std::string& fen){
 uint64_t BitBoards::getBitboard(const Piece& piece) const{ return bitboards[piece]; }
 
 
-
 std::optional<Piece> BitBoards::getPiece(const int rank, const int file) const{
     const int toSquare = (rank - 1) * 8 + file;
 
@@ -55,12 +54,21 @@ std::optional<Piece> BitBoards::getPiece(const int rank, const int file) const{
     for (int pieceIndex = 0; pieceIndex < Piece::PIECE_N; ++pieceIndex) {
         auto piece = static_cast<Piece>(pieceIndex);
         if ((bitboards[piece] & (1ULL << toSquare)) != 0) {
-
             const auto pieceOccupyingSquare = pieceNames[piece];
             return {piece};
         }
     }
     return {};
+}
+
+void BitBoards::setZero(const int rank, const int file, const Move& move){
+    const int toSquare = (rank - 1) * 8 + file;
+    for (int pieceIndex = 0; pieceIndex < 12; pieceIndex++) {
+        const auto movingPiece = static_cast<Piece>(pieceIndex);
+
+        auto piece = static_cast<Piece>(pieceIndex);
+        bitboards[piece] &= ~(1ULL << toSquare);
+    }
 }
 
 std::string &BitBoards::toFEN(){
