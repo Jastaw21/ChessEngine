@@ -21,6 +21,7 @@ enum MoveResult {
     MOVE_NOT_LEGAL_FOR_PIECE,
     MOVE_OUT_OF_BOUNDS,
     BLOCKING_PIECE,
+    KING_IN_CHECK,
 };
 
 struct Move {
@@ -31,10 +32,12 @@ struct Move {
     int fileTo;
 
     MoveResult result;
+    Piece capturedPiece = Piece::PIECE_N;
 
     std::string toUCI() const;
 };
 
+Move createMove(const Piece& piece, const std::string& moveUCI);
 
 class BoardManager {
 public:
@@ -44,7 +47,9 @@ public:
     BitBoards *getBitboards(){ return &bitboards; }
 
     bool tryMove(Move& move);
+    bool captureIsLegal(Move& move);
     bool checkMove(Move& move);
+    void undoMove(const Move& move);
 
 private:
 
@@ -53,6 +58,8 @@ private:
     bool pieceInWay(const Move& move) const;
     [[nodiscard]] bool moveDestinationIsEmpty(const Move& move) const;
     bool moveDestOccupiedByColour(const std::string& testColour, const Move& move) const;
+
+    bool kingInCheck(const Piece& piece, const Move& move);
 
     void makeMove(const Move& move);
 

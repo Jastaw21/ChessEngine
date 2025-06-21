@@ -6,6 +6,27 @@
 #include "BoardManager/BoardManager.h"
 #include "Utility/Fen.h"
 
+TEST(MoveStruct, ToUCICorrect){
+
+    const Move move{.piece = Piece::WP, .rankFrom = 1, .fileFrom = 1, .rankTo = 2, .fileTo = 1};
+    EXPECT_EQ(move.toUCI(), "a1a2");
+
+    const Move move2{.piece = Piece::WP, .rankFrom = 1, .fileFrom = 1, .rankTo = 8, .fileTo = 8};
+    EXPECT_EQ(move2.toUCI(), "a1h8");
+
+}
+
+TEST(MoveStruct, MakeFromUCICorrect){
+
+    const auto move = createMove(Piece::WN, "a1a2");
+    EXPECT_EQ(move.piece, Piece::WN);
+    EXPECT_EQ(move.rankFrom, 1);
+    EXPECT_EQ(move.fileFrom, 1);
+    EXPECT_EQ(move.rankTo, 2);
+    EXPECT_EQ(move.fileTo, 1);
+
+}
+
 TEST(BoardManagerLegality, WhitePawnLegalityCorrect){
     auto manager = BoardManager();
     // load a board with pawn in d4
@@ -15,17 +36,21 @@ TEST(BoardManagerLegality, WhitePawnLegalityCorrect){
     Move southMove{.piece = Piece::WP, .rankFrom = 4, .fileFrom = 4, .rankTo = 3, .fileTo = 4};
     Move eastMove{.piece = Piece::WP, .rankFrom = 4, .fileFrom = 4, .rankTo = 4, .fileTo = 5};
     Move westMove{.piece = Piece::WP, .rankFrom = 4, .fileFrom = 4, .rankTo = 4, .fileTo = 3};
+    Move northEastMove{.piece = Piece::WP, .rankFrom = 4, .fileFrom = 4, .rankTo = 5, .fileTo = 5};
+
     Move northMove{.piece = Piece::WP, .rankFrom = 4, .fileFrom = 4, .rankTo = 5, .fileTo = 4};
 
     EXPECT_FALSE(manager.checkMove(southMove));
     EXPECT_FALSE(manager.checkMove(eastMove));
     EXPECT_FALSE(manager.checkMove(westMove));
+    EXPECT_FALSE(manager.checkMove(northEastMove));
 
     EXPECT_TRUE(manager.checkMove(northMove));
 
     EXPECT_EQ(southMove.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
     EXPECT_EQ(eastMove.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
     EXPECT_EQ(westMove.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
+    EXPECT_EQ(northEastMove.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
 
     EXPECT_EQ(northMove.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
 
@@ -55,11 +80,13 @@ TEST(BoardManagerLegality, BlackPawnLegalityCorrect){
     Move southMove{.piece = Piece::BP, .rankFrom = 4, .fileFrom = 4, .rankTo = 3, .fileTo = 4};
     Move eastMove{.piece = Piece::BP, .rankFrom = 4, .fileFrom = 4, .rankTo = 4, .fileTo = 5};
     Move westMove{.piece = Piece::BP, .rankFrom = 4, .fileFrom = 4, .rankTo = 4, .fileTo = 3};
+    Move southEastMove{.piece = Piece::BP, .rankFrom = 4, .fileFrom = 4, .rankTo = 3, .fileTo = 5};
     Move northMove{.piece = Piece::BP, .rankFrom = 4, .fileFrom = 4, .rankTo = 5, .fileTo = 4};
 
     EXPECT_FALSE(manager.checkMove(northMove));
     EXPECT_FALSE(manager.checkMove(eastMove));
     EXPECT_FALSE(manager.checkMove(westMove));
+    EXPECT_FALSE(manager.checkMove(southEastMove));
 
     EXPECT_TRUE(manager.checkMove(southMove));
 
@@ -231,10 +258,44 @@ TEST(BoardManagerLegality, KnightLegalityCorrect){
         EXPECT_EQ(horizMove.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
     }
 
-    // can do it's weird hop and jump
-    Move hopMove{.piece = Piece::BN, .rankFrom = 1, .fileFrom = 1, .rankTo = 3, .fileTo = 2};
-    EXPECT_TRUE(manager.checkMove(hopMove));
-    EXPECT_EQ(hopMove.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+    manager.getBitboards()->loadFEN("8/8/8/8/3N4/8/8/8");
+
+    // can do its weird hop and jumps
+    Move move = createMove(Piece::BN, "d4b3");
+    EXPECT_TRUE(manager.checkMove(move));
+    EXPECT_EQ(move.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+
+    move = createMove(Piece::BN, "d4c2");
+    EXPECT_TRUE(manager.checkMove(move));
+    EXPECT_EQ(move.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+
+    move = createMove(Piece::BN, "d4e2");
+    EXPECT_TRUE(manager.checkMove(move));
+    EXPECT_EQ(move.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+
+    move = createMove(Piece::BN, "d4f3");
+    EXPECT_TRUE(manager.checkMove(move));
+    EXPECT_EQ(move.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+
+    move = createMove(Piece::BN, "d4f5");
+    EXPECT_TRUE(manager.checkMove(move));
+    EXPECT_EQ(move.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+
+    move = createMove(Piece::BN, "d4e6");;
+    EXPECT_TRUE(manager.checkMove(move));
+    EXPECT_EQ(move.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+
+    move = createMove(Piece::BN, "d4c6");;
+    EXPECT_TRUE(manager.checkMove(move));
+    EXPECT_EQ(move.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+
+    move = createMove(Piece::BN, "d4b5");;
+    EXPECT_TRUE(manager.checkMove(move));
+    EXPECT_EQ(move.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+
+
+
+
 }
 
 TEST(BoardManagerLegality, CantMoveToOccupiedSquareWithSameColour){
@@ -264,7 +325,7 @@ TEST(BoardManagerLegality, CanMoveToOccupiedSquareWithOtherColour){
     EXPECT_EQ(blackRookMove.result, MoveResult::PIECE_CAPTURE);
 }
 
-TEST(BoardManagerLegality,MostPiecesCantJumpOthers){
+TEST(BoardManagerLegality, MostPiecesCantJumpOthers){
     auto manager = BoardManager();
     // blank space in a3, a1,2,4 occupied.
     // we'll move the white rook to each of 3,5. All should fail
@@ -278,7 +339,8 @@ TEST(BoardManagerLegality,MostPiecesCantJumpOthers){
     EXPECT_FALSE(manager.checkMove(moveA5));
     EXPECT_EQ(moveA5.result, MoveResult::BLOCKING_PIECE);
 }
-TEST(BoardManagerLegality,KnightsCanJumpOthers){
+
+TEST(BoardManagerLegality, KnightsCanJumpOthers){
     auto manager = BoardManager();
     // knight in a1 with a variety of blockers
     manager.getBitboards()->loadFEN("8/8/8/8/8/8/rb6/nR6");
@@ -292,3 +354,108 @@ TEST(BoardManagerLegality,KnightsCanJumpOthers){
     EXPECT_EQ(moveA5.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
 }
 
+TEST(BoardManagerMoveExecution, EmptySquareMoveUpdates){
+    auto manager = BoardManager();
+    // load a board with white pawn in d4
+    manager.getBitboards()->loadFEN(Fen::STARTING_FEN);
+
+    // move white pawn to e5
+    Move move{.piece = Piece::WP, .rankFrom = 2, .fileFrom = 1, .rankTo = 3, .fileTo = 1};
+    manager.tryMove(move);
+
+    // move to square is correct
+    EXPECT_EQ(manager.getBitboards()->getPiece(3, 1).value(), Piece::WP);
+    // move from square is empty
+    EXPECT_FALSE(manager.getBitboards()->getPiece(2, 1).has_value());
+}
+
+TEST(BoardManagerMoveExecution, CaptureUpdatesState){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN("8/8/8/8/8/8/8/nR6");
+
+    // move rook at A1 to capture
+    Move move{.piece = Piece::WR, .rankFrom = 1, .fileFrom = 2, .rankTo = 1, .fileTo = 1};
+    manager.tryMove(move);
+
+    // a1 is now the white rook
+    EXPECT_EQ(manager.getBitboards()->getPiece(1, 1).value(), Piece::WR);
+    // the black Knight is gone
+    EXPECT_EQ(manager.getBitboards()->getBitboard(Piece::BN), 0ULL);
+}
+
+TEST(BoardManagerMoveExecution, SimpleUndoRestoresState){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN("8/8/8/8/8/8/8/1R6");
+
+    uint64_t initialBitboard = manager.getBitboards()->getBitboard(Piece::WR);
+
+    // move rook at A1 to capture
+    Move move{.piece = Piece::WR, .rankFrom = 1, .fileFrom = 2, .rankTo = 1, .fileTo = 1};
+    manager.tryMove(move);
+
+    manager.undoMove(move);
+
+    uint64_t finalBitboard = manager.getBitboards()->getBitboard(Piece::WR);
+
+    EXPECT_EQ(initialBitboard, finalBitboard);
+}
+
+TEST(BoardManagerMoveExecution, UndoCaptureRestoresFullState){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN("8/8/8/8/8/8/8/nR6");
+
+    auto whiteRookBoardInitial = manager.getBitboards()->getBitboard(Piece::WR);
+    auto blackKnightBoardInitial = manager.getBitboards()->getBitboard(Piece::BN);
+
+    // move rook at A1 to capture
+    Move move{.piece = Piece::WR, .rankFrom = 1, .fileFrom = 2, .rankTo = 1, .fileTo = 1};
+    manager.tryMove(move);
+
+    // a1 is now the white rook
+    EXPECT_EQ(manager.getBitboards()->getPiece(1, 1).value(), Piece::WR);
+    // the black Knight is gone
+    EXPECT_EQ(manager.getBitboards()->getBitboard(Piece::BN), 0ULL);
+
+    manager.undoMove(move);
+    // a1 is now the black night again
+    EXPECT_EQ(manager.getBitboards()->getPiece(1, 1).value(), Piece::BN);
+    // the white rook is back where it was
+    EXPECT_EQ(manager.getBitboards()->getPiece(1,2), Piece::WR);
+
+    const auto whiteRookBoardFinal = manager.getBitboards()->getBitboard(Piece::WR);
+    const auto blackKnightBoardFinal = manager.getBitboards()->getBitboard(Piece::BN);
+
+    EXPECT_EQ(whiteRookBoardInitial, whiteRookBoardFinal);
+    EXPECT_EQ(blackKnightBoardInitial, blackKnightBoardFinal);
+}
+
+TEST(BoardManagerMoveExecution, KingCantBeCaptured){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN("8/8/8/8/8/8/8/kP6");
+
+    auto tryCapture = Move{.piece = Piece::BP, .rankFrom = 1, .fileFrom = 2, .rankTo = 1, .fileTo = 1};
+    EXPECT_FALSE(manager.tryMove(tryCapture));
+
+}
+
+TEST(BoardManagerMoveExecution, PawnsOnlyCaptureDiagonally){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN("8/8/8/8/8/8/p7/kP6");
+
+    auto tryCaptureWest = Move{.piece = Piece::WP, .rankFrom = 1, .fileFrom = 2, .rankTo = 1, .fileTo = 1};
+    EXPECT_FALSE(manager.tryMove(tryCaptureWest));
+
+    auto tryCaptureNorthWest = Move{.piece = Piece::WP, .rankFrom = 1, .fileFrom = 2, .rankTo = 2, .fileTo = 1};
+    EXPECT_TRUE(manager.tryMove(tryCaptureNorthWest));
+    EXPECT_EQ(tryCaptureNorthWest.result, MoveResult::PIECE_CAPTURE);
+
+}
+
+TEST(BoardManagerAdvandedRules, KingCantMoveInCheck){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN("8/8/8/8/8/8/8/kQ6");
+
+    auto move = createMove(Piece::BK, "a1a2");
+    EXPECT_FALSE(manager.checkMove(move));
+    EXPECT_EQ(move.result, MoveResult::KING_IN_CHECK);
+}
