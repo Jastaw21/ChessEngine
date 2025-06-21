@@ -3,16 +3,27 @@ project(Chess)
 
 set(CMAKE_CXX_STANDARD 20)
 
+# === SDL Setup ===
 set(CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/SDL3/lib/cmake")
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/SDL3_image/lib/cmake/SDL3_image")
-
 
 find_package(SDL3 REQUIRED CONFIG COMPONENTS SDL3)
 find_package(SDL3_image REQUIRED CONFIG)
 
+# === GoogleTest Setup ===
+include(FetchContent)
 
+FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/refs/heads/main.zip
+)
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
 
-add_executable(Chess ${PROJECT_SOURCE_DIR}/src/main.cpp
+enable_testing()
+
+# === Core Library ===
+add_library(chess_lib
         src/GUI/gui.cpp
         include/GUI/gui.h
         src/GUI/VisualBoard.cpp
@@ -33,11 +44,17 @@ add_executable(Chess ${PROJECT_SOURCE_DIR}/src/main.cpp
         src/BoardManager/BoardManager.cpp
         include/BoardManager/BoardManager.h
         src/Engine/Piece.cpp
-        include/Engine/Piece.h)
+        include/Engine/Piece.h
+        src/Utility/Fen.cpp
+)
 
-include_directories(include)
+target_include_directories(chess_lib PUBLIC include)
+target_link_libraries(chess_lib PUBLIC SDL3::SDL3 SDL3_image::SDL3_image)
 
-target_link_libraries(Chess PRIVATE SDL3::SDL3)
-target_link_libraries(Chess PRIVATE SDL3_image::SDL3_image)
+# === Main Application ===
+add_executable(Chess src/main.cpp
+        include/Utility/math.h)
+target_link_libraries(Chess PRIVATE chess_lib)
 
-
+# === Add Tests ===
+add_subdirectory(tests)

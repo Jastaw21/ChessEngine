@@ -11,8 +11,6 @@
 class VisualPiece;
 class DrawableEntity;
 class VisualBoard;
-
-class BoardManager;
 class EngineBase;
 
 class ChessGui {
@@ -20,36 +18,40 @@ public:
 
     ChessGui();
 
-    explicit ChessGui(EngineBase *engine);
-
+    explicit ChessGui(EngineBase* engine);
 
     [[nodiscard]] bool wasInit() const;
 
-    void loop();
-    void render() const;
-    void registerEntity(DrawableEntity *entity);
     [[nodiscard]] EngineBase *getEngine() const;
     [[nodiscard]] SDL_Renderer *getRenderer() const;
-
-    inline void setBoardBackground(VisualBoard *background){ board_background_ = background; }
-
     BoardManager *getBoardManager(){ return &boardManager_; };
-    [[nodiscard]] inline VisualBoard *getBoardBackground() const{ return board_background_; }
+    [[nodiscard]] inline VisualBoard *getVisualBoard() const{ return visualBoard; }
+    void setVisualBoard(VisualBoard* background){ visualBoard = background; }
+
+    void registerEntity(DrawableEntity* entity);
+
+    void loop();
+
+    void addMouseClick(const int x, const int y);
+    void addMouseRelease(const int x, const int y);
+
+    [[nodiscard]] int clicked_square() const{ return clickedSquare; }
 
 private:
 
     // loop stuff
     bool running;
     void pollEvents();
+    void render() const;
 
     // drawing
-    SDL_Window *window;
-    SDL_Renderer *renderer;
+    SDL_Window* window;
+    SDL_Renderer* renderer;
     std::vector<DrawableEntity *> drawables;
-    VisualBoard *board_background_;
+    VisualBoard* visualBoard;
 
     // chess engine
-    EngineBase *engine_;
+    EngineBase* engine_;
     BoardManager boardManager_;
 
     // event handling
@@ -59,8 +61,6 @@ private:
     std::shared_ptr<VisualPiece> heldPiece;
 
     int clickedSquare = -1;
-
-    void makeMove(const Move &move);
 };
 
 

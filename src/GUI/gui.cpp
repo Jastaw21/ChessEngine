@@ -8,8 +8,8 @@ ChessGui::ChessGui(){
     window = SDL_CreateWindow("Chess", 800, 800, 0);
     renderer = SDL_CreateRenderer(window, nullptr);
     running = true;
-    board_background_ = new VisualBoard(Vec2D(800, 800), this);
-    registerEntity(board_background_);
+    visualBoard = new VisualBoard(Vec2D(800, 800), this);
+    registerEntity(visualBoard);
 
     SDL_Init(SDL_INIT_VIDEO);
 }
@@ -18,14 +18,17 @@ ChessGui::ChessGui(EngineBase* engine) : engine_(engine){
     window = SDL_CreateWindow("Chess", 800, 800, 0);
     renderer = SDL_CreateRenderer(window, nullptr);
     running = true;
-    board_background_ = new VisualBoard(Vec2D(800, 800), this);
-    registerEntity(board_background_);
+    visualBoard = new VisualBoard(Vec2D(800, 800), this);
+    registerEntity(visualBoard);
 
     SDL_Init(SDL_INIT_VIDEO);
 }
 
 bool ChessGui::wasInit() const{ return window != nullptr && renderer != nullptr; }
 
+EngineBase *ChessGui::getEngine() const{ return engine_; }
+SDL_Renderer *ChessGui::getRenderer() const{ return renderer; }
+void ChessGui::registerEntity(DrawableEntity* entity){ drawables.push_back(entity); }
 
 void ChessGui::loop(){
     if (!wasInit()) { return; }
@@ -50,77 +53,6 @@ void ChessGui::render() const{
 
     // flip it
     SDL_RenderPresent(renderer);
-}
-
-void ChessGui::registerEntity(DrawableEntity* entity){ drawables.push_back(entity); }
-
-EngineBase *ChessGui::getEngine() const{ return engine_; }
-
-
-SDL_Renderer *ChessGui::getRenderer() const{ return renderer; }
-
-void ChessGui::handleMouseDown(const Uint8 button){
-    switch (button) {
-        case SDL_BUTTON_LEFT: {
-            float x, y;
-            SDL_GetMouseState(&x, &y);
-            const int file = static_cast<int>(x / (board_background_->boardSize().x / 8.f));
-            const int rank = 1 + static_cast<int>(8 - (y / (board_background_->boardSize().y / 8.f)));
-            const char clickedFile = 'a' + file;
-
-            int candidateClickedSquare = 1 + ((rank - 1) * 8 + (file - 1));
-
-            if (boardManager_.getBitboards()->getPiece(rank, file).has_value()) {
-                clickedSquare = candidateClickedSquare;
-            }
-            std::cout << "Clicked on:" << clickedFile << rank << "Square: " << candidateClickedSquare << std::endl;
-        }
-        default:
-            break;
-    }
-}
-
-void ChessGui::handleMouseUp(const Uint8 button){
-    switch (button) {
-        case SDL_BUTTON_LEFT: {
-            float x, y;
-            SDL_GetMouseState(&x, &y);
-
-            // need to effectively round down to the nearest rank/file
-            const int file = static_cast<int>(x / (board_background_->boardSize().x / 8.f));
-            const int rank = 1 + static_cast<int>(8 - (y / (board_background_->boardSize().y / 8.f)));
-
-            if (clickedSquare == -1) { return; }
-
-            int clickedRank = (clickedSquare / 8) + 1;
-            int clickedFile = (clickedSquare % 8);
-
-            auto candidateMovePiece = boardManager_.getBitboards()->getPiece(clickedRank, clickedFile);
-
-            if (!candidateMovePiece.has_value()) { return; }
-
-            auto move = Move{
-                        .piece = candidateMovePiece.value(),
-                        .rankFrom = clickedRank,
-                        .fileFrom = clickedFile,
-                        .rankTo = rank, .fileTo = file
-                    };
-
-            std::cout << "Move: " << move.toUCI() << std::endl;
-
-            if (!boardManager_.tryMove(move)) {
-                clickedSquare = -1;
-                return;
-            }
-
-            std::cout << move.result << std::endl;
-            clickedSquare = -1;
-
-            break;
-        }
-        default:
-            break;
-    }
 }
 
 void ChessGui::pollEvents(){
@@ -162,4 +94,72 @@ void ChessGui::handleKeypress(const SDL_Keycode keycode){
         default:
             break;
     }
+}
+
+void ChessGui::handleMouseDown(const Uint8 button){
+    switch (button) {
+        case SDL_BUTTON_LEFT: {
+            float x, y;
+            SDL_GetMouseState(&x, &y);
+            addMouseClick(x, y);
+        }
+        default:
+            break;
+    }
+}
+
+void ChessGui::handleMouseUp(const Uint8 button){
+    switch (button) {
+        case SDL_BUTTON_LEFT: {
+            float x, y;
+            SDL_GetMouseState(&x, &y);
+            addMouseRelease(x, y);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+void ChessGui::addMouseClick(const int x, const int y){
+    const int file = 1 + static_cast<int>(x / (visualBoard->boardSize().x / 8.f));
+    const int rank = 1 + static_cast<int>(8 - (y / (visualBoard->boardSize().y / 8.f)));
+    const char clickedFile = 'a' + file - 1;
+
+    int candidateClickedSquare = rankAndFileToSquare(rank, file);
+
+    if (boardManager_.getBitboards()->getPiece(rank, file).has_value()) { clickedSquare = candidateClickedSquare; }
+    std::cout << "Clicked on:" << clickedFile << rank << "Square: " << candidateClickedSquare << std::endl;
+}
+
+void ChessGui::addMouseRelease(const int x, const int y){
+    // need to effectively round down to the nearest rank/file
+    const int rank = 1 + static_cast<int>(8 - (y / (visualBoard->boardSize().y / 8.f)));
+    const int file = 1 + static_cast<int>(x / (visualBoard->boardSize().x / 8.f));
+
+    if (clickedSquare == -1) { return; }
+
+    int clickedRank, clickedFile;
+    squareToRankAndFile(clickedSquare, clickedRank, clickedFile);
+
+    auto candidateMovePiece = boardManager_.getBitboards()->getPiece(clickedRank, clickedFile);
+
+    if (!candidateMovePiece.has_value()) { return; }
+
+    auto move = Move{
+                .piece = candidateMovePiece.value(),
+                .rankFrom = clickedRank,
+                .fileFrom = clickedFile,
+                .rankTo = rank, .fileTo = file
+            };
+
+    std::cout << "Move: " << move.toUCI() << std::endl;
+
+    if (!boardManager_.tryMove(move)) {
+        clickedSquare = -1;
+        return;
+    }
+
+    std::cout << move.result << std::endl;
+    clickedSquare = -1;
 }

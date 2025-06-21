@@ -11,9 +11,16 @@
 class BitBoards;
 
 enum MoveResult {
+    // successes
     MOVE_TO_EMPTY_SQUARE,
+    PIECE_CAPTURE,
+
+    // failures
     ILLEGAL_MOVE,
-    PIECE_CAPTURE
+    SQUARE_OCCUPIED,
+    MOVE_NOT_LEGAL_FOR_PIECE,
+    MOVE_OUT_OF_BOUNDS,
+    BLOCKING_PIECE,
 };
 
 struct Move {
@@ -35,20 +42,19 @@ public:
     explicit BoardManager();
 
     BitBoards *getBitboards(){ return &bitboards; }
-    [[nodiscard]] bool prelimCheckMove(Move& move) const;
+
     bool tryMove(Move& move);
+    bool checkMove(Move& move);
 
 private:
 
-    static bool moveIsLegal(const Move& move);
-    static bool moveIsPossible(const Move& move);
+    static bool moveIsLegalForPiece(const Move& move);
+    static bool moveInBounds(const Move& move);
+    bool pieceInWay(const Move& move) const;
     [[nodiscard]] bool moveDestinationIsEmpty(const Move& move) const;
-    [[nodiscard]] bool moveDestinationIsOccupiedWithOpponent(const Move& move) const;
     bool moveDestOccupiedByColour(const std::string& testColour, const Move& move) const;
 
     void makeMove(const Move& move);
-
-private:
 
     BitBoards bitboards{};
 };
