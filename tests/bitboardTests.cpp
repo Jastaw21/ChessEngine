@@ -66,8 +66,24 @@ TEST(BitBoards, SetZeroRemovesBit){
 
     board.setZero(8, 1);
 
+    for (int i = 0; i < Piece::PIECE_N; i++) {
+        const auto piece = static_cast<Piece>(i);
+        EXPECT_EQ(board[piece], 0);
+    }
+
     const auto blackRookBoard = board[Piece::BR];
     EXPECT_EQ(blackRookBoard, 0);
+}
+
+TEST(BitBoards, SetOneSetsBit){
+    auto board = BitBoards();
+    const auto blackRookA8Fen = "8/8/8/8/8/8/8/8";
+    board.loadFEN(blackRookA8Fen);
+
+    board.setOne(Piece::BR, 8, 1);
+
+    const auto blackRookBoard = board[Piece::BR];
+    EXPECT_EQ(blackRookBoard, 0x100000000000000);
 }
 
 TEST(BitBoards, RankAndFileToSquare){

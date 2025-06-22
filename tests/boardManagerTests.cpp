@@ -7,24 +7,54 @@
 #include "Utility/Fen.h"
 
 TEST(MoveStruct, ToUCICorrect){
-
-    const Move move{.piece = Piece::WP, .rankFrom = 1, .fileFrom = 1, .rankTo = 2, .fileTo = 1};
+    constexpr Move move{.piece = Piece::WP, .rankFrom = 1, .fileFrom = 1, .rankTo = 2, .fileTo = 1};
     EXPECT_EQ(move.toUCI(), "a1a2");
 
-    const Move move2{.piece = Piece::WP, .rankFrom = 1, .fileFrom = 1, .rankTo = 8, .fileTo = 8};
+    constexpr Move move2{.piece = Piece::WP, .rankFrom = 1, .fileFrom = 1, .rankTo = 8, .fileTo = 8};
     EXPECT_EQ(move2.toUCI(), "a1h8");
-
 }
 
 TEST(MoveStruct, MakeFromUCICorrect){
-
     const auto move = createMove(Piece::WN, "a1a2");
     EXPECT_EQ(move.piece, Piece::WN);
     EXPECT_EQ(move.rankFrom, 1);
     EXPECT_EQ(move.fileFrom, 1);
     EXPECT_EQ(move.rankTo, 2);
     EXPECT_EQ(move.fileTo, 1);
+}
 
+TEST(BoardManagerHistory, AllMovesResultInHistory){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN("p7/8/8/8/8/8/8/8");
+
+    EXPECT_EQ(manager.getMoveHistory().size(), 0);
+
+    // make a move
+    Move move{.piece = Piece::BP, .rankFrom = 8, .fileFrom = 1, .rankTo = 7, .fileTo = 1};
+
+    // succesful moves should increase the size
+    EXPECT_TRUE(manager.tryMove(move));
+    EXPECT_EQ(manager.getMoveHistory().size(), 1);
+
+    // unsuccsesful moves shouldn't increase the size
+    Move failedMove = createMove(Piece::WP, "a7f2");
+    EXPECT_FALSE(manager.tryMove(move));
+    EXPECT_EQ(manager.getMoveHistory().size(), 1);
+}
+
+TEST(BoardManagerHistory, UndoMovesRestoreHistory){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN("p7/8/8/8/8/8/8/8");
+
+    EXPECT_EQ(manager.getMoveHistory().size(), 0);
+
+    // make a move
+    Move move{.piece = Piece::BP, .rankFrom = 8, .fileFrom = 1, .rankTo = 7, .fileTo = 1};
+    manager.tryMove(move);
+    EXPECT_EQ(manager.getMoveHistory().size(), 1);
+
+    manager.undoMove(move);
+    EXPECT_EQ(manager.getMoveHistory().size(), 0);
 }
 
 TEST(BoardManagerLegality, WhitePawnLegalityCorrect){
@@ -178,7 +208,7 @@ TEST(BoardManagerLegality, KingLegalityCorrect){
         }
     }
 
-    // can move vertically one square only
+    // can vertically move one square only
     for (int i = 1; i < 8; i++) {
         Move verticalMove{.piece = Piece::BK, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = 1};
         if (i == 1) {
@@ -190,7 +220,7 @@ TEST(BoardManagerLegality, KingLegalityCorrect){
         }
     }
 
-    // can move horizontally one square only
+    // can horizontally move one square only
     for (int i = 1; i < 8; i++) {
         Move horizMove{.piece = Piece::BK, .rankFrom = 1, .fileFrom = 1, .rankTo = 1, .fileTo = i + 1};
         if (i == 1) {
@@ -205,7 +235,7 @@ TEST(BoardManagerLegality, KingLegalityCorrect){
 
 TEST(BoardManagerLegality, BishopLegalityCorrect){
     auto manager = BoardManager();
-    // load a board with black bishop in a1
+    // load a board with a black bishop in a1
     manager.getBitboards()->loadFEN("8/8/8/8/8/8/8/b7");
 
     // can move diagonally
@@ -292,10 +322,6 @@ TEST(BoardManagerLegality, KnightLegalityCorrect){
     move = createMove(Piece::BN, "d4b5");;
     EXPECT_TRUE(manager.checkMove(move));
     EXPECT_EQ(move.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
-
-
-
-
 }
 
 TEST(BoardManagerLegality, CantMoveToOccupiedSquareWithSameColour){
@@ -327,8 +353,8 @@ TEST(BoardManagerLegality, CanMoveToOccupiedSquareWithOtherColour){
 
 TEST(BoardManagerLegality, MostPiecesCantJumpOthers){
     auto manager = BoardManager();
-    // blank space in a3, a1,2,4 occupied.
-    // we'll move the white rook to each of 3,5. All should fail
+    // Blank space in a3, a1,2,4 occupied.
+    // We'll move the white rook to each of 3,5. All should fail
     manager.getBitboards()->loadFEN("8/8/8/8/p7/8/P7/R7");
 
     Move moveA3{.piece = Piece::WR, .rankFrom = 1, .fileFrom = 1, .rankTo = 3, .fileTo = 1};
@@ -365,7 +391,7 @@ TEST(BoardManagerMoveExecution, EmptySquareMoveUpdates){
 
     // move to square is correct
     EXPECT_EQ(manager.getBitboards()->getPiece(3, 1).value(), Piece::WP);
-    // move from square is empty
+    // move from the square is empty
     EXPECT_FALSE(manager.getBitboards()->getPiece(2, 1).has_value());
 }
 
@@ -436,6 +462,9 @@ TEST(BoardManagerMoveExecution, KingCantBeCaptured){
     auto tryCapture = Move{.piece = Piece::BP, .rankFrom = 1, .fileFrom = 2, .rankTo = 1, .fileTo = 1};
     EXPECT_FALSE(manager.tryMove(tryCapture));
 
+    manager.getBitboards()->loadFEN("3K4/8/2n5/8/8/8/8/8");
+    auto tryCapture2 = Move{.piece = Piece::BN, .rankFrom = 6, .fileFrom = 3, .rankTo = 8, .fileTo = 4};
+    EXPECT_FALSE(manager.tryMove(tryCapture2));
 }
 
 TEST(BoardManagerMoveExecution, PawnsOnlyCaptureDiagonally){
@@ -448,7 +477,6 @@ TEST(BoardManagerMoveExecution, PawnsOnlyCaptureDiagonally){
     auto tryCaptureNorthWest = Move{.piece = Piece::WP, .rankFrom = 1, .fileFrom = 2, .rankTo = 2, .fileTo = 1};
     EXPECT_TRUE(manager.tryMove(tryCaptureNorthWest));
     EXPECT_EQ(tryCaptureNorthWest.result, MoveResult::PIECE_CAPTURE);
-
 }
 
 TEST(BoardManagerAdvandedRules, KingCantMoveInCheck){
@@ -459,3 +487,48 @@ TEST(BoardManagerAdvandedRules, KingCantMoveInCheck){
     EXPECT_FALSE(manager.checkMove(move));
     EXPECT_EQ(move.result, MoveResult::KING_IN_CHECK);
 }
+
+TEST(BoardManagerAdvancedRules, SimpleEnPassant){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN(Fen::STARTING_FEN);
+
+    // e5e6 e5d5 then into en passant
+    auto whiteMove1 = createMove(Piece::WP, "e2e4");
+    manager.tryMove(whiteMove1);
+    auto whiteMove2 = createMove(Piece::WP, "e4e5");
+    manager.tryMove(whiteMove2);
+    auto blackMove1 = createMove(Piece::BP, "f7f5");
+    manager.tryMove(blackMove1);
+
+    auto testEnPassant = createMove(Piece::WP, "e5f6");
+    EXPECT_TRUE(manager.tryMove(testEnPassant));
+    EXPECT_EQ(testEnPassant.result, MoveResult::EN_PASSANT);
+}
+
+TEST(BoardManagerAdvancedRules, EnPassantCanBeUndone){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN(Fen::STARTING_FEN);
+
+
+    // e5e6 e5d5 then into en passant
+    auto whiteMove1 = createMove(Piece::WP, "e2e4");
+    manager.tryMove(whiteMove1);
+    auto whiteMove2 = createMove(Piece::WP, "e4e5");
+    manager.tryMove(whiteMove2);
+    auto blackMove1 = createMove(Piece::BP, "f7f5");
+    manager.tryMove(blackMove1);
+
+    const auto initialWhiteBitboard = manager.getBitboards()->getBitboard(Piece::BP);
+    const auto initialBlackBitboard = manager.getBitboards()->getBitboard(Piece::WP);
+
+    auto testEnPassant = createMove(Piece::WP, "e5f6");
+
+    manager.undoMove(testEnPassant);
+
+    const auto finalWhiteBitboard = manager.getBitboards()->getBitboard(Piece::BP);
+    const auto finalBlackBitboard = manager.getBitboards()->getBitboard(Piece::WP);
+
+    EXPECT_EQ(initialWhiteBitboard, finalWhiteBitboard);
+    EXPECT_EQ(initialBlackBitboard, finalBlackBitboard);
+}
+

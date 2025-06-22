@@ -78,6 +78,12 @@ void BitBoards::setZero(const int rank, const int file){
     }
 }
 
+void BitBoards::setOne(const Piece& piece, const int rank, const int file){
+    const int toSquare = rankAndFileToSquare(rank, file);
+    bitboards[piece] |= (1ULL << toSquare);
+}
+
+
 bool BitBoards::test(const uint64_t inBoard) const{
     for (const auto& board: bitboards) {
         if ((board & inBoard) != 0)
@@ -95,7 +101,7 @@ std::string &BitBoards::toFEN(){
 
         // file by file
         for (int file = 1; file <= 8; ++file) {
-            // square i.e., the bit we'll search
+            // square i.e. the bit we'll search
             const int square = rankAndFileToSquare(rank, file);
 
             bool isPieceHere = false;

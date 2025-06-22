@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include "GUI/VisualBoard.h"
-#include "GUI/DrawableEntity.h"
 #include "GUI/gui.h"
+#include "GUI/DrawableEntity.h"
+#include "GUI/VisualBoard.h"
 
 ChessGui::ChessGui(){
     window = SDL_CreateWindow("Chess", 800, 800, 0);
@@ -65,7 +65,11 @@ void ChessGui::pollEvents(){
             break;
 
         case SDL_EVENT_KEY_DOWN:
-            handleKeypress(event.key.key);
+            handleKeyDown(event.key.key);
+            break;
+
+        case SDL_EVENT_KEY_UP:
+            handleKeyUp(event.key.key);
             break;
 
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
@@ -82,7 +86,7 @@ void ChessGui::pollEvents(){
     }
 }
 
-void ChessGui::handleKeypress(const SDL_Keycode keycode){
+void ChessGui::handleKeyDown(const SDL_Keycode keycode){
     switch (keycode) {
         case SDLK_ESCAPE:
             running = false;
@@ -91,8 +95,26 @@ void ChessGui::handleKeypress(const SDL_Keycode keycode){
         case SDLK_SPACE:
             break;
 
+        case SDLK_LALT:
+        case SDLK_LSHIFT:
+        case SDLK_LCTRL:
+            modifiersSet[keycode] = true;
+            break;
+        case SDLK_Z:
+            if (modifiersSet[SDLK_LCTRL])
+                boardManager_.undoMove();
+            break;
+
         default:
             break;
+    }
+}
+
+void ChessGui::handleKeyUp(const SDL_Keycode key){
+    for (std::pair<SDL_Keycode, bool> keycode: modifiersSet) {
+        if (keycode.first == key) {
+            modifiersSet[keycode.first] = false;
+        }
     }
 }
 

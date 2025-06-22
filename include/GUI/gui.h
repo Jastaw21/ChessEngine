@@ -13,6 +13,10 @@ class DrawableEntity;
 class VisualBoard;
 class EngineBase;
 
+inline std::unordered_map<SDL_Keycode, bool> modifiersSet = {
+            {SDLK_LCTRL, false}, {SDLK_LSHIFT, false}, {SDLK_LALT, false}
+        };
+
 class ChessGui {
 public:
 
@@ -41,6 +45,7 @@ private:
 
     // loop stuff
     bool running;
+
     void pollEvents();
     void render() const;
 
@@ -57,7 +62,8 @@ private:
     // event handling
     void handleMouseDown(Uint8 button);
     void handleMouseUp(Uint8 button);
-    void handleKeypress(SDL_Keycode keycode);
+    void handleKeyDown(SDL_Keycode keycode);
+    static void handleKeyUp(SDL_Keycode key);
     std::shared_ptr<VisualPiece> heldPiece;
 
     int clickedSquare = -1;

@@ -5,6 +5,8 @@
 #ifndef BOARDMANAGER_H
 #define BOARDMANAGER_H
 
+#include <stack>
+
 #include "BitBoards.h"
 #include "Engine/Piece.h"
 
@@ -22,6 +24,7 @@ enum MoveResult {
     MOVE_OUT_OF_BOUNDS,
     BLOCKING_PIECE,
     KING_IN_CHECK,
+    EN_PASSANT,
 };
 
 struct Move {
@@ -45,11 +48,13 @@ public:
     explicit BoardManager();
 
     BitBoards *getBitboards(){ return &bitboards; }
+    std::stack<Move> &getMoveHistory(){ return moveHistory; }
 
     bool tryMove(Move& move);
-    bool captureIsLegal(Move& move);
+    static bool captureIsLegal(Move& move);
     bool checkMove(Move& move);
     void undoMove(const Move& move);
+    void undoMove();
 
 private:
 
@@ -58,12 +63,15 @@ private:
     bool pieceInWay(const Move& move) const;
     [[nodiscard]] bool moveDestinationIsEmpty(const Move& move) const;
     bool moveDestOccupiedByColour(const std::string& testColour, const Move& move) const;
+    bool moveIsEnPassant(Move& move) const;
 
     bool kingInCheck(const Piece& piece, const Move& move);
 
     void makeMove(const Move& move);
 
     BitBoards bitboards{};
+
+    std::stack<Move> moveHistory;
 };
 
 

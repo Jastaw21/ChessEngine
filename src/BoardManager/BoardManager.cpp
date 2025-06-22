@@ -168,6 +168,32 @@ bool BoardManager::moveDestOccupiedByColour(const std::string& testColour, const
     return false;
 }
 
+bool BoardManager::moveIsEnPassant(Move& move) const{
+    const auto lastMove = moveHistory.top();
+
+    // only relevant if pawns have moved...
+    if (lastMove.piece != Piece::BP && lastMove.piece != Piece::WP)
+        return false;
+
+    // ...and moved two ranks
+    if (abs(lastMove.rankTo - lastMove.rankFrom) != 2)
+        return false;
+
+    // must move to the same file as the last move
+    if (move.fileTo != lastMove.fileTo)
+        return false;
+
+    // and must end up north (WP is the mover) or south (BP) of the last move's destination
+    int targetRank = lastMove.rankTo - sign(lastMove.rankTo - lastMove.rankFrom);
+    if (move.rankTo != targetRank)
+        return false;
+
+    move.result = MoveResult::EN_PASSANT;
+    const auto& capturedPiece = bitboards.getPiece(lastMove.rankTo, move.fileTo);
+    move.capturedPiece = capturedPiece.value();
+    return true;
+}
+
 bool BoardManager::kingInCheck(const Piece& piece, const Move& move){
     Piece validAttackingPieces[5];
 
@@ -200,13 +226,13 @@ bool BoardManager::kingInCheck(const Piece& piece, const Move& move){
             if (bits.test(index)) {
                 int rank, file;
                 squareToRankAndFile(index, rank, file);
-                Move move = {
+                Move testMove = {
                             .piece = validAttackingPieces[attacker],
                             .rankFrom = rank, .fileFrom = file,
                             .rankTo = kRank, .fileTo = kFile
                         };
 
-                if (checkMove(move))
+                if (moveIsLegalForPiece(testMove))
                     return true;
             }
         }
@@ -217,13 +243,14 @@ bool BoardManager::kingInCheck(const Piece& piece, const Move& move){
 bool BoardManager::tryMove(Move& move){
     if (!checkMove(move)) { return false; }
     makeMove(move);
+    moveHistory.push(move);
     return true;
 }
 
 bool BoardManager::captureIsLegal(Move& move){
     if (move.capturedPiece == Piece::WK || move.capturedPiece == Piece::BK) {
         move.capturedPiece = Piece::PIECE_N;
-        return true;
+        return false;
     }
 
     // if it's a pawn, must be diagonal to capture
@@ -259,11 +286,18 @@ bool BoardManager::checkMove(Move& move){
         return false;
     }
 
+    // is the king trying to be moved in check
     if (move.piece == Piece::WK || move.piece == Piece::BK) {
         if (kingInCheck(move.piece, move)) {
             move.result = MoveResult::KING_IN_CHECK;
             return false;
         }
+    }
+
+    // is it an en passant capture?
+    if (moveHistory.size() > 0 && moveIsEnPassant(move)) {
+        move.result = MoveResult::EN_PASSANT;
+        return true;
     }
 
     // would it be a capture?
@@ -293,7 +327,7 @@ bool BoardManager::checkMove(Move& move){
 }
 
 void BoardManager::undoMove(const Move& move){
-    // set the from bit back to one
+    // set the form bit back to one
     auto squareFrom = rankAndFileToSquare(move.rankFrom, move.fileFrom);
     bitboards[move.piece] |= (1ULL << squareFrom);
 
@@ -303,14 +337,25 @@ void BoardManager::undoMove(const Move& move){
         bitboards[move.capturedPiece] |= (1ULL << squareTo);
     }
 
+    // if it was an en_passant capture, restore the correct square to one
+    if (move.result == MoveResult::EN_PASSANT) { bitboards.setOne(moveHistory.top().piece, moveHistory.top().rankTo, move.fileTo); }
+
     // set the to bit back to zero for this piece
     auto squareTo = rankAndFileToSquare(move.rankTo, move.fileTo);
     bitboards[move.piece] &= ~(1ULL << squareTo);
+
+    moveHistory.pop();
+}
+
+void BoardManager::undoMove(){
+    if (moveHistory.empty())
+        return;
+    undoMove(moveHistory.top());
 }
 
 
 void BoardManager::makeMove(const Move& move){
-    // set the from bit to zero
+    // set the from square of the moving piece to zero
     auto squareFrom = rankAndFileToSquare(move.rankFrom, move.fileFrom);
     bitboards[move.piece] &= ~(1ULL << squareFrom);
 
@@ -318,7 +363,11 @@ void BoardManager::makeMove(const Move& move){
     if (move.result == MoveResult::PIECE_CAPTURE)
         bitboards.setZero(move.rankTo, move.fileTo);
 
-    // set the to bit to one
+    // if it was an en_passant capture, set the correct square to zero
+    if (move.result == MoveResult::EN_PASSANT)
+        bitboards.setZero(moveHistory.top().rankTo, move.fileTo);
+
+    // set the to square of the moving piece to one
     auto squareTo = rankAndFileToSquare(move.rankTo, move.fileTo);
     bitboards[move.piece] |= (1ULL << squareTo);
 }

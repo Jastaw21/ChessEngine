@@ -95,6 +95,7 @@ public:
 
     std::optional<Piece> getPiece(const int rank, const int file) const;
     void setZero(const int rank, const int file);
+    void setOne(const Piece& piece, int rank, int file);
 
     bool test(const uint64_t inBoard) const;
 
