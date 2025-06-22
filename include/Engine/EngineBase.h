@@ -4,14 +4,17 @@
 
 #ifndef ENGINEBASE_H
 #define ENGINEBASE_H
+#include "ChessPlayer.h"
 
-class EngineBase {
+class EngineBase : public ChessPlayer {
 public:
 
-    EngineBase();
-    virtual ~EngineBase() = default;
+    EngineBase(const Colours colour = Colours::WHITE);
     virtual void evaluate() = 0;
     virtual void search() = 0;
+
+    virtual Move makeMove() override;
+
 };
 
 

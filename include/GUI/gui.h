@@ -12,6 +12,7 @@ class VisualPiece;
 class DrawableEntity;
 class VisualBoard;
 class EngineBase;
+class ChessPlayer;
 
 inline std::unordered_map<SDL_Keycode, bool> modifiersSet = {
             {SDLK_LCTRL, false}, {SDLK_LSHIFT, false}, {SDLK_LALT, false}
@@ -23,6 +24,7 @@ public:
     ChessGui();
 
     explicit ChessGui(EngineBase* engine);
+    explicit ChessGui(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer);
 
     [[nodiscard]] bool wasInit() const;
 
@@ -58,6 +60,9 @@ private:
     // chess engine
     EngineBase* engine_;
     BoardManager boardManager_;
+
+    ChessPlayer* whitePlayer_;
+    ChessPlayer* blackPlayer_;
 
     // event handling
     void handleMouseDown(Uint8 button);

@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "GUI/gui.h"
+#include "ChessPlayer.h"
 #include "GUI/DrawableEntity.h"
 #include "GUI/VisualBoard.h"
 
@@ -15,6 +16,17 @@ ChessGui::ChessGui(){
 }
 
 ChessGui::ChessGui(EngineBase* engine) : engine_(engine){
+    window = SDL_CreateWindow("Chess", 800, 800, 0);
+    renderer = SDL_CreateRenderer(window, nullptr);
+    running = true;
+    visualBoard = new VisualBoard(Vec2D(800, 800), this);
+    registerEntity(visualBoard);
+
+    SDL_Init(SDL_INIT_VIDEO);
+}
+
+ChessGui::ChessGui(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer) : whitePlayer_(whitePlayer),
+                                                                         blackPlayer_(blackPlayer){
     window = SDL_CreateWindow("Chess", 800, 800, 0);
     renderer = SDL_CreateRenderer(window, nullptr);
     running = true;
