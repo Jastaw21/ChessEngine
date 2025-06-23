@@ -1,22 +1,20 @@
-#include <bitset>
+#include <iostream>
 
-#include "GUI/gui.h"
-#include <SDL3/SDL.h>
-#include "SDL3/SDL_main.h"
-#include "GUI/VisualBoard.h"
-#include "Engine/TestEngine.h"
+#include "HumanPlayer.h"
 #include "BoardManager/BitBoards.h"
+#include "Engine/TestEngine.h"
+#include "GUI/gui.h"
+#include "GUI/VisualBoard.h"
 
 
-int main(int argc, char **argv){
-    auto engine = TestEngine();
-    auto gui = ChessGui(&engine);
+int main(int argc, char** argv){
 
-    auto eng = gui.getEngine();
-    int i = 1 + 8;
+    auto whitePlayer = HumanPlayer(Colours::WHITE);
+    auto blackPlayer = HumanPlayer(Colours::BLACK);
+    auto gui = ChessGui(&whitePlayer, &blackPlayer);
+
 
     gui.getBoardManager()->getBitboards()->loadFEN(Fen::STARTING_FEN);
-
     gui.loop();
     return 0;
 }

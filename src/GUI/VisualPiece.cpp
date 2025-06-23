@@ -118,7 +118,7 @@ std::vector<std::shared_ptr<VisualPiece> > VisualPieceBuilder::buildInstances(){
 
         auto concretePiece = std::make_shared<ConcretePiece>(pieceType, 0, 0);
 
-        const bool isWhite = pieceColours[pieceType] == "White";
+        const bool isWhite = pieceColours[pieceType] == Colours::WHITE;
         char fenStyleString = tolower(reversePieceMap.at(pieceType));
         // where is the piece saved?
         std::string path = source_path +

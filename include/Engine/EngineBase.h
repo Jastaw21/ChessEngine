@@ -15,6 +15,7 @@ public:
 
     virtual Move makeMove() override;
 
+
 };
 
 

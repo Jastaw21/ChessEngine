@@ -59,6 +59,7 @@ TEST(BitBoards, BitboardsLocationsCorrect){
     EXPECT_EQ(board[Piece::WQ], 0x8);
 }
 
+
 TEST(BitBoards, SetZeroRemovesBit){
     auto board = BitBoards();
     const auto blackRookA8Fen = "r7/8/8/8/8/8/8/8";
@@ -119,7 +120,35 @@ TEST(BitBoards, TestFunction){
 
     EXPECT_TRUE(board.test(a1));
     EXPECT_FALSE(board.test(a4));
+}
 
+TEST(BitBoards, GetPieceFindsPieces){
+    auto board = BitBoards();
+    board.loadFEN("pppppppp/8/8/8/8/8/8/8");
 
+    for (int i = 56; i < 64; i++) { EXPECT_EQ(board.getPiece(i).value(), Piece::BP); }
+}
 
+TEST(BitBoards, GetPieceReturnsNullInEmptySquares){
+    auto board = BitBoards();
+    board.loadFEN("pppppppp/8/8/8/8/8/8/8");
+
+    for (int i = 0; i < 56; i++) { EXPECT_FALSE(board.getPiece(i).has_value()); }
+}
+
+TEST(BitBoards, GetPieceOverloadsMatch){
+    auto board = BitBoards();
+    board.loadFEN("pppppppp/8/8/8/8/8/8/8");
+
+    for (int i = 0; i < 56; i++) {
+        int rank, file;
+        squareToRankAndFile(i, rank, file);
+        EXPECT_EQ(board.getPiece(rank,file), board.getPiece(i));
+    }
+
+    for (int i = 56; i < 64; i++) {
+        int rank, file;
+        squareToRankAndFile(i, rank, file);
+        EXPECT_EQ(board.getPiece(rank,file).value(), board.getPiece(i).value());
+    }
 }

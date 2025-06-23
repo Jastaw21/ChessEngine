@@ -70,6 +70,12 @@ std::optional<Piece> BitBoards::getPiece(const int rank, const int file) const{
     return {};
 }
 
+std::optional<Piece> BitBoards::getPiece(const int square) const{
+    int rank, file;
+    squareToRankAndFile(square, rank, file);
+    return getPiece(rank, file);
+}
+
 void BitBoards::setZero(const int rank, const int file){
     const int toSquare = rankAndFileToSquare(rank, file);
     for (int pieceIndex = 0; pieceIndex < 12; pieceIndex++) {

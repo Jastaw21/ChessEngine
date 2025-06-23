@@ -488,6 +488,15 @@ TEST(BoardManagerAdvandedRules, KingCantMoveInCheck){
     EXPECT_EQ(move.result, MoveResult::KING_IN_CHECK);
 }
 
+TEST(BoardManagerAdvandedRules, CheckCantBeExposed){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN("8/8/8/8/8/q7/R7/K7");
+
+    auto rookMoveOutOfWay = createMove(Piece::WR, "a2b2");
+    EXPECT_FALSE(manager.checkMove(rookMoveOutOfWay));
+    EXPECT_EQ(rookMoveOutOfWay.result, MoveResult::DISCOVERED_CHECK);
+}
+
 TEST(BoardManagerAdvancedRules, SimpleEnPassant){
     auto manager = BoardManager();
     manager.getBitboards()->loadFEN(Fen::STARTING_FEN);
@@ -532,3 +541,17 @@ TEST(BoardManagerAdvancedRules, EnPassantCanBeUndone){
     EXPECT_EQ(initialBlackBitboard, finalBlackBitboard);
 }
 
+TEST(BoardManagerMoveExecution, TurnChanges){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN(Fen::STARTING_FEN);
+
+    auto whiteMove = createMove(Piece::WP, "e2e4");
+    manager.tryMove(whiteMove);
+
+    EXPECT_EQ(manager.getCurrentTurn(), Colours::BLACK);
+
+    auto blackMove = createMove(Piece::BP, "e7e5");
+    manager.tryMove(blackMove);
+
+    EXPECT_EQ(manager.getCurrentTurn(), Colours::WHITE);
+}

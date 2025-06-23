@@ -4,6 +4,9 @@
 
 #ifndef HUMANPLAYER_H
 #define HUMANPLAYER_H
+#include <iostream>
+#include <bits/ostream.tcc>
+
 #include "ChessPlayer.h"
 
 
@@ -17,12 +20,12 @@ public:
     void pickUpPiece(const int clickedSquare){ clickedSquare_ = clickedSquare; }
     [[nodiscard]] int getHeldPiece() const{ return clickedSquare_; }
     void dropPiece(){ clickedSquare_ = -1; }
-    void selectDestination(const int destSquare){ destinationSquare = destSquare; };
+    void selectDestination(const int destSquare, BoardManager* manager);
 
 private:
 
-    int clickedSquare_ = -1;
-    int destinationSquare = -1;
+    int clickedSquare_;;
+
 };
 
 

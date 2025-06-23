@@ -23,37 +23,28 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 
 # === Core Library ===
-add_library(chess_lib
+add_library(
+        chess_lib
         src/GUI/gui.cpp
-        include/GUI/gui.h
         src/GUI/VisualBoard.cpp
-        include/GUI/VisualBoard.h
         src/GUI/DrawableEntity.cpp
-        include/GUI/DrawableEntity.h
         src/GUI/VisualPiece.cpp
-        include/GUI/VisualPiece.h
-        include/Utility/Fen.h
         src/Utility/Vec2D.cpp
-        include/Utility/Vec2D.h
         src/Engine/EngineBase.cpp
-        include/Engine/EngineBase.h
         src/Engine/TestEngine.cpp
-        include/Engine/TestEngine.h
         src/BoardManager/BitBoards.cpp
-        include/BoardManager/BitBoards.h
         src/BoardManager/BoardManager.cpp
-        include/BoardManager/BoardManager.h
         src/Engine/Piece.cpp
-        include/Engine/Piece.h
         src/Utility/Fen.cpp
+        src/ChessPlayer.cpp
+        src/HumanPlayer.cpp
 )
 
 target_include_directories(chess_lib PUBLIC include)
 target_link_libraries(chess_lib PUBLIC SDL3::SDL3 SDL3_image::SDL3_image)
 
 # === Main Application ===
-add_executable(Chess src/main.cpp
-        include/Utility/math.h)
+add_executable(Chess src/main.cpp)
 target_link_libraries(Chess PRIVATE chess_lib)
 
 # === Add Tests ===

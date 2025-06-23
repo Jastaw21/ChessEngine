@@ -13,6 +13,11 @@ enum Piece {
     PIECE_N
 };
 
+enum Colours {
+    WHITE,
+    BLACK,
+};
+
 inline std::unordered_map<char, Piece> pieceMap = {
             {'P', WP}, {'N', WN}, {'B', WB}, {'R', WR}, {'Q', WQ}, {'K', WK},
             {'p', BP}, {'n', BN}, {'b', BB}, {'r', BR}, {'q', BQ}, {'k', BK},
@@ -37,19 +42,19 @@ inline std::unordered_map<Piece, std::string> pieceNames = {
             {BK, "Black King"},
         };
 
-inline std::unordered_map<Piece, std::string> pieceColours = {
-            {WP, "White"},
-            {WN, "White"},
-            {WB, "White"},
-            {WR, "White"},
-            {WQ, "White"},
-            {WK, "White"},
-            {BP, "Black"},
-            {BN, "Black"},
-            {BB, "Black"},
-            {BR, "Black"},
-            {BQ, "Black"},
-            {BK, "Black"},
+inline std::unordered_map<Piece, Colours> pieceColours = {
+            {WP, Colours::WHITE},
+            {WN, Colours::WHITE},
+            {WB, Colours::WHITE},
+            {WR, Colours::WHITE},
+            {WQ, Colours::WHITE},
+            {WK, Colours::WHITE},
+            {BP, Colours::BLACK},
+            {BN, Colours::BLACK},
+            {BB, Colours::BLACK},
+            {BR, Colours::BLACK},
+            {BQ, Colours::BLACK},
+            {BK, Colours::BLACK},
         };
 
 class ConcretePiece {

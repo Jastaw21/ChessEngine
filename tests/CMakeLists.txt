@@ -5,6 +5,7 @@ add_executable(chess_tests
         bitboardTests.cpp
         FenTests.cpp
         boardManagerTests.cpp
+        humanPlayerTests.cpp
         # Add more test files here
 )
 

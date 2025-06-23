@@ -10,7 +10,7 @@
 class TestEngine final : public EngineBase {
 public:
 
-    TestEngine();
+    TestEngine(Colours colour);
 
     void evaluate() override;
     void search() override;

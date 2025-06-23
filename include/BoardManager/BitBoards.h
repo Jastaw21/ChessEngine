@@ -94,6 +94,7 @@ public:
     uint64_t &operator[](const Piece piece){ return bitboards[piece]; }
 
     std::optional<Piece> getPiece(const int rank, const int file) const;
+    std::optional<Piece> getPiece(int square) const;
     void setZero(const int rank, const int file);
     void setOne(const Piece& piece, int rank, int file);
 

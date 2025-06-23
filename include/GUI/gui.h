@@ -5,6 +5,7 @@
 #include <vector>
 #include <SDL3/SDL.h>
 
+#include "HumanPlayer.h"
 #include "BoardManager/BoardManager.h"
 
 
@@ -14,6 +15,7 @@ class VisualBoard;
 class EngineBase;
 class ChessPlayer;
 
+
 inline std::unordered_map<SDL_Keycode, bool> modifiersSet = {
             {SDLK_LCTRL, false}, {SDLK_LSHIFT, false}, {SDLK_LALT, false}
         };
@@ -21,20 +23,24 @@ inline std::unordered_map<SDL_Keycode, bool> modifiersSet = {
 class ChessGui {
 public:
 
-    ChessGui();
-
     explicit ChessGui(EngineBase* engine);
     explicit ChessGui(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer);
+    ChessGui();
 
     [[nodiscard]] bool wasInit() const;
 
-    [[nodiscard]] EngineBase *getEngine() const;
     [[nodiscard]] SDL_Renderer *getRenderer() const;
     BoardManager *getBoardManager(){ return &boardManager_; };
-    [[nodiscard]] inline VisualBoard *getVisualBoard() const{ return visualBoard; }
-    void setVisualBoard(VisualBoard* background){ visualBoard = background; }
-
     void registerEntity(DrawableEntity* entity);
+
+
+    ChessPlayer *getWhitePlayer() const{ return whitePlayer_; }
+    ChessPlayer *getBlackPlayer() const{ return blackPlayer_; }
+
+    HumanPlayer *getWhitePlayerAsHuman() const;
+    HumanPlayer *getBlackPlayerAsHuman() const;
+
+
 
     void loop();
 
@@ -57,8 +63,6 @@ private:
     std::vector<DrawableEntity *> drawables;
     VisualBoard* visualBoard;
 
-    // chess engine
-    EngineBase* engine_;
     BoardManager boardManager_;
 
     ChessPlayer* whitePlayer_;
@@ -72,6 +76,8 @@ private:
     std::shared_ptr<VisualPiece> heldPiece;
 
     int clickedSquare = -1;
+
+    ChessPlayer *getCurrentPlayer() const;
 };
 
 

@@ -2,20 +2,12 @@
 
 #include "GUI/gui.h"
 #include "ChessPlayer.h"
+
 #include "GUI/DrawableEntity.h"
 #include "GUI/VisualBoard.h"
 
-ChessGui::ChessGui(){
-    window = SDL_CreateWindow("Chess", 800, 800, 0);
-    renderer = SDL_CreateRenderer(window, nullptr);
-    running = true;
-    visualBoard = new VisualBoard(Vec2D(800, 800), this);
-    registerEntity(visualBoard);
 
-    SDL_Init(SDL_INIT_VIDEO);
-}
-
-ChessGui::ChessGui(EngineBase* engine) : engine_(engine){
+ChessGui::ChessGui(EngineBase* engine){
     window = SDL_CreateWindow("Chess", 800, 800, 0);
     renderer = SDL_CreateRenderer(window, nullptr);
     running = true;
@@ -36,11 +28,31 @@ ChessGui::ChessGui(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer) : whitePl
     SDL_Init(SDL_INIT_VIDEO);
 }
 
+ChessGui::ChessGui(){
+    window = SDL_CreateWindow("Chess", 800, 800, 0);
+    renderer = SDL_CreateRenderer(window, nullptr);
+    running = true;
+    visualBoard = new VisualBoard(Vec2D(800, 800), this);
+    registerEntity(visualBoard);
+
+    SDL_Init(SDL_INIT_VIDEO);
+}
+
 bool ChessGui::wasInit() const{ return window != nullptr && renderer != nullptr; }
 
-EngineBase *ChessGui::getEngine() const{ return engine_; }
 SDL_Renderer *ChessGui::getRenderer() const{ return renderer; }
+
 void ChessGui::registerEntity(DrawableEntity* entity){ drawables.push_back(entity); }
+
+HumanPlayer *ChessGui::getBlackPlayerAsHuman() const{
+    if (const auto humanPlayer = static_cast<HumanPlayer *>(getBlackPlayer())) { return humanPlayer; }
+    return nullptr;;
+}
+
+HumanPlayer *ChessGui::getWhitePlayerAsHuman() const{
+    if (const auto humanPlayer = static_cast<HumanPlayer *>(getWhitePlayer())) { return humanPlayer; }
+    return nullptr;
+}
 
 void ChessGui::loop(){
     if (!wasInit()) { return; }
@@ -124,13 +136,21 @@ void ChessGui::handleKeyDown(const SDL_Keycode keycode){
 
 void ChessGui::handleKeyUp(const SDL_Keycode key){
     for (std::pair<SDL_Keycode, bool> keycode: modifiersSet) {
-        if (keycode.first == key) {
-            modifiersSet[keycode.first] = false;
-        }
+        if (keycode.first == key) { modifiersSet[keycode.first] = false; }
     }
 }
 
+ChessPlayer *ChessGui::getCurrentPlayer() const{
+    if (boardManager_.getCurrentTurn() == Colours::WHITE) { return whitePlayer_; }
+    return blackPlayer_;
+}
+
 void ChessGui::handleMouseDown(const Uint8 button){
+    if ((boardManager_.getCurrentTurn() == Colours::WHITE && whitePlayer_->playerType != PlayerType::HUMAN)
+        ||
+        (boardManager_.getCurrentTurn() == Colours::BLACK && blackPlayer_->playerType != PlayerType::HUMAN)
+    ) { return; }
+
     switch (button) {
         case SDL_BUTTON_LEFT: {
             float x, y;
@@ -156,14 +176,26 @@ void ChessGui::handleMouseUp(const Uint8 button){
 }
 
 void ChessGui::addMouseClick(const int x, const int y){
+    // where on the screen did we click?
     const int file = 1 + static_cast<int>(x / (visualBoard->boardSize().x / 8.f));
     const int rank = 1 + static_cast<int>(8 - (y / (visualBoard->boardSize().y / 8.f)));
-    const char clickedFile = 'a' + file - 1;
+    const int candidateClickedSquare = rankAndFileToSquare(rank, file);
 
-    int candidateClickedSquare = rankAndFileToSquare(rank, file);
+    // check if we clicked on a piece
+    auto clickedPiece = boardManager_.getBitboards()->getPiece(rank, file);
 
-    if (boardManager_.getBitboards()->getPiece(rank, file).has_value()) { clickedSquare = candidateClickedSquare; }
-    std::cout << "Clicked on:" << clickedFile << rank << "Square: " << candidateClickedSquare << std::endl;
+    if (clickedPiece.has_value()) {
+        clickedSquare = candidateClickedSquare;
+        if (pieceColours[clickedPiece.value()] != getCurrentPlayer()->getColour())
+            return;
+
+        // dispatch this click to the current player
+        if (const auto humanPlayer = static_cast<HumanPlayer *>(getCurrentPlayer())) {
+            if (!humanPlayer->playerType == PlayerType::HUMAN)
+                return;
+            humanPlayer->pickUpPiece(candidateClickedSquare);
+        }
+    }
 }
 
 void ChessGui::addMouseRelease(const int x, const int y){
@@ -171,29 +203,11 @@ void ChessGui::addMouseRelease(const int x, const int y){
     const int rank = 1 + static_cast<int>(8 - (y / (visualBoard->boardSize().y / 8.f)));
     const int file = 1 + static_cast<int>(x / (visualBoard->boardSize().x / 8.f));
 
-    if (clickedSquare == -1) { return; }
-
-    int clickedRank, clickedFile;
-    squareToRankAndFile(clickedSquare, clickedRank, clickedFile);
-
-    auto candidateMovePiece = boardManager_.getBitboards()->getPiece(clickedRank, clickedFile);
-
-    if (!candidateMovePiece.has_value()) { return; }
-
-    auto move = Move{
-                .piece = candidateMovePiece.value(),
-                .rankFrom = clickedRank,
-                .fileFrom = clickedFile,
-                .rankTo = rank, .fileTo = file
-            };
-
-    std::cout << "Move: " << move.toUCI() << std::endl;
-
-    if (!boardManager_.tryMove(move)) {
-        clickedSquare = -1;
-        return;
+    if (const auto humanPlayer = static_cast<HumanPlayer *>(getCurrentPlayer())) {
+        if (humanPlayer->getHeldPiece() == -1)
+            return;
+        if (!humanPlayer->playerType == PlayerType::HUMAN)
+            return;
+        humanPlayer->selectDestination(rankAndFileToSquare(rank, file), &boardManager_);
     }
-
-    std::cout << move.result << std::endl;
-    clickedSquare = -1;
 }

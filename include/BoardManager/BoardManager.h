@@ -25,6 +25,7 @@ enum MoveResult {
     BLOCKING_PIECE,
     KING_IN_CHECK,
     EN_PASSANT,
+    DISCOVERED_CHECK,
 };
 
 struct Move {
@@ -51,27 +52,33 @@ public:
     std::stack<Move> &getMoveHistory(){ return moveHistory; }
 
     bool tryMove(Move& move);
-    static bool captureIsLegal(Move& move);
+
     bool checkMove(Move& move);
     void undoMove(const Move& move);
     void undoMove();
 
+    Colours getCurrentTurn() const{ return currentTurn; }
+
 private:
 
+    // internal move legality checkers
+    static bool captureIsLegal(Move& move);
     static bool moveIsLegalForPiece(const Move& move);
     static bool moveInBounds(const Move& move);
     bool pieceInWay(const Move& move) const;
     [[nodiscard]] bool moveDestinationIsEmpty(const Move& move) const;
-    bool moveDestOccupiedByColour(const std::string& testColour, const Move& move) const;
+    bool moveDestOccupiedByColour(const Colours& testColour, const Move& move) const;
     bool moveIsEnPassant(Move& move) const;
+    bool kingInCheck(const Move& move);
+    bool checkWouldBeUncovered(Move& move);
 
-    bool kingInCheck(const Piece& piece, const Move& move);
-
+    // do the move
     void makeMove(const Move& move);
 
+    // data
     BitBoards bitboards{};
-
     std::stack<Move> moveHistory;
+    Colours currentTurn = Colours::WHITE;
 };
 
 

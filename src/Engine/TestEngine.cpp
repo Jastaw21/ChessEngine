@@ -5,11 +5,9 @@
 #include "Engine/TestEngine.h"
 
 
-TestEngine::TestEngine() : EngineBase() {
 
 
-
-}
+TestEngine::TestEngine(const Colours colour) : EngineBase(colour){}
 
 void TestEngine::evaluate() {
     return;
