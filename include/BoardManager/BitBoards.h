@@ -30,8 +30,8 @@ struct Move;
  * @return The corresponding square index in the range [0, 63].
  * @throws std::invalid_argument if rank or file is outside the range [1, 8].
  */
-int rankAndFileToSquare(const int rank, const int file);
-void squareToRankAndFile(const int square, int& rank, int& file);
+int rankAndFileToSquare(int rank, int file);
+void squareToRankAndFile(int square, int& rank, int& file);
 
 namespace Comparisons {
     constexpr uint64_t buildFileBoard(const char file){
@@ -49,7 +49,7 @@ namespace Comparisons {
         return result;
     }
 
-    constexpr std::array<uint64_t, 8> files = {
+    constexpr std::array files = {
                 buildFileBoard('a'),
                 buildFileBoard('b'),
                 buildFileBoard('c'),
@@ -60,7 +60,7 @@ namespace Comparisons {
                 buildFileBoard('h')
             };
 
-    constexpr std::array<uint64_t, 8> ranks = {
+    constexpr std::array ranks = {
                 buildRankBoard(1),
                 buildRankBoard(2),
                 buildRankBoard(3),
@@ -93,17 +93,17 @@ public:
     [[nodiscard]] uint64_t getBitboard(const Piece& piece) const;
     uint64_t &operator[](const Piece piece){ return bitboards[piece]; }
 
-    std::optional<Piece> getPiece(const int rank, const int file) const;
+    std::optional<Piece> getPiece(int rank, int file) const;
     std::optional<Piece> getPiece(int square) const;
-    void setZero(const int rank, const int file);
+    void setZero(int rank, int file);
     void setOne(const Piece& piece, int rank, int file);
 
-    bool test(const uint64_t inBoard) const;
+    bool test(uint64_t inBoard) const;
 
 private:
 
     // array of PIECE_N length bitboards
-    std::array<uint64_t, Piece::PIECE_N> bitboards;
+    std::array<uint64_t, PIECE_N> bitboards;
     std::string fen_{};
 };
 

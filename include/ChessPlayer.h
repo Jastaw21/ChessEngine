@@ -15,7 +15,7 @@ class ChessPlayer {
 public:
 
     virtual ~ChessPlayer() = default;
-    explicit ChessPlayer(const Colours colour, const PlayerType playerType);
+    explicit ChessPlayer(Colours colour, PlayerType playerType);
 
     virtual Move makeMove() =0;
 
@@ -23,9 +23,9 @@ public:
         bIsReady = isReady;
         return bIsReady;
     };
-    bool isReady() const{ return bIsReady; };
-    void setColour(const Colours& colour){ this->colour = colour; };
-    Colours getColour() const{ return colour; };
+    bool isReady() const{ return bIsReady; }
+    void setColour(const Colours& colour){ this->colour = colour; }
+    Colours getColour() const{ return colour; }
 
     PlayerType playerType;
 

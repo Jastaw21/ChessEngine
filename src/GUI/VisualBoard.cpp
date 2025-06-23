@@ -3,12 +3,13 @@
 //
 
 
+#include "GUI/VisualBoard.h"
+
 #include <bitset>
 
-#include "GUI/VisualBoard.h"
+#include "BoardManager/BitBoards.h"
 #include "GUI/gui.h"
 #include "GUI/VisualPiece.h"
-#include "BoardManager/BitBoards.h"
 
 BoardSquare::BoardSquare(const bool isWhite_p, const int rank_p, const int file_p, const SDL_FRect& rect)
     : isWhite(isWhite_p),
@@ -17,7 +18,7 @@ BoardSquare::BoardSquare(const bool isWhite_p, const int rank_p, const int file_
       rect_(rect){ renderInfo.color = isWhite ? SDL_Color(255, 242, 204, 255) : SDL_Color(51, 48, 40, 255); }
 
 void BoardSquare::draw(SDL_Renderer* renderTarget){
-    SDL_Color& color = renderInfo.color;
+    const SDL_Color& color = renderInfo.color;
     SDL_SetRenderDrawColor(renderTarget, color.r, color.g, color.b, color.a);
     SDL_RenderFillRect(renderTarget, &rect_);
 }
@@ -49,27 +50,27 @@ VisualBoard::VisualBoard(const Vec2D& boardSizePixels, ChessGui* gui): boardSize
     build_background(square_size);
 
     auto builder = VisualPieceBuilder(square_size, gui);
-    auto created_pieces = builder.buildInstances();
+    const auto created_pieces = builder.buildInstances();
     for (auto& piece: created_pieces) { pieces_.push_back(piece); }
 }
 
 VisualBoard::~VisualBoard(){
-    while (!pieces_.empty()) { pieces_.pop_back(); };
-    while (!squares_.empty()) { squares_.pop_back(); };
+    while (!pieces_.empty()) { pieces_.pop_back(); }
+    while (!squares_.empty()) { squares_.pop_back(); }
 }
 
 void VisualBoard::draw(SDL_Renderer* renderer){
     for (auto& square: squares_) { square.draw(renderer); }
 
     const auto& boards = parent_->getBoardManager()->getBitboards();
-    for (int pieceIndex = 0; pieceIndex < Piece::PIECE_N; pieceIndex++) {
+    for (int pieceIndex = 0; pieceIndex < PIECE_N; pieceIndex++) {
         const auto piece = static_cast<Piece>(pieceIndex);
         auto bits = std::bitset<64>(boards->getBitboard(piece));
 
         for (size_t index = 0; index < bits.size(); ++index) {
             if (bits.test(index)) {
-                const int rank = 7- (index / 8);
-                const int file = (index % 8);
+                const int rank = 7- index / 8;
+                const int file = index % 8;
 
                 const auto destRect = SDL_FRect{
                             .x = file * squareSize().x, .y = rank * squareSize().y, .w = squareSize().x,
@@ -91,17 +92,18 @@ std::shared_ptr<VisualPiece> VisualBoard::pieceAtLocation(const int rank, const 
     return nullptr;
 }
 
+// ReSharper disable once CppMemberFunctionMayBeConst
 void VisualBoard::updatePieceLocation(const Piece piece, const size_t index){
-    const int rank = 1 + (index / 8);
-    const int file = (index % 8);
+    const int rank = 1 + index / 8;
+    const int file = index % 8;
     const auto relevantPiece = getFirstPieceOfType(piece);
     if (relevantPiece.has_value()) { relevantPiece->get()->setLocation(rank, file); }
 }
 
 
 void VisualBoard::updatePieceLocations(){
-    auto bb = parent_->getBoardManager()->getBitboards();
-    for (int pieceIndex = 0; pieceIndex < Piece::PIECE_N; pieceIndex++) {
+    const auto bb = parent_->getBoardManager()->getBitboards();
+    for (int pieceIndex = 0; pieceIndex < PIECE_N; pieceIndex++) {
         const auto piece = static_cast<Piece>(pieceIndex);
         auto bits = std::bitset<64>(bb->getBitboard(piece));
 

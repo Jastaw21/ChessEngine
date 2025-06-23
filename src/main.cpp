@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "HumanPlayer.h"
 #include "BoardManager/BitBoards.h"
 #include "Engine/TestEngine.h"
@@ -9,8 +7,8 @@
 
 int main(int argc, char** argv){
 
-    auto whitePlayer = HumanPlayer(Colours::WHITE);
-    auto blackPlayer = HumanPlayer(Colours::BLACK);
+    auto whitePlayer = HumanPlayer(WHITE);
+    auto blackPlayer = HumanPlayer(BLACK);
     auto gui = ChessGui(&whitePlayer, &blackPlayer);
 
 

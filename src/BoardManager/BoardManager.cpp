@@ -2,6 +2,7 @@
 // Created by jacks on 18/06/2025.
 //
 
+// ReSharper disable CppTooWideScopeInitStatement
 #include "BoardManager/BoardManager.h"
 
 #include <bitset>
@@ -24,16 +25,16 @@ std::string Move::toUCI() const{
 
 Move createMove(const Piece& piece, const std::string& moveUCI){
     const char fromFile = moveUCI[0];
-    const int fileFrom = (fromFile - 'a') + 1;
+    const int fileFrom = fromFile - 'a' + 1;
 
     const char fromRank = moveUCI[1];
-    const int rankFrom = (fromRank - '1') + 1;
+    const int rankFrom = fromRank - '1' + 1;
 
     const char toFile = moveUCI[2];
-    const int fileTo = (toFile - 'a') + 1;
+    const int fileTo = toFile - 'a' + 1;
 
     const char toRank = moveUCI[3];
-    const int rankTo = (toRank - '1') + 1;
+    const int rankTo = toRank - '1' + 1;
 
     const Move newMove = {
                 .piece = piece, .rankFrom = rankFrom, .fileFrom = fileFrom, .rankTo = rankTo, .fileTo = fileTo
@@ -50,54 +51,51 @@ bool BoardManager::moveIsLegalForPiece(const Move& move){
     const int deltaFile = move.fileTo - move.fileFrom;
 
     switch (move.piece) {
-        case Piece::WP:
+        case WP:
             // if it doesn't move north at all, can't work
             if (deltaRank <= 0)
                 return false;
 
             if (move.rankFrom == 2)
                 return abs(deltaRank) <= 2;
-            else
-                return abs(deltaRank) <= 1;
+            return abs(deltaRank) <= 1;
 
-        case Piece::BP:
+        case BP:
             // if it doesn't move south at all, can't work
             if (deltaRank >= 0)
                 return false;
             if (move.rankFrom == 7)
                 return abs(deltaRank) <= 2;
-            else
-                return abs(deltaRank) <= 1;
+            return abs(deltaRank) <= 1;
 
-        case Piece::WR:
-        case Piece::BR:
+        case WR:
+        case BR:
             return move.rankFrom == move.rankTo || move.fileFrom == move.fileTo;
 
-        case Piece::WB:
-        case Piece::BB:
+        case WB:
+        case BB:
             return abs(deltaRank) == abs(deltaFile);
 
-        case Piece::WQ:
-        case Piece::BQ: {
-            bool isDiagonal = (abs(deltaRank) == abs(deltaFile));
-            bool isVertical = abs(deltaRank) > 0 && abs(deltaFile) == 0;
-            bool isHorizontal = abs(deltaRank) == 0 && abs(deltaFile) > 0;
+        case WQ:
+        case BQ: {
+            const bool isDiagonal = abs(deltaRank) == abs(deltaFile);
+            const bool isVertical = abs(deltaRank) > 0 && abs(deltaFile) == 0;
+            const bool isHorizontal = abs(deltaRank) == 0 && abs(deltaFile) > 0;
 
             return isDiagonal || isHorizontal || isVertical;
         }
 
-
-        case Piece::WK:
-        case Piece::BK:
+        case WK:
+        case BK:
             return abs(deltaRank) == 1 || abs(deltaFile) == 1;
 
-        case Piece::WN:
-        case Piece::BN:
+        case WN:
+        case BN:
             return abs(deltaRank) == 2 && abs(deltaFile) == 1 || abs(deltaRank) == 1 && abs(deltaFile) == 2;
 
         default:
             return true;
-    };
+    }
 }
 
 bool BoardManager::moveInBounds(const Move& move){
@@ -114,7 +112,7 @@ bool BoardManager::moveInBounds(const Move& move){
 
 bool BoardManager::pieceInWay(const Move& move) const{
     // knights can jump anywhere
-    if (move.piece == Piece::BN || move.piece == Piece::WN)
+    if (move.piece == BN || move.piece == WN)
         return false;
     std::vector<int> squaresOnPath;
 
@@ -152,14 +150,14 @@ bool BoardManager::pieceInWay(const Move& move) const{
 
     // we now have the squares th`at we'll cross
     uint64_t crossedSquares = 0ULL;
-    for (const auto& square: squaresOnPath) { crossedSquares |= (1ULL << square); }
+    for (const auto& square: squaresOnPath) { crossedSquares |= 1ULL << square; }
 
     // return true if any collisions along route
     return bitboards.test(crossedSquares);
 }
 
 bool BoardManager::moveDestinationIsEmpty(const Move& move) const{
-    auto test = bitboards.getPiece(move.rankTo, move.fileTo);
+    const auto test = bitboards.getPiece(move.rankTo, move.fileTo);
     return !test.has_value();
 }
 
@@ -168,7 +166,7 @@ bool BoardManager::moveDestOccupiedByColour(const Colours& testColour, const Mov
     // the square is empty
     if (!test.has_value()) { return false; }
 
-    if ((pieceColours[test.value()] == testColour))
+    if (pieceColours[test.value()] == testColour)
         return true;
 
     return false;
@@ -178,7 +176,7 @@ bool BoardManager::moveIsEnPassant(Move& move) const{
     const auto lastMove = moveHistory.top();
 
     // only relevant if pawns have moved...
-    if (lastMove.piece != Piece::BP && lastMove.piece != Piece::WP)
+    if (lastMove.piece != BP && lastMove.piece != WP)
         return false;
 
     // ... and mismatched pieces..
@@ -194,11 +192,11 @@ bool BoardManager::moveIsEnPassant(Move& move) const{
         return false;
 
     // and must end up north (WP is the mover) or south (BP) of the last move's destination
-    int targetRank = lastMove.rankTo - sign(lastMove.rankTo - lastMove.rankFrom);
+    const int targetRank = lastMove.rankTo - sign(lastMove.rankTo - lastMove.rankFrom);
     if (move.rankTo != targetRank)
         return false;
 
-    move.result = MoveResult::EN_PASSANT;
+    move.result = EN_PASSANT;
     const auto& capturedPiece = bitboards.getPiece(lastMove.rankTo, move.fileTo);
     move.capturedPiece = capturedPiece.value();
     return true;
@@ -207,22 +205,22 @@ bool BoardManager::moveIsEnPassant(Move& move) const{
 bool BoardManager::kingInCheck(const Move& move){
     Piece validAttackingPieces[5];
 
-    if (pieceColours[move.piece] == Colours::BLACK) {
-        validAttackingPieces[0] = Piece::WR;
-        validAttackingPieces[1] = Piece::WN;
-        validAttackingPieces[2] = Piece::WB;
-        validAttackingPieces[3] = Piece::WQ;
-        validAttackingPieces[4] = Piece::WK;
+    if (pieceColours[move.piece] == BLACK) {
+        validAttackingPieces[0] = WR;
+        validAttackingPieces[1] = WN;
+        validAttackingPieces[2] = WB;
+        validAttackingPieces[3] = WQ;
+        validAttackingPieces[4] = WK;
     } else {
-        validAttackingPieces[0] = Piece::BR;
-        validAttackingPieces[1] = Piece::BN;
-        validAttackingPieces[2] = Piece::BB;
-        validAttackingPieces[3] = Piece::BQ;
-        validAttackingPieces[4] = Piece::BK;
+        validAttackingPieces[0] = BR;
+        validAttackingPieces[1] = BN;
+        validAttackingPieces[2] = BB;
+        validAttackingPieces[3] = BQ;
+        validAttackingPieces[4] = BK;
     }
 
     // check there's actually a king on the board
-    auto relevantKing = pieceColours[move.piece] == Colours::BLACK ? Piece::BK : Piece::WK;
+    const auto relevantKing = pieceColours[move.piece] == BLACK ? BK : WK;
     const auto& kingLocation = bitboards[relevantKing];
     if (kingLocation == 0)
         return false;
@@ -258,7 +256,7 @@ bool BoardManager::kingInCheck(const Move& move){
     return false;
 }
 
-bool BoardManager::checkWouldBeUncovered(Move& move){
+bool BoardManager::checkWouldBeUncovered(const Move& move){
     makeMove(move);
 
     if (kingInCheck(move)) {
@@ -276,13 +274,13 @@ bool BoardManager::tryMove(Move& move){
 }
 
 bool BoardManager::captureIsLegal(Move& move){
-    if (move.capturedPiece == Piece::WK || move.capturedPiece == Piece::BK) {
-        move.capturedPiece = Piece::PIECE_N;
+    if (move.capturedPiece == WK || move.capturedPiece == BK) {
+        move.capturedPiece = PIECE_N;
         return false;
     }
 
     // if it's a pawn, must be diagonal to capture
-    if (move.piece == Piece::WP || move.piece == Piece::BP) {
+    if (move.piece == WP || move.piece == BP) {
         const bool isDiagonal = abs(move.rankTo - move.rankFrom) == 1 && abs(move.fileTo - move.fileFrom) == 1;
         return isDiagonal;
     }
@@ -293,43 +291,43 @@ bool BoardManager::captureIsLegal(Move& move){
 bool BoardManager::checkMove(Move& move){
     // can this piece do that kind of move?
     if (!moveIsLegalForPiece(move)) {
-        move.result = MoveResult::MOVE_NOT_LEGAL_FOR_PIECE;
+        move.result = MOVE_NOT_LEGAL_FOR_PIECE;
         return false;
     }
     // is it in bounds?
     if (!moveInBounds(move)) {
-        move.result = MoveResult::MOVE_OUT_OF_BOUNDS;
+        move.result = MOVE_OUT_OF_BOUNDS;
         return false;
     }
 
     // is the square occupied by this colour?
     if (moveDestOccupiedByColour(pieceColours[move.piece], move)) {
-        move.result = MoveResult::SQUARE_OCCUPIED;
+        move.result = SQUARE_OCCUPIED;
         return false;
     }
 
     // would we have to step over other pieces?
     if (pieceInWay(move)) {
-        move.result = MoveResult::BLOCKING_PIECE;
+        move.result = BLOCKING_PIECE;
         return false;
     }
 
     // is the king trying to be moved in check
-    if (move.piece == Piece::WK || move.piece == Piece::BK) {
+    if (move.piece == WK || move.piece == BK) {
         if (kingInCheck(move)) {
-            move.result = MoveResult::KING_IN_CHECK;
+            move.result = KING_IN_CHECK;
             return false;
         }
     }
 
     if (checkWouldBeUncovered(move)) {
-        move.result = MoveResult::DISCOVERED_CHECK;
+        move.result = DISCOVERED_CHECK;
         return false;
     }
 
     // is it an en passant capture?
     if (moveHistory.size() > 0 && moveIsEnPassant(move)) {
-        move.result = MoveResult::EN_PASSANT;
+        move.result = EN_PASSANT;
         return true;
     }
 
@@ -339,52 +337,49 @@ bool BoardManager::checkMove(Move& move){
         const auto capturedPiece = bitboards.getPiece(move.rankTo, move.fileTo);
         move.capturedPiece = capturedPiece.value();
         if (captureIsLegal(move)) {
-            move.result = MoveResult::PIECE_CAPTURE;
+            move.result = PIECE_CAPTURE;
             return true;
-        } else {
-            move.result = MoveResult::MOVE_NOT_LEGAL_FOR_PIECE;
-            return false;
         }
+        move.result = MOVE_NOT_LEGAL_FOR_PIECE;
+        return false;
     }
 
     // if it's not a capture and is a pawn, recheck that it's vertical
-    if ((move.piece == Piece::WP || move.piece == Piece::BP)
+    if ((move.piece == WP || move.piece == BP)
         && move.fileTo != move.fileFrom) {
-        move.result = MoveResult::MOVE_NOT_LEGAL_FOR_PIECE;
+        move.result = MOVE_NOT_LEGAL_FOR_PIECE;
         return false;
     }
 
     // the last possible result is an empty square?
-    move.result = MoveResult::MOVE_TO_EMPTY_SQUARE;
+    move.result = MOVE_TO_EMPTY_SQUARE;
     return true;
 }
 
 void BoardManager::undoMove(const Move& move){
     // set the form bit back to one
-    auto squareFrom = rankAndFileToSquare(move.rankFrom, move.fileFrom);
-    bitboards[move.piece] |= (1ULL << squareFrom);
+    const auto squareFrom = rankAndFileToSquare(move.rankFrom, move.fileFrom);
+    bitboards[move.piece] |= 1ULL << squareFrom;
 
     // if it was a capture, restore that piece to one
-    if (move.result == MoveResult::PIECE_CAPTURE) {
-        auto squareTo = rankAndFileToSquare(move.rankTo, move.fileTo);
-        bitboards[move.capturedPiece] |= (1ULL << squareTo);
+    if (move.result == PIECE_CAPTURE) {
+        const auto squareTo = rankAndFileToSquare(move.rankTo, move.fileTo);
+        bitboards[move.capturedPiece] |= 1ULL << squareTo;
     }
 
     // if it was an en_passant capture, restore the correct square to one
-    if (move.result == MoveResult::EN_PASSANT) {
-        bitboards.setOne(moveHistory.top().piece, moveHistory.top().rankTo, move.fileTo);
-    }
+    if (move.result == EN_PASSANT) { bitboards.setOne(moveHistory.top().piece, moveHistory.top().rankTo, move.fileTo); }
 
     // set the to bit back to zero for this piece
-    auto squareTo = rankAndFileToSquare(move.rankTo, move.fileTo);
+    const auto squareTo = rankAndFileToSquare(move.rankTo, move.fileTo);
     bitboards[move.piece] &= ~(1ULL << squareTo);
 
     moveHistory.pop();
 
-    if (currentTurn == Colours::WHITE)
-        currentTurn = Colours::BLACK;
+    if (currentTurn == WHITE)
+        currentTurn = BLACK;
     else
-        currentTurn = Colours::WHITE;
+        currentTurn = WHITE;
 }
 
 void BoardManager::undoMove(){
@@ -392,34 +387,34 @@ void BoardManager::undoMove(){
         return;
     undoMove(moveHistory.top());
 
-    if (currentTurn == Colours::WHITE)
-        currentTurn = Colours::BLACK;
+    if (currentTurn == WHITE)
+        currentTurn = BLACK;
     else
-        currentTurn = Colours::WHITE;
+        currentTurn = WHITE;
 }
 
 
 void BoardManager::makeMove(const Move& move){
     // set the from square of the moving piece to zero
-    auto squareFrom = rankAndFileToSquare(move.rankFrom, move.fileFrom);
+    const auto squareFrom = rankAndFileToSquare(move.rankFrom, move.fileFrom);
     bitboards[move.piece] &= ~(1ULL << squareFrom);
 
     // if it was a capture, set that piece to zero
-    if (move.result == MoveResult::PIECE_CAPTURE)
+    if (move.result == PIECE_CAPTURE)
         bitboards.setZero(move.rankTo, move.fileTo);
 
     // if it was an en_passant capture, set the correct square to zero
-    if (move.result == MoveResult::EN_PASSANT)
+    if (move.result == EN_PASSANT)
         bitboards.setZero(moveHistory.top().rankTo, move.fileTo);
 
     // set the to square of the moving piece to one
-    auto squareTo = rankAndFileToSquare(move.rankTo, move.fileTo);
-    bitboards[move.piece] |= (1ULL << squareTo);
+    const auto squareTo = rankAndFileToSquare(move.rankTo, move.fileTo);
+    bitboards[move.piece] |= 1ULL << squareTo;
 
-    if (currentTurn == Colours::WHITE)
-        currentTurn = Colours::BLACK;
+    if (currentTurn == WHITE)
+        currentTurn = BLACK;
     else
-        currentTurn = Colours::WHITE;
+        currentTurn = WHITE;
 
     moveHistory.push(move);
 }

@@ -35,19 +35,16 @@ void BitBoards::loadFEN(const std::string& fen){
     size_t i = 0;
 
     while (i < fen.size() && fen[i] != ' ') {
-        char c = fen[i];
-
-        if (c == '/') {
+        if (char c = fen[i]; c == '/') {
             rank--;
             file = 1;
         } // Move to the next rank
         else if (isdigit(c))
-            file += (c - '0'); // Skip that many empty squares
+            file += c - '0'; // Skip that many empty squares
         else {
-            auto it = pieceMap.find(c);
-            if (it != pieceMap.end()) {
+            if (auto it = pieceMap.find(c); it != pieceMap.end()) {
                 const int square = rankAndFileToSquare(rank, file);
-                bitboards[it->second] |= (1ULL << square);
+                bitboards[it->second] |= 1ULL << square;
             }
             file++;
         }
@@ -63,9 +60,10 @@ std::optional<Piece> BitBoards::getPiece(const int rank, const int file) const{
 
     // Check if the destination square is empty
 
-    for (int pieceIndex = 0; pieceIndex < Piece::PIECE_N; ++pieceIndex) {
+    for (int pieceIndex = 0; pieceIndex < PIECE_N; ++pieceIndex) {
+        // ReSharper disable once CppTooWideScopeInitStatement
         auto piece = static_cast<Piece>(pieceIndex);
-        if ((bitboards[piece] & (1ULL << toSquare)) != 0) { return {piece}; }
+        if ((bitboards[piece] & 1ULL << toSquare) != 0) { return {piece}; }
     }
     return {};
 }
@@ -79,14 +77,14 @@ std::optional<Piece> BitBoards::getPiece(const int square) const{
 void BitBoards::setZero(const int rank, const int file){
     const int toSquare = rankAndFileToSquare(rank, file);
     for (int pieceIndex = 0; pieceIndex < 12; pieceIndex++) {
-        auto piece = static_cast<Piece>(pieceIndex);
+        const auto piece = static_cast<Piece>(pieceIndex);
         bitboards[piece] &= ~(1ULL << toSquare);
     }
 }
 
 void BitBoards::setOne(const Piece& piece, const int rank, const int file){
     const int toSquare = rankAndFileToSquare(rank, file);
-    bitboards[piece] |= (1ULL << toSquare);
+    bitboards[piece] |= 1ULL << toSquare;
 }
 
 
@@ -115,7 +113,7 @@ std::string &BitBoards::toFEN(){
             // check each piece
             for (const auto& [key, value]: pieceMap) {
                 // if the bit is in the bitboard, and-ed with the square, then we have a piece here
-                if (bitboards[value] & (1ULL << square)) {
+                if (bitboards[value] & 1ULL << square) {
                     isPieceHere = true;
                     fen_ += key;
                     break;

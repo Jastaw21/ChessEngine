@@ -9,7 +9,7 @@
 class EngineBase : public ChessPlayer {
 public:
 
-    EngineBase(const Colours colour = Colours::WHITE);
+    explicit EngineBase(Colours colour = WHITE);
     virtual void evaluate() = 0;
     virtual void search() = 0;
 

@@ -23,14 +23,13 @@ inline std::unordered_map<SDL_Keycode, bool> modifiersSet = {
 class ChessGui {
 public:
 
-    explicit ChessGui(EngineBase* engine);
     explicit ChessGui(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer);
     ChessGui();
 
     [[nodiscard]] bool wasInit() const;
 
     [[nodiscard]] SDL_Renderer *getRenderer() const;
-    BoardManager *getBoardManager(){ return &boardManager_; };
+    BoardManager *getBoardManager(){ return &boardManager_; }
     void registerEntity(DrawableEntity* entity);
 
 
@@ -41,13 +40,12 @@ public:
     HumanPlayer *getBlackPlayerAsHuman() const;
 
 
-
     void loop();
 
-    void addMouseClick(const int x, const int y);
-    void addMouseRelease(const int x, const int y);
+    void addMouseClick(int x, int y);
+    void addMouseRelease(int x, int y);
 
-    [[nodiscard]] int clicked_square() const{ return clickedSquare; }
+    [[nodiscard]] int clicked_square(){ return clickedSquare; }
 
 private:
 

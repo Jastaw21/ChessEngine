@@ -7,16 +7,6 @@
 #include "GUI/VisualBoard.h"
 
 
-ChessGui::ChessGui(EngineBase* engine){
-    window = SDL_CreateWindow("Chess", 800, 800, 0);
-    renderer = SDL_CreateRenderer(window, nullptr);
-    running = true;
-    visualBoard = new VisualBoard(Vec2D(800, 800), this);
-    registerEntity(visualBoard);
-
-    SDL_Init(SDL_INIT_VIDEO);
-}
-
 ChessGui::ChessGui(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer) : whitePlayer_(whitePlayer),
                                                                          blackPlayer_(blackPlayer){
     window = SDL_CreateWindow("Chess", 800, 800, 0);
@@ -141,14 +131,14 @@ void ChessGui::handleKeyUp(const SDL_Keycode key){
 }
 
 ChessPlayer *ChessGui::getCurrentPlayer() const{
-    if (boardManager_.getCurrentTurn() == Colours::WHITE) { return whitePlayer_; }
+    if (boardManager_.getCurrentTurn() == WHITE) { return whitePlayer_; }
     return blackPlayer_;
 }
 
 void ChessGui::handleMouseDown(const Uint8 button){
-    if ((boardManager_.getCurrentTurn() == Colours::WHITE && whitePlayer_->playerType != PlayerType::HUMAN)
+    if ((boardManager_.getCurrentTurn() == WHITE && whitePlayer_->playerType != HUMAN)
         ||
-        (boardManager_.getCurrentTurn() == Colours::BLACK && blackPlayer_->playerType != PlayerType::HUMAN)
+        (boardManager_.getCurrentTurn() == BLACK && blackPlayer_->playerType != HUMAN)
     ) { return; }
 
     switch (button) {
@@ -178,11 +168,11 @@ void ChessGui::handleMouseUp(const Uint8 button){
 void ChessGui::addMouseClick(const int x, const int y){
     // where on the screen did we click?
     const int file = 1 + static_cast<int>(x / (visualBoard->boardSize().x / 8.f));
-    const int rank = 1 + static_cast<int>(8 - (y / (visualBoard->boardSize().y / 8.f)));
+    const int rank = 1 + static_cast<int>(8 - y / (visualBoard->boardSize().y / 8.f));
     const int candidateClickedSquare = rankAndFileToSquare(rank, file);
 
     // check if we clicked on a piece
-    auto clickedPiece = boardManager_.getBitboards()->getPiece(rank, file);
+    const auto clickedPiece = boardManager_.getBitboards()->getPiece(rank, file);
 
     if (clickedPiece.has_value()) {
         clickedSquare = candidateClickedSquare;
@@ -191,7 +181,7 @@ void ChessGui::addMouseClick(const int x, const int y){
 
         // dispatch this click to the current player
         if (const auto humanPlayer = static_cast<HumanPlayer *>(getCurrentPlayer())) {
-            if (!humanPlayer->playerType == PlayerType::HUMAN)
+            if (!humanPlayer->playerType == HUMAN)
                 return;
             humanPlayer->pickUpPiece(candidateClickedSquare);
         }
@@ -200,13 +190,13 @@ void ChessGui::addMouseClick(const int x, const int y){
 
 void ChessGui::addMouseRelease(const int x, const int y){
     // need to effectively round down to the nearest rank/file
-    const int rank = 1 + static_cast<int>(8 - (y / (visualBoard->boardSize().y / 8.f)));
+    const int rank = 1 + static_cast<int>(8 - y / (visualBoard->boardSize().y / 8.f));
     const int file = 1 + static_cast<int>(x / (visualBoard->boardSize().x / 8.f));
 
     if (const auto humanPlayer = static_cast<HumanPlayer *>(getCurrentPlayer())) {
         if (humanPlayer->getHeldPiece() == -1)
             return;
-        if (!humanPlayer->playerType == PlayerType::HUMAN)
+        if (!humanPlayer->playerType == HUMAN)
             return;
         humanPlayer->selectDestination(rankAndFileToSquare(rank, file), &boardManager_);
     }

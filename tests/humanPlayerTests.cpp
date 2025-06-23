@@ -8,20 +8,20 @@
 #include "GUI/gui.h"
 #include "Utility/Fen.h"
 
-class HumanPlayerInteractionTests : public ::testing::Test {
+class HumanPlayerInteractionTests : public testing::Test {
 protected:
 
-    void SetUp() override{
-        whitePlayer = HumanPlayer(Colours::WHITE);
-        blackPlayer = HumanPlayer(Colours::BLACK);
+    virtual void SetUp() override{
+        whitePlayer = HumanPlayer(WHITE);
+        blackPlayer = HumanPlayer(BLACK);
 
         gui = ChessGui(&whitePlayer, &blackPlayer);
 
         gui.getBoardManager()->getBitboards()->loadFEN(Fen::STARTING_FEN);
     }
 
-    HumanPlayer whitePlayer{Colours::WHITE};
-    HumanPlayer blackPlayer{Colours::BLACK};
+    HumanPlayer whitePlayer{WHITE};
+    HumanPlayer blackPlayer{BLACK};
     ChessGui gui{nullptr, nullptr}; // Or default ctor if supported
 };
 

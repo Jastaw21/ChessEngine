@@ -5,11 +5,11 @@
 #ifndef BOARDBACKGROUND_H
 #define BOARDBACKGROUND_H
 
-#include "DrawableEntity.h"
-#include "VisualPiece.h"
 #include <memory>
 #include <optional>
 
+#include "DrawableEntity.h"
+#include "VisualPiece.h"
 #include "Utility/Vec2D.h"
 
 class BitBoards;
@@ -70,7 +70,7 @@ private:
 
     bool boardDirty = true;
 
-    std::optional<std::shared_ptr<VisualPiece> > getFirstPieceOfType(const Piece piece_) const;
+    std::optional<std::shared_ptr<VisualPiece> > getFirstPieceOfType(Piece piece_) const;
     std::unordered_map<Piece, VisualPiece> pieceInstances;
 };
 

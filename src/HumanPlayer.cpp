@@ -4,7 +4,7 @@
 
 #include "../include/HumanPlayer.h"
 
-HumanPlayer::HumanPlayer(const Colours colour): ChessPlayer(colour, PlayerType::HUMAN),
+HumanPlayer::HumanPlayer(const Colours colour): ChessPlayer(colour, HUMAN),
                                                 clickedSquare_(-1){}
 
 Move HumanPlayer::makeMove(){}
@@ -12,7 +12,7 @@ Move HumanPlayer::makeMove(){}
 void HumanPlayer::selectDestination(const int destSquare, BoardManager* manager){
     if (clickedSquare_ == -1)
         return;
-    auto candidateMovePiece = manager->getBitboards()->getPiece(clickedSquare_);
+    const auto candidateMovePiece = manager->getBitboards()->getPiece(clickedSquare_);
 
     int clickedRank, clickedFile, rank, file;
     squareToRankAndFile(clickedSquare_, clickedRank, clickedFile);

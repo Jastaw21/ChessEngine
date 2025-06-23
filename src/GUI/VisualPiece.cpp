@@ -3,13 +3,14 @@
 //
 
 
-#include <map>
+#include "GUI/VisualPiece.h"
+
 #include <iostream>
-#include <SDL3_image/SDL_image.h>
+#include <map>
 #include <utility>
+#include <SDL3_image/SDL_image.h>
 
 #include "GUI/gui.h"
-#include "GUI/VisualPiece.h"
 
 const inline std::map<const char, std::string> pieceFileSuffixes = {
             {'p', "-pawn.png"},
@@ -24,7 +25,6 @@ inline constexpr auto SRC_RECT_128_128 = SDL_FRect{0, 0, 128, 128};
 
 
 VisualPiece::VisualPiece(std::shared_ptr<SDL_Texture> texture,
-                         const int rank, const int file,
                          const Vec2D& squareSize,
                          std::shared_ptr<ConcretePiece> piece)
 
@@ -43,10 +43,9 @@ void VisualPiece::draw(SDL_Renderer* renderer){
     SDL_RenderTexture(renderer, text, &SRC_RECT_128_128, &destRect);
 }
 
-void VisualPiece::draw(SDL_Renderer* renderer, const SDL_FRect& destRect){
+void VisualPiece::draw(SDL_Renderer* renderer, const SDL_FRect& destRect) const{
     const auto text = texture_.get();
     SDL_RenderTexture(renderer, text, &SRC_RECT_128_128, &destRect);
-
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
@@ -100,7 +99,7 @@ std::vector<std::shared_ptr<VisualPiece> > VisualPieceBuilder::FromFEN(const std
             auto uniqueTexture = std::shared_ptr<SDL_Texture>(rawPieceTexture, SDL_DestroyTexture);
 
             // construct the piece
-            auto piece = std::make_shared<VisualPiece>(uniqueTexture, rank, file, squareSize, concretePiece);
+            auto piece = std::make_shared<VisualPiece>(uniqueTexture, squareSize, concretePiece);
 
             // add it and move on
             pieces.push_back(piece);
@@ -113,12 +112,12 @@ std::vector<std::shared_ptr<VisualPiece> > VisualPieceBuilder::FromFEN(const std
 
 std::vector<std::shared_ptr<VisualPiece> > VisualPieceBuilder::buildInstances(){
     std::vector<std::shared_ptr<VisualPiece> > pieces;
-    for (int piece = 0; piece < Piece::PIECE_N; piece++) {
+    for (int piece = 0; piece < PIECE_N; piece++) {
         const auto pieceType = static_cast<Piece>(piece);
 
         auto concretePiece = std::make_shared<ConcretePiece>(pieceType, 0, 0);
 
-        const bool isWhite = pieceColours[pieceType] == Colours::WHITE;
+        const bool isWhite = pieceColours[pieceType] == WHITE;
         char fenStyleString = tolower(reversePieceMap.at(pieceType));
         // where is the piece saved?
         std::string path = source_path +
@@ -130,7 +129,7 @@ std::vector<std::shared_ptr<VisualPiece> > VisualPieceBuilder::buildInstances(){
         auto uniqueTexture = std::shared_ptr<SDL_Texture>(rawPieceTexture, SDL_DestroyTexture);
 
         // construct the piece
-        auto visualPiece = std::make_shared<VisualPiece>(uniqueTexture, 0, 0, squareSize, concretePiece);
+        auto visualPiece = std::make_shared<VisualPiece>(uniqueTexture, squareSize, concretePiece);
 
         // add it and move on
         pieces.push_back(visualPiece);

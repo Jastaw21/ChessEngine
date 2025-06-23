@@ -36,7 +36,7 @@ struct Move {
     int fileTo;
 
     MoveResult result;
-    Piece capturedPiece = Piece::PIECE_N;
+    Piece capturedPiece = PIECE_N;
 
     std::string toUCI() const;
 };
@@ -70,7 +70,7 @@ private:
     bool moveDestOccupiedByColour(const Colours& testColour, const Move& move) const;
     bool moveIsEnPassant(Move& move) const;
     bool kingInCheck(const Move& move);
-    bool checkWouldBeUncovered(Move& move);
+    bool checkWouldBeUncovered(const Move& move);
 
     // do the move
     void makeMove(const Move& move);
@@ -78,7 +78,7 @@ private:
     // data
     BitBoards bitboards{};
     std::stack<Move> moveHistory;
-    Colours currentTurn = Colours::WHITE;
+    Colours currentTurn = WHITE;
 };
 
 

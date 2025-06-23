@@ -17,11 +17,11 @@ namespace Fen {
         returnString += rankString;
         returnString += std::to_string(file);
         return returnString;
-    };
+    }
 
     inline void FenToRankAndFile(const std::string& fen, int& rank, int& file){
         file = fen[0] - 'a' + 1;
         rank = fen[1] - '1' + 1;
-    };
+    }
 }
 #endif //FEN_H

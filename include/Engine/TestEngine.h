@@ -10,10 +10,10 @@
 class TestEngine final : public EngineBase {
 public:
 
-    TestEngine(Colours colour);
+    explicit TestEngine(Colours colour);
 
-    void evaluate() override;
-    void search() override;
+    virtual void evaluate() override;
+    virtual void search() override;
 };
 
 

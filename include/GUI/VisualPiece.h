@@ -6,16 +6,14 @@
 #define VISUAL_PIECE_H
 
 #include <memory>
-
-
 #include <string>
 #include <vector>
 #include <SDL3/SDL.h>
 
-#include "Utility/Vec2D.h"
-#include "Utility/Fen.h"
 #include "DrawableEntity.h"
 #include "Engine/Piece.h"
+#include "Utility/Fen.h"
+#include "Utility/Vec2D.h"
 
 class ChessGui;
 
@@ -28,12 +26,11 @@ public:
     [[nodiscard]] Piece &getPiece() const;
 
     VisualPiece(std::shared_ptr<SDL_Texture> texture,
-                int rank, int file,
                 const Vec2D& squareSize,
                 std::shared_ptr<ConcretePiece> piece);
 
     virtual void draw(SDL_Renderer* renderer) override;
-    void draw(SDL_Renderer* renderer, const SDL_FRect& destRect);
+    void draw(SDL_Renderer* renderer, const SDL_FRect& destRect) const;
 
     void setLocation(int rank, int file);
 
@@ -61,7 +58,7 @@ public:
 
     Vec2D squareSize;
 
-    std::vector<std::shared_ptr<VisualPiece>> buildInstances();
+    std::vector<std::shared_ptr<VisualPiece> > buildInstances();
 
 private:
 
