@@ -38,6 +38,8 @@ add_library(
         src/Utility/Fen.cpp
         src/ChessPlayer.cpp
         src/HumanPlayer.cpp
+        src/Engine/SearchTree.cpp
+        include/Engine/SearchTree.h
 )
 
 target_include_directories(chess_lib PUBLIC include)

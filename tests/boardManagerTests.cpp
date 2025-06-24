@@ -189,6 +189,23 @@ TEST(BoardManagerLegality, QueenLegalityCorrect){
         EXPECT_TRUE(manager.checkMove(horizMove));
         EXPECT_EQ(horizMove.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
     }
+
+    // can't do random moves
+    for (int square = 0; square < 64; square++) {
+        int rank, file;
+        squareToRankAndFile(square, rank, file);
+
+        if (file == 1)
+            continue;
+        if (rank == 1)
+            continue;
+        if (rank - 1 == file -1)
+            continue;
+        auto move = Move{.piece = WQ, .rankFrom = 1, .fileFrom = 1, .rankTo = rank, .fileTo = file};
+        EXPECT_FALSE(manager.checkMove(move));
+        EXPECT_EQ(move.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
+
+    }
 }
 
 TEST(BoardManagerLegality, KingLegalityCorrect){
@@ -231,6 +248,30 @@ TEST(BoardManagerLegality, KingLegalityCorrect){
             EXPECT_EQ(horizMove.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
         }
     }
+
+
+    // can't do random moves
+    for (int square = 0; square < 64; square++) {
+        int rank, file;
+        squareToRankAndFile(square, rank, file);
+        auto move = Move{.piece = BK, .rankFrom = 1, .fileFrom = 1, .rankTo = rank, .fileTo = file};
+
+        if (rank > 2 || file > 2) {
+            EXPECT_FALSE(manager.checkMove(move));
+            EXPECT_EQ(move.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
+        }
+    }
+
+
+}
+TEST(BoardManagerLegality, KingCanTakeItselfOutOfCheck){
+    auto manager = BoardManager();
+    // load a board with black king in a1
+    manager.getBitboards()->loadFEN("3K4/3r4/8/8/8/8/8/8");
+
+    auto move = createMove(WK, "d8d7");
+    EXPECT_TRUE(manager.checkMove(move));
+    EXPECT_EQ(move.result, MoveResult::PIECE_CAPTURE);
 }
 
 TEST(BoardManagerLegality, BishopLegalityCorrect){
@@ -486,6 +527,25 @@ TEST(BoardManagerAdvandedRules, KingCantMoveInCheck){
     auto move = createMove(BK, "a1a2");
     EXPECT_FALSE(manager.checkMove(move));
     EXPECT_EQ(move.result, MoveResult::KING_IN_CHECK);
+}
+
+TEST(BoardManagerAdvandedRules, KingCantBeInCheckThroughOtherPieces){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN("7k/6r1/8/8/8/8/8/B7");
+
+    auto move = createMove(BK, "h8g8");
+    EXPECT_TRUE(manager.checkMove(move));
+    EXPECT_EQ(move.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+}
+
+TEST(BoardManagerAdvancedRules, PiecesCanSaveKingFromCheck){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN("8/8/8/8/qR6/8/8/K7");
+
+    auto move = createMove(WR, "b4a4");
+
+    EXPECT_TRUE(manager.checkMove(move));
+    EXPECT_EQ(move.result, MoveResult::PIECE_CAPTURE);
 }
 
 TEST(BoardManagerAdvandedRules, CheckCantBeExposed){

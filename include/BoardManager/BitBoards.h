@@ -12,24 +12,10 @@
 
 #include "Engine/Piece.h"
 
+
+
 struct Move;
 
-/**
- * Converts a given chessboard rank and file to a corresponding square index.
- *
- * The rank and file are 1-based, where rank 1 is the bottom-most row,
- * rank 8 is the top-most row, file 1 is the left-most column (from white's perspective),
- * and file 8 is the right-most column.
- *
- * Square indices are 0-based and calculated sequentially from a8 (top-left, index 0)
- * to h1 (bottom-right, index 63) when traversing rows in descending order and columns
- * in ascending order.
- *
- * @param rank The rank of the square, must be in the range [1, 8].
- * @param file The file of the square, must be in the range [1, 8].
- * @return The corresponding square index in the range [0, 63].
- * @throws std::invalid_argument if rank or file is outside the range [1, 8].
- */
 int rankAndFileToSquare(int rank, int file);
 void squareToRankAndFile(int square, int& rank, int& file);
 
@@ -79,6 +65,8 @@ namespace Comparisons {
     inline uint64_t northWest(const uint64_t& inBitBoard){ return inBitBoard >> 7; }
     inline uint64_t southEast(const uint64_t& inBitBoard){ return inBitBoard << 7; }
     inline uint64_t southWest(const uint64_t& inBitBoard){ return inBitBoard << 9; }
+
+
 }
 
 
@@ -99,6 +87,7 @@ public:
     void setOne(const Piece& piece, int rank, int file);
 
     bool test(uint64_t inBoard) const;
+    int countPiece(const Piece& pieceToSearch) const;
 
 private:
 

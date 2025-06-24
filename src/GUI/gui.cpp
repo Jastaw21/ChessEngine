@@ -2,6 +2,7 @@
 
 #include "GUI/gui.h"
 #include "ChessPlayer.h"
+#include "Engine/EngineBase.h"
 
 #include "GUI/DrawableEntity.h"
 #include "GUI/VisualBoard.h"
@@ -119,6 +120,10 @@ void ChessGui::handleKeyDown(const SDL_Keycode keycode){
                 boardManager_.undoMove();
             break;
 
+        case SDLK_N:
+            requestEngineMove();
+
+
         default:
             break;
     }
@@ -199,5 +204,14 @@ void ChessGui::addMouseRelease(const int x, const int y){
         if (!humanPlayer->playerType == HUMAN)
             return;
         humanPlayer->selectDestination(rankAndFileToSquare(rank, file), &boardManager_);
+    }
+}
+
+void ChessGui::requestEngineMove() const{
+
+    if (const auto engine = static_cast<EngineBase *>(getCurrentPlayer())) {
+        if (!engine->playerType == ENGINE)
+            return;
+        engine->makeMove();
     }
 }

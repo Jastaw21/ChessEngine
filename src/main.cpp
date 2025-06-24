@@ -8,8 +8,10 @@
 int main(int argc, char** argv){
 
     auto whitePlayer = HumanPlayer(WHITE);
-    auto blackPlayer = HumanPlayer(BLACK);
+    auto blackPlayer = TestEngine(BLACK);
+    //auto blackPlayer = HumanPlayer(BLACK);
     auto gui = ChessGui(&whitePlayer, &blackPlayer);
+    blackPlayer.setManager(gui.getBoardManager());
 
 
     gui.getBoardManager()->getBitboards()->loadFEN(Fen::STARTING_FEN);

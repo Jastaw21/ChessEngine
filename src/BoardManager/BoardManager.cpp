@@ -6,7 +6,9 @@
 #include "BoardManager/BoardManager.h"
 
 #include <bitset>
+#include <iostream>
 #include <vector>
+#include <bits/ostream.tcc>
 
 #include "BoardManager/BitBoards.h"
 #include "Utility/math.h"
@@ -50,6 +52,9 @@ bool BoardManager::moveIsLegalForPiece(const Move& move){
     const int deltaRank = move.rankTo - move.rankFrom;
     const int deltaFile = move.fileTo - move.fileFrom;
 
+    if (deltaRank == 0 && deltaFile == 0)
+        return false;
+
     switch (move.piece) {
         case WP:
             // if it doesn't move north at all, can't work
@@ -87,7 +92,7 @@ bool BoardManager::moveIsLegalForPiece(const Move& move){
 
         case WK:
         case BK:
-            return abs(deltaRank) == 1 || abs(deltaFile) == 1;
+            return (abs(deltaRank) == 1 || abs(deltaFile) == 1) && (abs(deltaRank) + abs(deltaFile) <= 2);
 
         case WN:
         case BN:
@@ -198,6 +203,10 @@ bool BoardManager::moveIsEnPassant(Move& move) const{
 
     move.result = EN_PASSANT;
     const auto& capturedPiece = bitboards.getPiece(lastMove.rankTo, move.fileTo);
+    if (!capturedPiece.has_value()) {
+        std::cout << "ERROR: No captured piece for en passant capture" << std::endl;
+        return true;
+    }
     move.capturedPiece = capturedPiece.value();
     return true;
 }
@@ -240,6 +249,7 @@ bool BoardManager::kingInCheck(const Move& move){
 
         for (size_t index = 0; index < bits.size(); ++index) {
             if (bits.test(index)) {
+                // test all attacks
                 int rank, file;
                 squareToRankAndFile(index, rank, file);
                 Move testMove = {
@@ -248,7 +258,7 @@ bool BoardManager::kingInCheck(const Move& move){
                             .rankTo = kRank, .fileTo = kFile
                         };
 
-                if (moveIsLegalForPiece(testMove))
+                if (moveIsLegalForPiece(testMove) && !pieceInWay(testMove) )
                     return true;
             }
         }
@@ -256,7 +266,7 @@ bool BoardManager::kingInCheck(const Move& move){
     return false;
 }
 
-bool BoardManager::checkWouldBeUncovered(const Move& move){
+bool BoardManager::checkWouldBeUncovered(Move& move){
     makeMove(move);
 
     if (kingInCheck(move)) {
@@ -315,8 +325,17 @@ bool BoardManager::checkMove(Move& move){
     // is the king trying to be moved in check
     if (move.piece == WK || move.piece == BK) {
         if (kingInCheck(move)) {
-            move.result = KING_IN_CHECK;
-            return false;
+            // need to check it'd still be in check after this move
+            makeMove(move);
+            const bool isNowValid = !kingInCheck(move);
+            undoMove(move);
+            if (!isNowValid) {
+                move.result = KING_IN_CHECK;
+                return false;
+            }
+            // it must have captured it's way out of the move
+            move.result = PIECE_CAPTURE;
+            return true;
         }
     }
 
@@ -326,7 +345,7 @@ bool BoardManager::checkMove(Move& move){
     }
 
     // is it an en passant capture?
-    if (moveHistory.size() > 0 && moveIsEnPassant(move)) {
+    if (moveHistory.size() > 0 && (move.piece == WP || move.piece == BP) && moveIsEnPassant(move)) {
         move.result = EN_PASSANT;
         return true;
     }
@@ -394,14 +413,23 @@ void BoardManager::undoMove(){
 }
 
 
-void BoardManager::makeMove(const Move& move){
+void BoardManager::makeMove(Move& move){
     // set the from square of the moving piece to zero
     const auto squareFrom = rankAndFileToSquare(move.rankFrom, move.fileFrom);
     bitboards[move.piece] &= ~(1ULL << squareFrom);
 
+
+    if (const auto discoveredPiece = bitboards.getPiece(move.rankTo,move.fileTo);
+        discoveredPiece.has_value() && pieceColours[discoveredPiece.value()] != pieceColours[move.piece]  ) {
+        move.result = PIECE_CAPTURE;
+        move.capturedPiece = discoveredPiece.value();
+    }
+
+
     // if it was a capture, set that piece to zero
     if (move.result == PIECE_CAPTURE)
         bitboards.setZero(move.rankTo, move.fileTo);
+
 
     // if it was an en_passant capture, set the correct square to zero
     if (move.result == EN_PASSANT)

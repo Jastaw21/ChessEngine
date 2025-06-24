@@ -12,8 +12,15 @@
 
 
 int rankAndFileToSquare(const int rank, const int file){
-    if (rank < 1 || rank > 8) { throw std::invalid_argument("Rank must be between 1 and 8"); }
-    if (file < 1 || file > 8) { throw std::invalid_argument("File must be between 1 and 8"); }
+
+    if (rank < 1 || rank > 8) {
+        std::cout<<rank << "rr " << file << std::endl;
+        throw std::invalid_argument("Rank must be between 1 and 8");
+    }
+    if (file < 1 || file > 8) {
+        std::cout<<rank << "ff " << file << std::endl;
+        throw std::invalid_argument("File must be between 1 and 8");
+    }
     const int rankStartSquare = (rank - 1) * 8;
     return rankStartSquare + (file - 1);
 }
@@ -22,6 +29,8 @@ void squareToRankAndFile(const int square, int& rank, int& file){
     file = square % 8 + 1;
     rank = square / 8 + 1;
 }
+
+
 
 BitBoards::BitBoards(){ bitboards.fill(0ULL); }
 
@@ -94,6 +103,11 @@ bool BitBoards::test(const uint64_t inBoard) const{
             return true;
     }
     return false;
+}
+
+int BitBoards::countPiece(const Piece& pieceToSearch) const{
+    if (bitboards[pieceToSearch] != 0) { return std::bitset<64>(bitboards[pieceToSearch]).count(); }
+    return 0;
 }
 
 std::string &BitBoards::toFEN(){

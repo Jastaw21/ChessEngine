@@ -152,3 +152,26 @@ TEST(BitBoards, GetPieceOverloadsMatch){
         EXPECT_EQ(board.getPiece(rank,file).value(), board.getPiece(i).value());
     }
 }
+
+TEST(BitBoards, CountPieces){
+
+    auto boards = BitBoards();
+    boards.loadFEN(Fen::STARTING_FEN);
+
+    EXPECT_EQ(boards.countPiece(WP), 8);
+    EXPECT_EQ(boards.countPiece(WK), 1);
+
+}
+
+TEST(BitBoards, WeirdBlackRookInWrongPlace){
+
+    auto boards = BitBoards();
+    boards.loadFEN("3K4/3r4/8/8/8/8/8/8");
+
+    auto& blackRookBoard = boards[BR];
+    EXPECT_EQ(blackRookBoard, 0x8000000000000);
+
+    auto& whiteRookBoard = boards[WR];
+    EXPECT_EQ(whiteRookBoard, 0x0);
+
+}

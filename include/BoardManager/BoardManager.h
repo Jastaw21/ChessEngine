@@ -14,18 +14,18 @@ class BitBoards;
 
 enum MoveResult {
     // successes
-    MOVE_TO_EMPTY_SQUARE,
-    PIECE_CAPTURE,
+    MOVE_TO_EMPTY_SQUARE,       //0
+    PIECE_CAPTURE,              //1
 
     // failures
-    ILLEGAL_MOVE,
-    SQUARE_OCCUPIED,
-    MOVE_NOT_LEGAL_FOR_PIECE,
-    MOVE_OUT_OF_BOUNDS,
-    BLOCKING_PIECE,
-    KING_IN_CHECK,
-    EN_PASSANT,
-    DISCOVERED_CHECK,
+    ILLEGAL_MOVE,               //2
+    SQUARE_OCCUPIED,            //3
+    MOVE_NOT_LEGAL_FOR_PIECE,   //4
+    MOVE_OUT_OF_BOUNDS,         //5
+    BLOCKING_PIECE,             //6
+    KING_IN_CHECK,              //7
+    EN_PASSANT,                 //8
+    DISCOVERED_CHECK,           //9
 };
 
 struct Move {
@@ -70,10 +70,10 @@ private:
     bool moveDestOccupiedByColour(const Colours& testColour, const Move& move) const;
     bool moveIsEnPassant(Move& move) const;
     bool kingInCheck(const Move& move);
-    bool checkWouldBeUncovered(const Move& move);
+    bool checkWouldBeUncovered(Move& move);
 
     // do the move
-    void makeMove(const Move& move);
+    void makeMove(Move& move);
 
     // data
     BitBoards bitboards{};
