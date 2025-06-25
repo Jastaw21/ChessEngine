@@ -12,13 +12,12 @@
 
 
 int rankAndFileToSquare(const int rank, const int file){
-
     if (rank < 1 || rank > 8) {
-        std::cout<<rank << "rr " << file << std::endl;
+        std::cout << rank << "rr " << file << std::endl;
         throw std::invalid_argument("Rank must be between 1 and 8");
     }
     if (file < 1 || file > 8) {
-        std::cout<<rank << "ff " << file << std::endl;
+        std::cout << rank << "ff " << file << std::endl;
         throw std::invalid_argument("File must be between 1 and 8");
     }
     const int rankStartSquare = (rank - 1) * 8;
@@ -30,6 +29,8 @@ void squareToRankAndFile(const int square, int& rank, int& file){
     rank = square / 8 + 1;
 }
 
+int squareToFile(const int square){ return square % 8 + 1; }
+int squareToRank(const int square){ return square / 8 + 1; }
 
 
 BitBoards::BitBoards(){ bitboards.fill(0ULL); }

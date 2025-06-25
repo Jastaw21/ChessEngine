@@ -12,18 +12,19 @@
 class TestEngine final : public EngineBase {
 public:
 
-    static uint64_t getPrelimValidMoves(const Piece& piece, int square);
     explicit TestEngine(Colours colour);
     explicit TestEngine(Colours colour, BoardManager* boardManager);
 
-    virtual float evaluate() override;
-    virtual Move search() override;
+
+    static float evaluate(BoardManager& mgr);
+    float minMax(BoardManager& mgr, int depth, bool isMaximising);
+    Move search();
 
     virtual Move makeMove() override;
 
     void setManager(BoardManager* boardManager){ boardManager_ = boardManager; }
 
-    std::vector<Move> generateMoveList(Position& position) const;
+    std::vector<Move> generateMoveList(BoardManager& mgr) const;
 
 
     BoardManager* boardManager_ = nullptr;

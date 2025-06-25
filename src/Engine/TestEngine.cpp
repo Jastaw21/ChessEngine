@@ -6,6 +6,7 @@
 
 #include <bitset>
 #include <iostream>
+#include <math.h>
 #include <bits/ostream.tcc>
 
 
@@ -35,59 +36,74 @@ TestEngine::TestEngine(const Colours colour) : EngineBase(colour){}
 TestEngine::TestEngine(const Colours colour, BoardManager* boardManager): EngineBase(colour),
                                                                           boardManager_(boardManager){}
 
-uint64_t TestEngine::getPrelimValidMoves(const Piece& piece, const int square){
-    uint64_t result = 0ULL;
-    switch (piece) {
-        case WP:
-        case BP:
-            result |= 1ULL << (square + pieceColours[piece] == WHITE ? 8 : -8);
-            if (square <= 15 && square >= 8)
-                result |= 1ULL << (square + 16);
-            return result;
 
-        default:
-            break;
-    }
-    return 0ULL;
-}
-
-float TestEngine::evaluate(){
-    float materialScore = 0;
+float TestEngine::evaluate(BoardManager& mgr){
+    float materialScore = 0.0f;
 
     for (int piece = 0; piece < PIECE_N; piece++) {
         auto pieceName = static_cast<Piece>(piece);
         const int pieceValue = pieceValues[pieceName];
-        const int count = boardManager_->getBitboards()->countPiece(pieceName);
-        const int valueCount = pieceValue * count;
 
-        if (pieceColours[pieceName] == colour) { materialScore += valueCount; } else { materialScore -= valueCount; }
+        const int whiteCount = mgr.getBitboards()->countPiece(pieceName);
+        const int blackCount = mgr.getBitboards()->countPiece(pieceName);
+
+        materialScore += pieceValue * (whiteCount - blackCount);
     }
-
     return materialScore;
 }
 
-Move TestEngine::search(){
-    Position pos = Position(*boardManager_->getBitboards(), colour);
+float TestEngine::minMax(BoardManager& mgr, const int depth, const bool isMaximising){
+    if (depth == 0) { return evaluate(mgr); }
 
-    auto moves = generateMoveList(pos);
+    auto moves = generateMoveList(mgr);
+
+    if (moves.empty()) { return evaluate(mgr); }
+
+    int bestEval = isMaximising ? -100000 : 100000;
+
+    for (Move& move: moves) {
+        mgr.tryMove(move);
+        int eval = minMax(mgr, depth - 1, !isMaximising);
+        mgr.undoMove();
+
+        if (isMaximising) { bestEval = std::max(bestEval, eval); } else { bestEval = std::min(bestEval, eval); }
+    }
+    return bestEval;
+}
+
+
+Move TestEngine::search(){
+    BoardManager startingManager = *boardManager_;
+
+    auto moves = generateMoveList(startingManager);
     if (moves.empty()) {
         std::cout << "No Moves" << std::endl;
         return Move();
     }
 
-    float bestMove = evaluate();
+    Move bestMove = moves[0];
+    float bestEval = -100000;
 
-    int bestMoveIndex = 0;
-    for (int move = 0; move < moves.size(); move++) {
-        boardManager_->tryMove(moves[move]);
-        std::cout << bestMove << std::endl;
-        if (evaluate() > bestMove) {
-            bestMove = evaluate();
-            bestMoveIndex = move;
+    const Colours us = startingManager.getCurrentTurn();
+
+    for (Move& move: moves) {
+        startingManager.tryMove(move);
+        const float eval = minMax(startingManager, 2, us == WHITE);
+        startingManager.undoMove();
+
+        if (us == WHITE) {
+            if (eval > bestEval) {
+                bestEval = eval;
+                bestMove = move;
+            }
+        } else {
+            if (eval < bestEval) {
+                bestEval = eval;
+                bestMove = move;
+            }
         }
-        boardManager_->undoMove(moves[move]);
     }
-    return moves[bestMoveIndex];
+    return bestMove;
 }
 
 Move TestEngine::makeMove(){
@@ -96,17 +112,17 @@ Move TestEngine::makeMove(){
     return move;
 }
 
-std::vector<Move> TestEngine::generateMoveList(Position& position) const{
+std::vector<Move> TestEngine::generateMoveList(BoardManager& mgr) const{
     std::vector<Move> moves;
     // check each piece we have
     for (int piece = 0; piece < PIECE_N; piece++) {
         auto pieceName = static_cast<Piece>(piece);
         // if it's not our piece, skip it
-        if (pieceColours[pieceName] != colour)
+        if (pieceColours[pieceName] != mgr.getCurrentTurn())
             continue;
 
         // get all the starting squares for this piece
-        auto bits = std::bitset<64>(position.getBitboards().getBitboard(pieceName));
+        auto bits = std::bitset<64>(mgr.getBitboards()->getBitboard(pieceName));
         for (int bit = 0; bit < bits.size(); bit++) {
             if (bits.test(bit)) {
                 int startRank, startFile;
@@ -117,7 +133,7 @@ std::vector<Move> TestEngine::generateMoveList(Position& position) const{
                     squareToRankAndFile(destSquare, destRank, destFile);
                     // ReSharper disable once CppTooWideScopeInitStatement
                     Move move = {pieceName, startRank, startFile, destRank, destFile};
-                    if (boardManager_->checkMove(move))
+                    if (mgr.checkMove(move))
                         moves.push_back(move);
                 }
             }

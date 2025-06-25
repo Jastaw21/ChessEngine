@@ -12,8 +12,6 @@ class EngineBase : public ChessPlayer {
 public:
 
     explicit EngineBase(Colours colour = WHITE);
-    virtual float evaluate() = 0;
-    virtual Move search() = 0;
 
     virtual Move makeMove() override;
 

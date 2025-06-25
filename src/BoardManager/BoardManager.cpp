@@ -61,16 +61,23 @@ bool BoardManager::moveIsLegalForPiece(const Move& move){
             if (deltaRank <= 0)
                 return false;
 
+            if (abs(deltaFile) > 1)
+                return false;
+
             if (move.rankFrom == 2)
-                return abs(deltaRank) <= 2;
+                return abs(deltaRank) <= 2 && deltaFile == 0;
             return abs(deltaRank) <= 1;
 
         case BP:
             // if it doesn't move south at all, can't work
             if (deltaRank >= 0)
                 return false;
+
+            if (abs(deltaFile) > 1)
+                return false;
+
             if (move.rankFrom == 7)
-                return abs(deltaRank) <= 2;
+                return abs(deltaRank) <= 2 && deltaFile == 0;
             return abs(deltaRank) <= 1;
 
         case WR:
@@ -145,7 +152,7 @@ bool BoardManager::pieceInWay(const Move& move) const{
 
     // moving diagonally
     else {
-        for (int step = 1; step < deltaRank; step++) {
+        for (int step = 1; step < abs(deltaRank); step++) {
             const int newRank = move.rankFrom + step * sign(deltaRank);
             const int newFile = move.fileFrom + step * sign(deltaFile);
             int square = rankAndFileToSquare(newRank, newFile);
@@ -200,6 +207,8 @@ bool BoardManager::moveIsEnPassant(Move& move) const{
     const int targetRank = lastMove.rankTo - sign(lastMove.rankTo - lastMove.rankFrom);
     if (move.rankTo != targetRank)
         return false;
+
+    std::cout << "En passant capture" << std::endl;
 
     move.result = EN_PASSANT;
     const auto& capturedPiece = bitboards.getPiece(lastMove.rankTo, move.fileTo);

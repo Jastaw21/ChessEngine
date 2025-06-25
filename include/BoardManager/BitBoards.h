@@ -18,6 +18,8 @@ struct Move;
 
 int rankAndFileToSquare(int rank, int file);
 void squareToRankAndFile(int square, int& rank, int& file);
+int squareToFile(const int square);
+int squareToRank(const int square);
 
 namespace Comparisons {
     constexpr uint64_t buildFileBoard(const char file){
@@ -65,6 +67,8 @@ namespace Comparisons {
     inline uint64_t northWest(const uint64_t& inBitBoard){ return inBitBoard >> 7; }
     inline uint64_t southEast(const uint64_t& inBitBoard){ return inBitBoard << 7; }
     inline uint64_t southWest(const uint64_t& inBitBoard){ return inBitBoard << 9; }
+
+
 
 
 }

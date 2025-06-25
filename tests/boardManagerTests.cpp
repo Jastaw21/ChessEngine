@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 #include "BoardManager/BoardManager.h"
 #include "Utility/Fen.h"
+#include "BoardManager/Rules.h"
 
 TEST(MoveStruct, ToUCICorrect){
     constexpr Move move{.piece = WP, .rankFrom = 1, .fileFrom = 1, .rankTo = 2, .fileTo = 1};
@@ -199,12 +200,11 @@ TEST(BoardManagerLegality, QueenLegalityCorrect){
             continue;
         if (rank == 1)
             continue;
-        if (rank - 1 == file -1)
+        if (rank - 1 == file - 1)
             continue;
         auto move = Move{.piece = WQ, .rankFrom = 1, .fileFrom = 1, .rankTo = rank, .fileTo = file};
         EXPECT_FALSE(manager.checkMove(move));
         EXPECT_EQ(move.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
-
     }
 }
 
@@ -249,7 +249,6 @@ TEST(BoardManagerLegality, KingLegalityCorrect){
         }
     }
 
-
     // can't do random moves
     for (int square = 0; square < 64; square++) {
         int rank, file;
@@ -261,9 +260,8 @@ TEST(BoardManagerLegality, KingLegalityCorrect){
             EXPECT_EQ(move.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
         }
     }
-
-
 }
+
 TEST(BoardManagerLegality, KingCanTakeItselfOutOfCheck){
     auto manager = BoardManager();
     // load a board with black king in a1
@@ -300,6 +298,24 @@ TEST(BoardManagerLegality, BishopLegalityCorrect){
         EXPECT_FALSE(manager.checkMove(horizMove));
         EXPECT_EQ(horizMove.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
     }
+
+    // can't jump over others
+    manager.getBitboards()->loadFEN(Fen::STARTING_FEN);
+    Move move = createMove(WB, "c1e3");
+    EXPECT_FALSE(manager.checkMove(move));
+    EXPECT_EQ(move.result, MoveResult::BLOCKING_PIECE);
+
+    // can't jump over others
+    manager.getBitboards()->loadFEN(Fen::STARTING_FEN);
+    Move blackMove = createMove(BB, "c8h3");
+    EXPECT_FALSE(manager.checkMove(blackMove));
+    EXPECT_EQ(blackMove.result, MoveResult::BLOCKING_PIECE);
+
+    // can't capture over others
+    manager.getBitboards()->loadFEN("rnbqkbnr/ppppppp1/7p/8/8/8/PPPPPPPP/RNBQKBNR");
+    Move nextMove = createMove(WB, "c1h6");
+    EXPECT_FALSE(manager.checkMove(nextMove));
+    EXPECT_EQ(nextMove.result, MoveResult::BLOCKING_PIECE);
 }
 
 TEST(BoardManagerLegality, KnightLegalityCorrect){
@@ -614,3 +630,99 @@ TEST(BoardManagerMoveExecution, TurnChanges){
 
     EXPECT_EQ(manager.getCurrentTurn(), Colours::WHITE);
 }
+
+TEST(RulesHeaderTests, WholeFile){
+    for (int i = 0; i < 8; i++) {
+        switch (i) {
+            case(0):
+                EXPECT_EQ(CrossBoardMoves::wholeFile(i), 0x101010101010101);
+                break;
+
+            case(1):
+                EXPECT_EQ(CrossBoardMoves::wholeFile(i), 0x202020202020202);
+                break;
+            case(7):
+                EXPECT_EQ(CrossBoardMoves::wholeFile(i), 0x8080808080808080);
+        }
+    }
+}
+
+TEST(RulesHeaderTests, WholeRank){
+    for (int i = 0; i < 8; i++) {
+        switch (i) {
+            case(0):
+                EXPECT_EQ(CrossBoardMoves::wholeRank(i *8), 0xff);
+                break;
+
+            case(1):
+                EXPECT_EQ(CrossBoardMoves::wholeRank(i*8), 0xff00);
+                break;
+            case(7):
+                EXPECT_EQ(CrossBoardMoves::wholeRank(i*8), 0xff00000000000000);
+        }
+    }
+}
+
+TEST(RulesHeaderTests, Diags){
+    EXPECT_EQ(CrossBoardMoves::diags(18), 0x804020110a000a11);
+
+    EXPECT_EQ(CrossBoardMoves::diags(rankAndFileToSquare(6,6)), 0x8850005088040201);
+
+    EXPECT_EQ(CrossBoardMoves::diags(rankAndFileToSquare(8,8)), 0x40201008040201);
+
+    EXPECT_EQ(CrossBoardMoves::diags(rankAndFileToSquare(1,1)), 0x8040201008040200);
+
+}
+
+TEST(RulesHeaderTests, OnePieceMoves){
+    constexpr uint64_t H1 = 7;
+    EXPECT_EQ( SingleMoves::north(H1),32768);
+    EXPECT_EQ( SingleMoves::south(H1),0);
+    EXPECT_EQ( SingleMoves::east(H1),0);
+    EXPECT_EQ( SingleMoves::west(H1),64);
+
+    constexpr uint64_t H8 = 63;
+    EXPECT_EQ( SingleMoves::north(H8),0);
+    EXPECT_EQ( SingleMoves::south(H8),0x80000000000000);
+    EXPECT_EQ( SingleMoves::east(H8),0);
+    EXPECT_EQ( SingleMoves::west(H8),0x4000000000000000);
+
+    constexpr uint64_t A8 = 56;
+    EXPECT_EQ( SingleMoves::north(A8),0);
+    EXPECT_EQ( SingleMoves::south(A8),0x1000000000000);
+    EXPECT_EQ( SingleMoves::east(A8),0x200000000000000);
+    EXPECT_EQ( SingleMoves::west(A8),0);
+
+    constexpr uint64_t A1 = 0;
+    EXPECT_EQ( SingleMoves::north(A1),0x100);
+    EXPECT_EQ( SingleMoves::south(A1),0);
+    EXPECT_EQ( SingleMoves::east(A1),0x2);
+    EXPECT_EQ( SingleMoves::west(A1),0);
+}
+
+
+TEST(RulesHeaderTests, KnightMoves){
+
+    EXPECT_EQ(SingleMoves::getKnightMoves(0), 0x20400);
+    EXPECT_EQ(SingleMoves::getKnightMoves(rankAndFileToSquare(4,4)), 0x142200221400);
+}
+
+
+TEST(RulesHeaderTests, PawnMoves){
+    // all allow diags for simplicity
+
+    // from starting rank - n, ne, 2xn
+    EXPECT_EQ(RulesCheck::getMoves(8,WP), 0x1030000);
+
+    // from next rank - n, ne
+    EXPECT_EQ(RulesCheck::getMoves(16,WP), 0x3000000);
+
+
+    // from centre - nw, n ,ne
+    EXPECT_EQ(RulesCheck::getMoves(rankAndFileToSquare(4,4),WP), 0x1c00000000);
+    EXPECT_EQ(RulesCheck::getMoves(rankAndFileToSquare(5,8),WP), 0xc00000000000);
+
+    // can't wrap n/s
+    EXPECT_EQ(RulesCheck::getMoves(rankAndFileToSquare(8,8),WP), 0);
+}
+
