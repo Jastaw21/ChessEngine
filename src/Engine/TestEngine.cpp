@@ -6,8 +6,8 @@
 
 #include <bitset>
 #include <iostream>
-#include <math.h>
 #include <bits/ostream.tcc>
+#include "BoardManager/Rules.h"
 
 
 std::unordered_map<Piece, int> pieceValues = {
@@ -72,7 +72,7 @@ float TestEngine::minMax(BoardManager& mgr, const int depth, const bool isMaximi
 }
 
 
-Move TestEngine::search(){
+Move TestEngine::search() const{
     BoardManager startingManager = *boardManager_;
 
     auto moves = generateMoveList(startingManager);
@@ -84,14 +84,14 @@ Move TestEngine::search(){
     Move bestMove = moves[0];
     float bestEval = -100000;
 
-    const Colours us = startingManager.getCurrentTurn();
+    const Colours thisTurn = startingManager.getCurrentTurn();
 
     for (Move& move: moves) {
         startingManager.tryMove(move);
-        const float eval = minMax(startingManager, 2, us == WHITE);
+        const float eval = minMax(startingManager, 1, thisTurn == colour);
         startingManager.undoMove();
 
-        if (us == WHITE) {
+        if (thisTurn == WHITE) {
             if (eval > bestEval) {
                 bestEval = eval;
                 bestMove = move;
@@ -112,7 +112,7 @@ Move TestEngine::makeMove(){
     return move;
 }
 
-std::vector<Move> TestEngine::generateMoveList(BoardManager& mgr) const{
+std::vector<Move> TestEngine::generateMoveList(BoardManager& mgr){
     std::vector<Move> moves;
     // check each piece we have
     for (int piece = 0; piece < PIECE_N; piece++) {
@@ -126,18 +126,75 @@ std::vector<Move> TestEngine::generateMoveList(BoardManager& mgr) const{
         for (int bit = 0; bit < bits.size(); bit++) {
             if (bits.test(bit)) {
                 int startRank, startFile;
-                squareToRankAndFile(bit, startRank, startFile);
+                 squareToRankAndFile(bit, startRank, startFile);
                 // get all the squares we can get to
-                for (int destSquare = 0; destSquare < 64; destSquare++) {
-                    int destRank, destFile;
-                    squareToRankAndFile(destSquare, destRank, destFile);
-                    // ReSharper disable once CppTooWideScopeInitStatement
-                    Move move = {pieceName, startRank, startFile, destRank, destFile};
-                    if (mgr.checkMove(move))
-                        moves.push_back(move);
+
+                const auto destMoves = RulesCheck::getPsuedoLegalMoves(bit, pieceName);
+                auto attackBits = std::bitset<64>(destMoves);
+                for (int attackBit = 0; attackBit < attackBits.size(); attackBit++) {
+                                             if (attackBits.test(attackBit)) {
+                        int destRank, destFile;
+                        squareToRankAndFile(attackBit, destRank, destFile);
+                        // ReSharper disable once CppTooWideScopeInitStatement
+                        Move move = {pieceName, startRank, startFile, destRank, destFile};
+                        if (mgr.checkMove(move))
+                            moves.push_back(move);
+                    }
                 }
             }
         }
     }
     return moves;
+}
+
+
+uint64_t TestEngine::perft(const int depth, BoardManager& mgr_){
+    if (depth == 0) return 1;
+
+    uint64_t nodes = 0;
+
+    for (std::vector<Move> moves = generateMoveList(mgr_); Move& move: moves) {
+        if (!mgr_.tryMove(move)) continue;
+
+        nodes += perft(depth - 1, mgr_);
+        mgr_.undoMove();
+    }
+
+    return nodes;
+}
+
+void TestEngine::perftDivide(const int depth, BoardManager& mgr_){
+
+    std::vector<Move> moves = generateMoveList(mgr_);
+    std::cout << (pieceColours[moves[0].piece] == WHITE ? "White" : "Black")  << ":\n";
+    uint64_t total = 0;
+
+    std::cout << "Perft divide at depth " << depth << ":\n";
+
+    for (Move& move: moves) {
+
+        if (!mgr_.tryMove(move)) continue;
+
+        const uint64_t count = perft(depth - 1, mgr_);
+        mgr_.undoMove();
+
+        std::cout << move.toUCI() << ": " << count << "\n";
+
+        total += count;
+    }
+
+    std::cout << "Total nodes: " << total << "\n";
+}
+
+void TestEngine::runPerftDivide(const std::string& startingFen, const int depth){
+    BoardManager mgr_;
+    mgr_.getBitboards()->loadFEN(startingFen);
+    perftDivide(depth, mgr_);
+}
+
+
+uint64_t TestEngine::runPerftTest(const std::string& Fen, const int depth){
+    BoardManager mgr;
+    mgr.getBitboards()->loadFEN(Fen);
+    return perft(depth, mgr);
 }

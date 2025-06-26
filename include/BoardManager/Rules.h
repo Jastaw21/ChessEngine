@@ -87,10 +87,9 @@ namespace SingleMoves {
 
         // plus 2 block
         {
-            if (squareToRank(square) < 7) {
-                auto files = {-1, 1};
-                for (auto file: files) {
-                    if (squareToFile(square) + file > 1 && squareToFile(square) + file < 8) {
+            if (squareToRank(square) < 7) { const auto files = {-1, 1};
+                for (const auto file: files) {
+                    if (squareToFile(square) + file >= 1 && squareToFile(square) + file <= 8) {
                         result |= 1ULL << rankAndFileToSquare(squareToRank(square) + 2, squareToFile(square) + file);
                     }
                 }
@@ -99,10 +98,9 @@ namespace SingleMoves {
 
         // plus 1 block
         {
-            if (squareToRank(square) < 8) {
-                auto files = {-2, 2};
-                for (auto file: files) {
-                    if (squareToFile(square) + file > 1 && squareToFile(square) + file < 8) {
+            if (squareToRank(square) < 8) { const auto files = {-2, 2};
+                for (const auto file: files) {
+                    if (squareToFile(square) + file >= 1 && squareToFile(square) + file <= 8) {
                         result |= 1ULL << rankAndFileToSquare(squareToRank(square) + 1, squareToFile(square) + file);
                     }
                 }
@@ -111,10 +109,9 @@ namespace SingleMoves {
 
         // minus 1 block
         {
-            if (squareToRank(square) > 1) {
-                auto files = {-2, 2};
-                for (auto file: files) {
-                    if (squareToFile(square) + file > 1 && squareToFile(square) + file < 8) {
+            if (squareToRank(square) > 1) { const auto files = {-2, 2};
+                for (const auto file: files) {
+                    if (squareToFile(square) + file >= 1 && squareToFile(square) + file <= 8) {
                         result |= 1ULL << rankAndFileToSquare(squareToRank(square) -1, squareToFile(square) + file);
                     }
                 }
@@ -123,10 +120,9 @@ namespace SingleMoves {
 
         // minus 2 block
         {
-            if (squareToRank(square) > 2) {
-                auto files = {-1, 1};
-                for (auto file: files) {
-                    if (squareToFile(square) + file > 1 && squareToFile(square) + file < 8) {
+            if (squareToRank(square) > 2) { const auto files = {-1, 1};
+                for (const auto file: files) {
+                    if (squareToFile(square) + file >= 1 && squareToFile(square) + file <= 8) {
                         result |= 1ULL << rankAndFileToSquare(squareToRank(square) - 2, squareToFile(square) + file);
                     }
                 }
@@ -143,14 +139,22 @@ namespace CrossBoardMoves {
     inline uint64_t wholeFile(const int startSquare){
         uint64_t result = 0ULL;
         const int file = squareToFile(startSquare);
-        for (int rank = 1; rank <= 8; rank++) { result |= 1ULL << rankAndFileToSquare(rank, file); }
+        for (int rank = 1; rank <= 8; rank++) {
+            if (rank == squareToRank(startSquare))
+                continue;
+            result |= 1ULL << rankAndFileToSquare(rank, file);
+        }
         return result;
     }
 
     inline uint64_t wholeRank(const int startSquare){
         uint64_t result = 0ULL;
         const int rank = squareToRank(startSquare);
-        for (int file = 1; file <= 8; file++) { result |= 1ULL << rankAndFileToSquare(rank, file); }
+        for (int file = 1; file <= 8; file++) {
+            if (file == squareToFile(startSquare))
+                continue;
+            result |= 1ULL << rankAndFileToSquare(rank, file);
+        }
         return result;
     }
 
@@ -161,7 +165,7 @@ namespace CrossBoardMoves {
 
         // go north west
         int northWestTrackingSquare = SingleMoves::square_northWest(startSquare);
-        const int maxNorthWestSteps = std::min(rank - 1, 8 - file);
+        const int maxNorthWestSteps = std::min(8- rank, file-1);
         for (int step = 0; step < maxNorthWestSteps; step++) {
             result |= 1ULL << northWestTrackingSquare;
             northWestTrackingSquare = SingleMoves::square_northWest(northWestTrackingSquare);
@@ -196,7 +200,7 @@ namespace CrossBoardMoves {
 }
 
 namespace RulesCheck {
-    inline uint64_t getMoves(const int square, const Piece& piece){
+    inline uint64_t getPsuedoLegalMoves(const int square, const Piece& piece){
         uint64_t result = 0ULL;
         switch (piece) {
             case WP:
@@ -238,6 +242,7 @@ namespace RulesCheck {
             case WK:
             case BK:
                 result |= SingleMoves::allDirs(square);
+                break;
 
             case WN:
             case BN:

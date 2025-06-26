@@ -175,6 +175,7 @@ TEST(BoardManagerLegality, QueenLegalityCorrect){
         Move northEastMove{.piece = WQ, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = i + 1};
         EXPECT_TRUE(manager.checkMove(northEastMove));
         EXPECT_EQ(northEastMove.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+
     }
 
     // can move vertically
@@ -387,7 +388,7 @@ TEST(BoardManagerLegality, CantMoveToOccupiedSquareWithSameColour){
     manager.getBitboards()->loadFEN(Fen::STARTING_FEN);
 
     // the white queen can't move to where a white pawn is
-    Move whiteQueenMove{.piece = WQ, .rankFrom = 1, .fileFrom = 1, .rankTo = 2, .fileTo = 1};
+    Move whiteQueenMove{.piece = WQ, .rankFrom = 1, .fileFrom = 4, .rankTo = 2, .fileTo = 4};
     EXPECT_FALSE(manager.checkMove(whiteQueenMove));
     EXPECT_EQ(whiteQueenMove.result, MoveResult::SQUARE_OCCUPIED);
 }
@@ -635,14 +636,14 @@ TEST(RulesHeaderTests, WholeFile){
     for (int i = 0; i < 8; i++) {
         switch (i) {
             case(0):
-                EXPECT_EQ(CrossBoardMoves::wholeFile(i), 0x101010101010101);
+                EXPECT_EQ(CrossBoardMoves::wholeFile(i), 0x101010101010100);
                 break;
 
             case(1):
-                EXPECT_EQ(CrossBoardMoves::wholeFile(i), 0x202020202020202);
+                EXPECT_EQ(CrossBoardMoves::wholeFile(i), 0x202020202020200);
                 break;
             case(7):
-                EXPECT_EQ(CrossBoardMoves::wholeFile(i), 0x8080808080808080);
+                EXPECT_EQ(CrossBoardMoves::wholeFile(i), 0x8080808080808000);
         }
     }
 }
@@ -651,14 +652,21 @@ TEST(RulesHeaderTests, WholeRank){
     for (int i = 0; i < 8; i++) {
         switch (i) {
             case(0):
-                EXPECT_EQ(CrossBoardMoves::wholeRank(i *8), 0xff);
+                EXPECT_EQ(CrossBoardMoves::wholeRank(i *8), 0xfe);
+                if (CrossBoardMoves::wholeRank(i *8) != 0xfe)
+                    std::cout << i << " "<< (CrossBoardMoves::wholeRank(i *8) == 0xfe )<< std::endl;
                 break;
 
             case(1):
-                EXPECT_EQ(CrossBoardMoves::wholeRank(i*8), 0xff00);
+                EXPECT_EQ(CrossBoardMoves::wholeRank(i*8), 0xfe00);
+                if (CrossBoardMoves::wholeRank(i *8) != 0xfe00)
+                    std::cout << i << " "<< (CrossBoardMoves::wholeRank(i *8) == 0xfe00 )<< std::endl;
                 break;
             case(7):
-                EXPECT_EQ(CrossBoardMoves::wholeRank(i*8), 0xff00000000000000);
+                if (CrossBoardMoves::wholeRank(i *8) != 0xfe00000000000000)
+                    std::cout << i << " "<< (CrossBoardMoves::wholeRank(i *8) == 0xfe00000000000000) << std::endl;
+                EXPECT_EQ(CrossBoardMoves::wholeRank(i*8), 0xfe00000000000000);
+
         }
     }
 }
@@ -700,29 +708,56 @@ TEST(RulesHeaderTests, OnePieceMoves){
     EXPECT_EQ( SingleMoves::west(A1),0);
 }
 
-
 TEST(RulesHeaderTests, KnightMoves){
 
     EXPECT_EQ(SingleMoves::getKnightMoves(0), 0x20400);
     EXPECT_EQ(SingleMoves::getKnightMoves(rankAndFileToSquare(4,4)), 0x142200221400);
-}
 
+    EXPECT_EQ(SingleMoves::getKnightMoves(rankAndFileToSquare(1,2)), 0x50800);
+}
 
 TEST(RulesHeaderTests, PawnMoves){
     // all allow diags for simplicity
 
     // from starting rank - n, ne, 2xn
-    EXPECT_EQ(RulesCheck::getMoves(8,WP), 0x1030000);
+    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(8,WP), 0x1030000);
 
     // from next rank - n, ne
-    EXPECT_EQ(RulesCheck::getMoves(16,WP), 0x3000000);
+    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(16,WP), 0x3000000);
 
 
     // from centre - nw, n ,ne
-    EXPECT_EQ(RulesCheck::getMoves(rankAndFileToSquare(4,4),WP), 0x1c00000000);
-    EXPECT_EQ(RulesCheck::getMoves(rankAndFileToSquare(5,8),WP), 0xc00000000000);
+    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(4,4),WP), 0x1c00000000);
+    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(5,8),WP), 0xc00000000000);
 
     // can't wrap n/s
-    EXPECT_EQ(RulesCheck::getMoves(rankAndFileToSquare(8,8),WP), 0);
+    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(8,8),WP), 0);
 }
 
+TEST(RulesHeaderTests, BishopMoves){
+    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(1,1),WB), 0x8040201008040200);
+    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(5,6),BB), 0x488500050880402);
+}
+
+TEST(RulesHeaderTests, RookMoves){
+
+    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(1,1),WR), 0x1010101010101fe);
+    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(6,6),WR), 0x2020df2020202020);
+
+    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(2,1),WR), 0x10101010101fe01);
+
+}
+
+TEST(RulesHeaderTests, QueenMoves){
+    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(4,5),WQ), 0x11925438ef385492);
+    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(4,5),BQ), 0x11925438ef385492);
+    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(1,8),WQ), 0x8182848890a0c07f);
+    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(1,8),BQ), 0x8182848890a0c07f);
+}
+
+TEST(RulesHeaderTests, KingMoves){
+    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(4,5),WK), 0x3828380000);
+    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(1,8),BK), 0xc040);
+    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(2,2),BK), 0x70507);
+
+}

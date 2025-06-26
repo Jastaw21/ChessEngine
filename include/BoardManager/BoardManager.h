@@ -47,6 +47,7 @@ class BoardManager {
 public:
 
     explicit BoardManager();
+    static bool moveIsLegalForPiece(int squareFrom, int squareTo, const Piece& piece);
 
     BitBoards *getBitboards(){ return &bitboards; }
     std::stack<Move> &getMoveHistory(){ return moveHistory; }
@@ -67,7 +68,7 @@ private:
     static bool moveInBounds(const Move& move);
     bool pieceInWay(const Move& move) const;
     [[nodiscard]] bool moveDestinationIsEmpty(const Move& move) const;
-    bool moveDestOccupiedByColour(const Colours& testColour, const Move& move) const;
+    bool moveDestOccupiedByColour(const Move& move);
     bool moveIsEnPassant(Move& move) const;
     bool kingInCheck(const Move& move);
     bool checkWouldBeUncovered(Move& move);

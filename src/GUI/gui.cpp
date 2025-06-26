@@ -174,6 +174,7 @@ void ChessGui::addMouseClick(const int x, const int y){
     // where on the screen did we click?
     const int file = 1 + static_cast<int>(x / (visualBoard->boardSize().x / 8.f));
     const int rank = 1 + static_cast<int>(8 - y / (visualBoard->boardSize().y / 8.f));
+    if (file < 1 || file > 8 || rank < 1 || rank > 8) { return; }
     const int candidateClickedSquare = rankAndFileToSquare(rank, file);
 
     // check if we clicked on a piece

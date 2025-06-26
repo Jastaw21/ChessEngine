@@ -12,6 +12,7 @@
 
 #include "BoardManager/BitBoards.h"
 #include "Utility/math.h"
+#include "BoardManager/Rules.h"
 
 std::string Move::toUCI() const{
     std::string uci;
@@ -47,6 +48,12 @@ Move createMove(const Piece& piece, const std::string& moveUCI){
 
 
 BoardManager::BoardManager() = default;
+
+bool BoardManager::moveIsLegalForPiece(const int squareFrom, const int squareTo, const Piece& piece){
+    auto possibleMoves = RulesCheck::getPsuedoLegalMoves(squareFrom, piece);
+
+    return possibleMoves & (1ULL << squareTo);
+}
 
 bool BoardManager::moveIsLegalForPiece(const Move& move){
     const int deltaRank = move.rankTo - move.rankFrom;
@@ -173,16 +180,23 @@ bool BoardManager::moveDestinationIsEmpty(const Move& move) const{
     return !test.has_value();
 }
 
-bool BoardManager::moveDestOccupiedByColour(const Colours& testColour, const Move& move) const{
-    const auto test = bitboards.getPiece(move.rankTo, move.fileTo);
-    // the square is empty
-    if (!test.has_value()) { return false; }
+bool BoardManager::moveDestOccupiedByColour(const Move& move){
+    // destination value
+    const uint64_t destination = 1ULL << rankAndFileToSquare(move.rankTo, move.fileTo);
 
-    if (pieceColours[test.value()] == testColour)
-        return true;
+    // and it with the opponent squares
+    for (int piece = 0; piece < PIECE_N; ++piece) {
+        auto pieceName = static_cast<Piece>(piece);
+        if (pieceColours[pieceName] != pieceColours[move.piece])
+            continue;
+
+        if ((destination & bitboards[pieceName]) != 0)
+            return true;
+    }
 
     return false;
 }
+
 
 bool BoardManager::moveIsEnPassant(Move& move) const{
     const auto lastMove = moveHistory.top();
@@ -267,7 +281,7 @@ bool BoardManager::kingInCheck(const Move& move){
                             .rankTo = kRank, .fileTo = kFile
                         };
 
-                if (moveIsLegalForPiece(testMove) && !pieceInWay(testMove) )
+                if (moveIsLegalForPiece(testMove) && !pieceInWay(testMove))
                     return true;
             }
         }
@@ -308,19 +322,20 @@ bool BoardManager::captureIsLegal(Move& move){
 }
 
 bool BoardManager::checkMove(Move& move){
-    // can this piece do that kind of move?
-    if (!moveIsLegalForPiece(move)) {
-        move.result = MOVE_NOT_LEGAL_FOR_PIECE;
-        return false;
-    }
     // is it in bounds?
     if (!moveInBounds(move)) {
         move.result = MOVE_OUT_OF_BOUNDS;
         return false;
     }
+    // can this piece do that kind of move?
+    if (!moveIsLegalForPiece(rankAndFileToSquare(move.rankFrom, move.fileFrom),
+                             rankAndFileToSquare(move.rankTo, move.fileTo), move.piece)) {
+        move.result = MOVE_NOT_LEGAL_FOR_PIECE;
+        return false;
+    }
 
     // is the square occupied by this colour?
-    if (moveDestOccupiedByColour(pieceColours[move.piece], move)) {
+    if (moveDestOccupiedByColour(move)) {
         move.result = SQUARE_OCCUPIED;
         return false;
     }
@@ -354,10 +369,10 @@ bool BoardManager::checkMove(Move& move){
     }
 
     // is it an en passant capture?
-    if (moveHistory.size() > 0 && (move.piece == WP || move.piece == BP) && moveIsEnPassant(move)) {
-        move.result = EN_PASSANT;
-        return true;
-    }
+    // if (moveHistory.size() > 0 && (move.piece == WP || move.piece == BP) && moveIsEnPassant(move)) {
+    //     move.result = EN_PASSANT;
+    //     return true;
+    // }
 
     // would it be a capture?
     if (!moveDestinationIsEmpty(move)) {
@@ -427,18 +442,15 @@ void BoardManager::makeMove(Move& move){
     const auto squareFrom = rankAndFileToSquare(move.rankFrom, move.fileFrom);
     bitboards[move.piece] &= ~(1ULL << squareFrom);
 
-
-    if (const auto discoveredPiece = bitboards.getPiece(move.rankTo,move.fileTo);
-        discoveredPiece.has_value() && pieceColours[discoveredPiece.value()] != pieceColours[move.piece]  ) {
+    if (const auto discoveredPiece = bitboards.getPiece(move.rankTo, move.fileTo);
+        discoveredPiece.has_value() && pieceColours[discoveredPiece.value()] != pieceColours[move.piece]) {
         move.result = PIECE_CAPTURE;
         move.capturedPiece = discoveredPiece.value();
     }
 
-
     // if it was a capture, set that piece to zero
     if (move.result == PIECE_CAPTURE)
         bitboards.setZero(move.rankTo, move.fileTo);
-
 
     // if it was an en_passant capture, set the correct square to zero
     if (move.result == EN_PASSANT)
