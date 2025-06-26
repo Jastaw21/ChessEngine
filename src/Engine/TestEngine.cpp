@@ -72,7 +72,7 @@ float TestEngine::minMax(BoardManager& mgr, const int depth, const bool isMaximi
 }
 
 
-Move TestEngine::search() const{
+Move TestEngine::search(){
     BoardManager startingManager = *boardManager_;
 
     auto moves = generateMoveList(startingManager);
@@ -148,53 +148,26 @@ std::vector<Move> TestEngine::generateMoveList(BoardManager& mgr){
 }
 
 
-uint64_t TestEngine::perft(const int depth, BoardManager& mgr_){
+uint64_t TestEngine::perft(const int depth, BoardManager& mgr_) {
     if (depth == 0) return 1;
 
+    int movesAtDepth = 0;
+
     uint64_t nodes = 0;
+    for (std::vector<Move> moves = generateMoveList(mgr_); Move& move : moves) {
+        movesAtDepth++;
+        mgr_.tryMove(move);
 
-    for (std::vector<Move> moves = generateMoveList(mgr_); Move& move: moves) {
-        if (!mgr_.tryMove(move)) continue;
+        const uint64_t childNodes = perft(depth - 1, mgr_);
+        nodes += childNodes;
 
-        nodes += perft(depth - 1, mgr_);
         mgr_.undoMove();
     }
 
     return nodes;
 }
-
-void TestEngine::perftDivide(const int depth, BoardManager& mgr_){
-
-    std::vector<Move> moves = generateMoveList(mgr_);
-    std::cout << (pieceColours[moves[0].piece] == WHITE ? "White" : "Black")  << ":\n";
-    uint64_t total = 0;
-
-    std::cout << "Perft divide at depth " << depth << ":\n";
-
-    for (Move& move: moves) {
-
-        if (!mgr_.tryMove(move)) continue;
-
-        const uint64_t count = perft(depth - 1, mgr_);
-        mgr_.undoMove();
-
-        std::cout << move.toUCI() << ": " << count << "\n";
-
-        total += count;
-    }
-
-    std::cout << "Total nodes: " << total << "\n";
-}
-
-void TestEngine::runPerftDivide(const std::string& startingFen, const int depth){
-    BoardManager mgr_;
-    mgr_.getBitboards()->loadFEN(startingFen);
-    perftDivide(depth, mgr_);
-}
-
-
 uint64_t TestEngine::runPerftTest(const std::string& Fen, const int depth){
-    BoardManager mgr;
+    BoardManager mgr = BoardManager(colour);
     mgr.getBitboards()->loadFEN(Fen);
     return perft(depth, mgr);
 }

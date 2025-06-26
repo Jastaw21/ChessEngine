@@ -8,6 +8,22 @@
 #include "SearchTree.h"
 
 
+struct PerftResults {
+    uint64_t nodes;
+    uint64_t captures;
+
+    PerftResults operator+(const PerftResults& rhs) const{
+        return PerftResults{.nodes = this->nodes + rhs.nodes, .captures =  this->captures + rhs.captures};
+    }
+
+    PerftResults& operator+=(const PerftResults& rhs){
+        nodes += rhs.nodes;
+        captures += rhs.captures;
+        return *this;
+    }
+};
+
+
 class EngineBase : public ChessPlayer {
 public:
 

@@ -47,6 +47,7 @@ class BoardManager {
 public:
 
     explicit BoardManager();
+    explicit BoardManager(Colours colour) : currentTurn(colour) {};
     static bool moveIsLegalForPiece(int squareFrom, int squareTo, const Piece& piece);
 
     BitBoards *getBitboards(){ return &bitboards; }

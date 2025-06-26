@@ -426,14 +426,11 @@ void BoardManager::undoMove(const Move& move){
 }
 
 void BoardManager::undoMove(){
+
+
     if (moveHistory.empty())
         return;
     undoMove(moveHistory.top());
-
-    if (currentTurn == WHITE)
-        currentTurn = BLACK;
-    else
-        currentTurn = WHITE;
 }
 
 

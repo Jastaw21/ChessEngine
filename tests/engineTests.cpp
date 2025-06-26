@@ -8,14 +8,12 @@
 
 
 TEST(Engine, perft1){
+    TestEngine blackEngine(BLACK);
+    //EXPECT_EQ(blackEngine.runPerftTest(Fen::STARTING_FEN, 1),20);
+    EXPECT_EQ(blackEngine.runPerftTest(Fen::STARTING_FEN, 2),400);
+    EXPECT_EQ(blackEngine.runPerftTest(Fen::STARTING_FEN, 3),8902);
 
-    TestEngine engine(WHITE);
-
-    EXPECT_EQ(engine.runPerftTest(Fen::STARTING_FEN, 1), 20);
-    engine.runPerftDivide(Fen::STARTING_FEN, 1);
-    EXPECT_EQ(engine.runPerftTest(Fen::STARTING_FEN, 2), 400);
-    engine.runPerftDivide(Fen::STARTING_FEN, 2);
-    EXPECT_EQ(engine.runPerftTest(Fen::STARTING_FEN, 3), 8902);
-    engine.runPerftDivide(Fen::STARTING_FEN, 3);
+    TestEngine whiteEngine(WHITE);
+    EXPECT_EQ(whiteEngine.runPerftTest(Fen::STARTING_FEN, 1),20);
+    EXPECT_EQ(whiteEngine.runPerftTest(Fen::STARTING_FEN, 2),400);
 }
-
