@@ -148,25 +148,27 @@ std::vector<Move> TestEngine::generateMoveList(BoardManager& mgr){
 }
 
 
-uint64_t TestEngine::perft(const int depth, BoardManager& mgr_) {
-    if (depth == 0) return 1;
+PerftResults TestEngine::perft(const int depth, BoardManager& mgr_) {
+    if (depth == 0) return PerftResults(1, 0);
 
-    int movesAtDepth = 0;
 
-    uint64_t nodes = 0;
+
+    PerftResults perft_results {0, 0};
     for (std::vector<Move> moves = generateMoveList(mgr_); Move& move : moves) {
-        movesAtDepth++;
-        mgr_.tryMove(move);
 
-        const uint64_t childNodes = perft(depth - 1, mgr_);
-        nodes += childNodes;
+        mgr_.tryMove(move);
+        perft_results.captures += move.result == PIECE_CAPTURE ? 1 : 0;
+
+        const PerftResults child_perft_results = perft(depth - 1, mgr_);
+        perft_results += child_perft_results;
 
         mgr_.undoMove();
     }
 
-    return nodes;
+    return perft_results;
 }
-uint64_t TestEngine::runPerftTest(const std::string& Fen, const int depth){
+
+PerftResults TestEngine::runPerftTest(const std::string& Fen, const int depth){
     BoardManager mgr = BoardManager(colour);
     mgr.getBitboards()->loadFEN(Fen);
     return perft(depth, mgr);

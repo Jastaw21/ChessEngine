@@ -28,10 +28,10 @@ public:
     void setManager(BoardManager* boardManager){ boardManager_ = boardManager; }
 
     std::vector<Move> generateMoveList(BoardManager& mgr);
-    uint64_t perft(int depth, BoardManager& mgr_);
+    PerftResults perft(int depth, BoardManager& mgr_);
     void perftDivide(int depth, BoardManager& mgr_);
     void runPerftDivide(const std::string& startingFen, int depth);
-    uint64_t runPerftTest(const std::string& Fen, int depth);
+    PerftResults runPerftTest(const std::string& Fen, int depth);
 
 
     BoardManager* boardManager_ = nullptr;
