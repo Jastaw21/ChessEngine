@@ -11,14 +11,16 @@
 struct PerftResults {
     uint64_t nodes;
     uint64_t captures;
+    uint64_t enPassant;
 
     PerftResults operator+(const PerftResults& rhs) const{
-        return PerftResults{.nodes = this->nodes + rhs.nodes, .captures =  this->captures + rhs.captures};
+        return PerftResults{.nodes = this->nodes + rhs.nodes, .captures =  this->captures + rhs.captures, .enPassant = this->enPassant + rhs.enPassant};
     }
 
     PerftResults& operator+=(const PerftResults& rhs){
         nodes += rhs.nodes;
         captures += rhs.captures;
+        enPassant += rhs.enPassant;
         return *this;
     }
 };

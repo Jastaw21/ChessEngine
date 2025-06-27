@@ -88,7 +88,7 @@ Move TestEngine::search(){
 
     for (Move& move: moves) {
         startingManager.tryMove(move);
-        const float eval = minMax(startingManager, 1, thisTurn == colour);
+        const float eval = minMax(startingManager, 3, thisTurn == colour);
         startingManager.undoMove();
 
         if (thisTurn == WHITE) {
@@ -158,6 +158,7 @@ PerftResults TestEngine::perft(const int depth, BoardManager& mgr_) {
 
         mgr_.tryMove(move);
         perft_results.captures += move.result == PIECE_CAPTURE ? 1 : 0;
+        perft_results.enPassant += move.result == EN_PASSANT ? 1 : 0;
 
         const PerftResults child_perft_results = perft(depth - 1, mgr_);
         perft_results += child_perft_results;

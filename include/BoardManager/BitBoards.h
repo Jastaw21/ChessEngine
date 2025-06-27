@@ -83,7 +83,7 @@ public:
     std::string &toFEN();
 
     [[nodiscard]] uint64_t getBitboard(const Piece& piece) const;
-    uint64_t &operator[](const Piece piece){ return bitboards[piece]; }
+    uint64_t &operator[] (const Piece piece){ return bitboards[piece]; }
 
     std::optional<Piece> getPiece(int rank, int file) const;
     std::optional<Piece> getPiece(int square) const;

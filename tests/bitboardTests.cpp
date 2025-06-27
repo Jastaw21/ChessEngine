@@ -168,10 +168,10 @@ TEST(BitBoards, WeirdBlackRookInWrongPlace){
     auto boards = BitBoards();
     boards.loadFEN("3K4/3r4/8/8/8/8/8/8");
 
-    auto& blackRookBoard = boards[BR];
+    const auto& blackRookBoard = boards[BR];
     EXPECT_EQ(blackRookBoard, 0x8000000000000);
 
-    auto& whiteRookBoard = boards[WR];
+    const auto& whiteRookBoard = boards[WR];
     EXPECT_EQ(whiteRookBoard, 0x0);
 
 }

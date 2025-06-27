@@ -8,11 +8,10 @@
 #include <bitset>
 #include <iostream>
 #include <vector>
-#include <bits/ostream.tcc>
 
 #include "BoardManager/BitBoards.h"
-#include "Utility/math.h"
 #include "BoardManager/Rules.h"
+#include "Utility/math.h"
 
 std::string Move::toUCI() const{
     std::string uci;
@@ -50,7 +49,7 @@ Move createMove(const Piece& piece, const std::string& moveUCI){
 BoardManager::BoardManager() = default;
 
 bool BoardManager::moveIsLegalForPiece(const int squareFrom, const int squareTo, const Piece& piece){
-    auto possibleMoves = RulesCheck::getPsuedoLegalMoves(squareFrom, piece);
+    const auto possibleMoves = RulesCheck::getPsuedoLegalMoves(squareFrom, piece);
 
     return possibleMoves & (1ULL << squareTo);
 }
@@ -197,6 +196,34 @@ bool BoardManager::moveDestOccupiedByColour(const Move& move){
     return false;
 }
 
+bool BoardManager::moveIsEnPassantNew(Move& move){
+    if (abs(moveHistory.top().rankTo - moveHistory.top().rankFrom) != 2)
+        return false;
+    const uint64_t attackedSquare = 1ULL << rankAndFileToSquare(move.rankTo, move.fileTo);
+    const auto& otherPawnPiece = pieceColours[move.piece] == WHITE ? BP : WP;
+    const auto& locationsOfOtherPawns = bitboards[otherPawnPiece];
+    const std::bitset<64> locationsOfOtherPawnsBits(locationsOfOtherPawns);
+    int offset = pieceColours[move.piece] == WHITE ? 8 : -8;
+
+    // track the locations of the opponents pawns, shifted correctly
+    uint64_t otherPawnLocations = 0ULL;
+    for (int bit = 0; bit < locationsOfOtherPawnsBits.size(); ++bit) {
+        if (locationsOfOtherPawnsBits.test(bit) && bit >= 8 && bit <= 55) {
+            otherPawnLocations |= 1ULL << (bit + offset);
+        }
+    }
+
+    const bool isEnPassant = (attackedSquare & otherPawnLocations) > 0 && (
+                                 abs(moveHistory.top().rankTo - moveHistory.top().rankFrom) == 2);
+
+    if (!isEnPassant)
+        return false;
+
+    move.result = EN_PASSANT;
+    move.capturedPiece = otherPawnPiece;
+    return true;
+}
+
 
 bool BoardManager::moveIsEnPassant(Move& move) const{
     const auto lastMove = moveHistory.top();
@@ -222,14 +249,9 @@ bool BoardManager::moveIsEnPassant(Move& move) const{
     if (move.rankTo != targetRank)
         return false;
 
-    std::cout << "En passant capture" << std::endl;
-
     move.result = EN_PASSANT;
     const auto& capturedPiece = bitboards.getPiece(lastMove.rankTo, move.fileTo);
-    if (!capturedPiece.has_value()) {
-        std::cout << "ERROR: No captured piece for en passant capture" << std::endl;
-        return true;
-    }
+    if (!capturedPiece.has_value()) { return true; }
     move.capturedPiece = capturedPiece.value();
     return true;
 }
@@ -369,10 +391,10 @@ bool BoardManager::checkMove(Move& move){
     }
 
     // is it an en passant capture?
-    // if (moveHistory.size() > 0 && (move.piece == WP || move.piece == BP) && moveIsEnPassant(move)) {
-    //     move.result = EN_PASSANT;
-    //     return true;
-    // }
+    if (moveHistory.size() > 0 && (move.piece == WP || move.piece == BP) && moveIsEnPassantNew(move)) {
+        move.result = EN_PASSANT;
+        return true;
+    }
 
     // would it be a capture?
     if (!moveDestinationIsEmpty(move)) {
@@ -426,8 +448,6 @@ void BoardManager::undoMove(const Move& move){
 }
 
 void BoardManager::undoMove(){
-
-
     if (moveHistory.empty())
         return;
     undoMove(moveHistory.top());
