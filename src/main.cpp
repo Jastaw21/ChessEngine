@@ -14,7 +14,7 @@ int main(int argc, char** argv){
     blackPlayer.setManager(gui.getBoardManager());
 
 
-    gui.getBoardManager()->getBitboards()->loadFEN(Fen::STARTING_FEN);
+    gui.getBoardManager()->getBitboards()->loadFEN("r7/1Q6/8/8/8/8/8/8");
     gui.loop();
     return 0;
 }

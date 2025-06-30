@@ -70,10 +70,10 @@ private:
     bool pieceInWay(const Move& move) const;
     [[nodiscard]] bool moveDestinationIsEmpty(const Move& move) const;
     bool moveDestOccupiedByColour(const Move& move);
-    bool moveIsEnPassantNew(Move& move);
-    bool moveIsEnPassant(Move& move) const;
+    bool moveIsEnPassant(Move& move);
     bool kingInCheck(const Move& move);
     bool checkWouldBeUncovered(Move& move);
+    bool opponentInCheck(const Move& move) const;
 
     // do the move
     void makeMove(Move& move);

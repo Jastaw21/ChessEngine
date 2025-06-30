@@ -166,11 +166,11 @@ bool BoardManager::pieceInWay(const Move& move) const{
         }
     }
 
-    // we now have the squares th`at we'll cross
+    // we now have the squares that we'll cross
     uint64_t crossedSquares = 0ULL;
     for (const auto& square: squaresOnPath) { crossedSquares |= 1ULL << square; }
 
-    // return true if any collisions along route
+    // return true if any collisions along the route
     return bitboards.test(crossedSquares);
 }
 
@@ -196,7 +196,7 @@ bool BoardManager::moveDestOccupiedByColour(const Move& move){
     return false;
 }
 
-bool BoardManager::moveIsEnPassantNew(Move& move){
+bool BoardManager::moveIsEnPassant(Move& move){
     if (abs(moveHistory.top().rankTo - moveHistory.top().rankFrom) != 2)
         return false;
     const uint64_t attackedSquare = 1ULL << rankAndFileToSquare(move.rankTo, move.fileTo);
@@ -221,38 +221,6 @@ bool BoardManager::moveIsEnPassantNew(Move& move){
 
     move.result = EN_PASSANT;
     move.capturedPiece = otherPawnPiece;
-    return true;
-}
-
-
-bool BoardManager::moveIsEnPassant(Move& move) const{
-    const auto lastMove = moveHistory.top();
-
-    // only relevant if pawns have moved...
-    if (lastMove.piece != BP && lastMove.piece != WP)
-        return false;
-
-    // ... and mismatched pieces..
-    if (pieceColours[lastMove.piece] == pieceColours[move.piece])
-        return false;
-
-    // ...and moved two ranks
-    if (abs(lastMove.rankTo - lastMove.rankFrom) != 2)
-        return false;
-
-    // must move to the same file as the last move
-    if (move.fileTo != lastMove.fileTo)
-        return false;
-
-    // and must end up north (WP is the mover) or south (BP) of the last move's destination
-    const int targetRank = lastMove.rankTo - sign(lastMove.rankTo - lastMove.rankFrom);
-    if (move.rankTo != targetRank)
-        return false;
-
-    move.result = EN_PASSANT;
-    const auto& capturedPiece = bitboards.getPiece(lastMove.rankTo, move.fileTo);
-    if (!capturedPiece.has_value()) { return true; }
-    move.capturedPiece = capturedPiece.value();
     return true;
 }
 
@@ -320,6 +288,19 @@ bool BoardManager::checkWouldBeUncovered(Move& move){
     }
     undoMove(move);
     return false;
+}
+
+bool BoardManager::opponentInCheck(const Move& move) const{
+
+    for (int piece = 0; piece < PIECE_N; ++piece) {
+        auto pieceName = static_cast<Piece>(piece);
+        if (pieceColours[pieceName] == pieceColours[move.piece]) {
+
+
+        }
+    }
+
+
 }
 
 bool BoardManager::tryMove(Move& move){
@@ -391,7 +372,7 @@ bool BoardManager::checkMove(Move& move){
     }
 
     // is it an en passant capture?
-    if (moveHistory.size() > 0 && (move.piece == WP || move.piece == BP) && moveIsEnPassantNew(move)) {
+    if (moveHistory.size() > 0 && (move.piece == WP || move.piece == BP) && moveIsEnPassant(move)) {
         move.result = EN_PASSANT;
         return true;
     }
