@@ -291,16 +291,41 @@ bool BoardManager::checkWouldBeUncovered(Move& move){
 }
 
 bool BoardManager::opponentInCheck(const Move& move) const{
-
     for (int piece = 0; piece < PIECE_N; ++piece) {
         auto pieceName = static_cast<Piece>(piece);
-        if (pieceColours[pieceName] == pieceColours[move.piece]) {
-
-
-        }
+        if (pieceColours[pieceName] == pieceColours[move.piece]) {}
     }
+}
 
+bool BoardManager::isCastling(const Move& move) const{
+    if (move.piece != WK && move.piece != BK)
+        return false;
 
+    /*if we don't start from the king start pos, or don't end up in one of the castling positions,
+        *return false as isn't possible. TODO: check if either piece has moved at all
+        */
+    if (move.fileFrom != 5 || (move.fileTo != 3 && move.fileTo != 7))
+        return false;
+
+    // only works on rank 1
+    if (move.piece == WK)
+        if (move.rankFrom != 1 && move.rankTo != 1)
+            return false;
+
+    // only works on rank 8
+    if (move.piece == BK)
+        if (move.rankFrom != 8 && move.rankTo != 8)
+            return false;
+
+    // can't go there if the place is occupied
+    if (!moveDestinationIsEmpty(move))
+        return false;
+
+    // if there's a piece in the way, can't go there
+    if (pieceInWay(move))
+        return false;
+
+    return true;
 }
 
 bool BoardManager::tryMove(Move& move){
@@ -325,6 +350,11 @@ bool BoardManager::captureIsLegal(Move& move){
 }
 
 bool BoardManager::checkMove(Move& move){
+    if (isCastling(move)) {
+        move.result = CASTLING;
+        return true;
+    }
+
     // is it in bounds?
     if (!moveInBounds(move)) {
         move.result = MOVE_OUT_OF_BOUNDS;
@@ -436,10 +466,40 @@ void BoardManager::undoMove(){
 
 
 void BoardManager::makeMove(Move& move){
-    // set the from square of the moving piece to zero
-    const auto squareFrom = rankAndFileToSquare(move.rankFrom, move.fileFrom);
-    bitboards[move.piece] &= ~(1ULL << squareFrom);
+    if (move.result == CASTLING) {
+        bitboards.setZero(move.rankFrom, move.fileFrom);
+        bitboards.setOne(move.piece, move.rankTo, move.fileTo);
 
+        const auto relevantRook = move.piece == WK ? WR : BR;
+
+
+        int movedRookFileTo;
+        int movedRookFileFrom;
+        // queen side
+        if (move.fileTo == 3) {
+            // set the new rook location
+            movedRookFileTo = move.fileTo + 1;
+            movedRookFileFrom =  1;
+
+        }
+        // king side
+        else if (move.fileTo == 7) {
+            movedRookFileTo = move.fileTo - 1;
+            movedRookFileFrom =  8;
+
+
+        }
+
+        bitboards.setOne(relevantRook, move.rankTo, movedRookFileTo);
+        bitboards.setZero(move.rankTo, movedRookFileFrom);
+
+        // set the old rook location
+    }
+
+    // set the from square of the moving piece to zero
+    bitboards.setZero(move.rankFrom, move.fileFrom);
+
+    // check to see if discovered capture
     if (const auto discoveredPiece = bitboards.getPiece(move.rankTo, move.fileTo);
         discoveredPiece.has_value() && pieceColours[discoveredPiece.value()] != pieceColours[move.piece]) {
         move.result = PIECE_CAPTURE;
@@ -455,8 +515,7 @@ void BoardManager::makeMove(Move& move){
         bitboards.setZero(moveHistory.top().rankTo, move.fileTo);
 
     // set the to square of the moving piece to one
-    const auto squareTo = rankAndFileToSquare(move.rankTo, move.fileTo);
-    bitboards[move.piece] |= 1ULL << squareTo;
+    bitboards.setOne(move.piece, move.rankTo, move.fileTo);
 
     if (currentTurn == WHITE)
         currentTurn = BLACK;

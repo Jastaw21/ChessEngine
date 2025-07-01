@@ -120,6 +120,27 @@ Move TestEngine::makeMove(){
     return move;
 }
 
+std::vector<Move> TestEngine::generateValidMovesFromPosition(const BoardManager& mgr, Piece piece,
+                                                             int start_square) const{}
+
+
+std::vector<Move> TestEngine::generateMovesForPiece(BoardManager& mgr, const Piece& piece) const{
+    std::vector<Move> pieceMoves;
+
+    const auto& piecePositions = std::bitset<64>(mgr.getBitboards()->getBitboard(piece));
+
+    for (int startSquare = 0 ; startSquare < piecePositions.size(); startSquare++) {
+        if (!piecePositions.test(startSquare))
+            continue;
+
+        int startRank, startFile;
+        squareToRankAndFile(startSquare, startRank, startFile);
+
+        auto validMoves = generateValidMovesFromPosition(mgr, piece, startSquare);
+        pieceMoves.insert(pieceMoves.end(), validMoves.begin(), validMoves.end());
+    }
+}
+
 std::vector<Move> TestEngine::generateMoveList(BoardManager& mgr){
     std::vector<Move> moves;
     // check each piece we have
@@ -156,19 +177,21 @@ std::vector<Move> TestEngine::generateMoveList(BoardManager& mgr){
 }
 
 
-PerftResults TestEngine::perft(const int depth, BoardManager& mgr_) const{
+PerftResults TestEngine::perft(const int depth, BoardManager& boardManager) const{
     if (depth == 0) return PerftResults(1, 0);
 
     PerftResults perft_results{0, 0};
-    for (std::vector<Move> moves = generateMoveList(mgr_); Move& move: moves) {
-        mgr_.tryMove(move);
+    std::vector<Move> moves = generateMoveList(boardManager);
+
+    for (Move& move : moves) {
+        boardManager.tryMove(move);
         perft_results.captures += move.result == PIECE_CAPTURE ? 1 : 0;
         perft_results.enPassant += move.result == EN_PASSANT ? 1 : 0;
 
-        const PerftResults child_perft_results = perft(depth - 1, mgr_);
+        const PerftResults child_perft_results = perft(depth - 1, boardManager);
         perft_results += child_perft_results;
 
-        mgr_.undoMove();
+        boardManager.undoMove();
     }
 
     return perft_results;

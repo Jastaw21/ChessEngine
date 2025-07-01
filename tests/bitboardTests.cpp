@@ -59,6 +59,19 @@ TEST(BitBoards, BitboardsLocationsCorrect){
     EXPECT_EQ(board[Piece::WQ], 0x8);
 }
 
+TEST(BitBoards,ToFenWorksAfterInit){
+
+    auto board = BitBoards();
+    board.loadFEN(Fen::STARTING_FEN);
+    EXPECT_EQ(board.toFEN(), Fen::STARTING_FEN);
+}
+
+TEST(BitBoards, ToFenWorksInWeirdPositions){
+    auto board = BitBoards();
+    board.loadFEN("rnbqkbnr/p2ppppp/1pp5/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
+    EXPECT_EQ(board.toFEN(), "rnbqkbnr/p2ppppp/1pp5/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
+}
+
 
 TEST(BitBoards, SetZeroRemovesBit){
     auto board = BitBoards();

@@ -24,11 +24,13 @@ public:
     Move search(int depth = 2) const;
 
     virtual Move makeMove() override;
+    std::vector<Move> generateValidMovesFromPosition(const BoardManager& mgr, Piece piece, int start_square) const;
+    std::vector<Move> generateMovesForPiece(BoardManager& mgr, const Piece& piece) const;
 
     void setManager(BoardManager* boardManager){ boardManager_ = boardManager; }
 
     static std::vector<Move> generateMoveList(BoardManager& mgr);
-    PerftResults perft(int depth, BoardManager& mgr_) const;
+    PerftResults perft(int depth, BoardManager& boardManager) const;
     PerftResults runPerftTest(const std::string& Fen, int depth) const;
 
 

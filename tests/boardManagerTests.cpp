@@ -467,6 +467,17 @@ TEST(BoardManagerMoveExecution, CaptureUpdatesState){
     EXPECT_EQ(manager.getBitboards()->getBitboard(Piece::BN), 0ULL);
 }
 
+TEST(BoardManagerMoveExecution, MoveUpdatesFen){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN(Fen::STARTING_FEN);
+    auto move = createMove(WP, "e2e4");
+
+    manager.tryMove(move);
+
+    EXPECT_EQ(manager.getBitboards()->toFEN(), "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR");
+}
+
+
 TEST(BoardManagerMoveExecution, SimpleUndoRestoresState){
     auto manager = BoardManager();
     manager.getBitboards()->loadFEN("8/8/8/8/8/8/8/1R6");
@@ -537,7 +548,7 @@ TEST(BoardManagerMoveExecution, PawnsOnlyCaptureDiagonally){
     EXPECT_EQ(tryCaptureNorthWest.result, MoveResult::PIECE_CAPTURE);
 }
 
-TEST(BoardManagerAdvandedRules, KingCantMoveInCheck){
+TEST(BoardManagerAdvancedRules, KingCantMoveInCheck){
     auto manager = BoardManager();
     manager.getBitboards()->loadFEN("8/8/8/8/8/8/8/kQ6");
 
@@ -546,7 +557,7 @@ TEST(BoardManagerAdvandedRules, KingCantMoveInCheck){
     EXPECT_EQ(move.result, MoveResult::KING_IN_CHECK);
 }
 
-TEST(BoardManagerAdvandedRules, KingCantBeInCheckThroughOtherPieces){
+TEST(BoardManagerAdvancedRules, KingCantBeInCheckThroughOtherPieces){
     auto manager = BoardManager();
     manager.getBitboards()->loadFEN("7k/6r1/8/8/8/8/8/B7");
 
@@ -565,7 +576,7 @@ TEST(BoardManagerAdvancedRules, PiecesCanSaveKingFromCheck){
     EXPECT_EQ(move.result, MoveResult::PIECE_CAPTURE);
 }
 
-TEST(BoardManagerAdvandedRules, CheckCantBeExposed){
+TEST(BoardManagerAdvancedRules, CheckCantBeExposed){
     auto manager = BoardManager();
     manager.getBitboards()->loadFEN("8/8/8/8/8/q7/R7/K7");
 
@@ -617,6 +628,54 @@ TEST(BoardManagerAdvancedRules, EnPassantCanBeUndone){
     EXPECT_EQ(initialBlackBitboard, finalBlackBitboard);
 }
 
+TEST(BoardManagerAdvancedRules, CastlingKingSideWorks){
+    auto manager = BoardManager();
+    // this is a white castling position
+    manager.getBitboards()->loadFEN("rnbqkbnr/p2ppppp/1pp5/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
+
+    // this would be the castling move
+    auto whiteMove = createMove(WK, "e1g1");
+    EXPECT_TRUE(manager.checkMove(whiteMove));
+    EXPECT_EQ(whiteMove.result, MoveResult::CASTLING);
+
+    manager.getBitboards()->loadFEN("rnbqk2r/p2p1ppp/1ppbpn2/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
+    auto blackMove = createMove(BK, "e8g8");
+    EXPECT_TRUE(manager.checkMove(blackMove));
+    EXPECT_EQ(blackMove.result, MoveResult::CASTLING);
+}
+
+TEST(BoardManagerAdvancedRules, KingSideCastlingUpdatesBoardState){
+    auto manager = BoardManager();
+
+    // this is a white castling position
+    manager.getBitboards()->loadFEN("rnbqkbnr/p2ppppp/1pp5/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
+    // this would be the castling move
+    auto whiteMove = createMove(WK, "e1g1");
+    ASSERT_TRUE(manager.tryMove(whiteMove));
+
+    EXPECT_EQ(manager.getBitboards()->toFEN(), "rnbqkbnr/p2ppppp/1pp5/8/4P3/3B1N2/PPPP1PPP/RNBQ1RK1");
+
+
+    manager.getBitboards()->loadFEN("rnbqk2r/p2p1ppp/1ppbpn2/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
+    auto blackMove = createMove(BK, "e8g8");
+    ASSERT_TRUE(manager.tryMove(blackMove));
+    EXPECT_EQ(manager.getBitboards()->toFEN(),  "rnbq1rk1/p2p1ppp/1ppbpn2/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
+
+
+}
+
+TEST(BoardManagerAdvancedRules, QueenSideCastlingUpdatesBoardState){
+    auto manager = BoardManager();
+
+    // black first
+    manager.getBitboards()->loadFEN("r3kbnr/p1pqpppp/bp1p4/2n5/8/1PPP4/P3PPPP/RNBQKBNR");
+    auto blackMove = createMove(BK, "e8c8");
+    ASSERT_TRUE(manager.tryMove(blackMove));
+    ASSERT_TRUE(blackMove.result == MoveResult::CASTLING);
+    EXPECT_EQ(manager.getBitboards()->toFEN(), "2kr1bnr/p1pqpppp/bp1p4/2n5/8/1PPP4/P3PPPP/RNBQKBNR");
+}
+
+
 TEST(BoardManagerMoveExecution, TurnChanges){
     auto manager = BoardManager();
     manager.getBitboards()->loadFEN(Fen::STARTING_FEN);
@@ -644,6 +703,7 @@ TEST(RulesHeaderTests, WholeFile){
                 break;
             case(7):
                 EXPECT_EQ(CrossBoardMoves::wholeFile(i), 0x8080808080808000);
+            default: ;
         }
     }
 }
@@ -666,7 +726,7 @@ TEST(RulesHeaderTests, WholeRank){
                 if (CrossBoardMoves::wholeRank(i *8) != 0xfe00000000000000)
                     std::cout << i << " "<< (CrossBoardMoves::wholeRank(i *8) == 0xfe00000000000000) << std::endl;
                 EXPECT_EQ(CrossBoardMoves::wholeRank(i*8), 0xfe00000000000000);
-
+            default: ;
         }
     }
 }

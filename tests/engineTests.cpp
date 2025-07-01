@@ -47,6 +47,21 @@ TEST(Perft, perft3){
     EXPECT_EQ(whiteResultDepth1.enPassant, 0);
 }
 
+TEST(Perft, perft4){
+    const TestEngine blackEngine(BLACK);
+
+    const auto blackResultDepth1 = blackEngine.runPerftTest(Fen::STARTING_FEN, 4);
+    EXPECT_EQ(blackResultDepth1.nodes, 197281);
+    EXPECT_EQ(blackResultDepth1.captures, 1576);
+    EXPECT_EQ(blackResultDepth1.enPassant, 0);
+
+    const TestEngine whiteEngine(WHITE);
+    const auto whiteResultDepth1 = whiteEngine.runPerftTest(Fen::STARTING_FEN, 4);
+    EXPECT_EQ(whiteResultDepth1.nodes, 197281);
+    EXPECT_EQ(whiteResultDepth1.captures, 1576);
+    EXPECT_EQ(whiteResultDepth1.enPassant, 0);
+}
+
 TEST(Engine, EngineEvaluatesCorrectly){
     const auto whiteEngine = TestEngine(WHITE);
 

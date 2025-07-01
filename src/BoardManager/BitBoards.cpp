@@ -114,7 +114,7 @@ int BitBoards::countPiece(const Piece& pieceToSearch) const{
 std::string &BitBoards::toFEN(){
     fen_ = "";
     // rank by rank
-    for (int rank = 8; rank > 0; --rank) {
+    for (int rank = 8; rank >= 1; --rank) {
         // will be used to count empty squares
         int numEmpty = 0;
 
@@ -129,6 +129,10 @@ std::string &BitBoards::toFEN(){
             for (const auto& [key, value]: pieceMap) {
                 // if the bit is in the bitboard, and-ed with the square, then we have a piece here
                 if (bitboards[value] & 1ULL << square) {
+                    if (numEmpty > 0) {
+                        fen_ += std::to_string(numEmpty);
+                        numEmpty = 0;
+                    }
                     isPieceHere = true;
                     fen_ += key;
                     break;

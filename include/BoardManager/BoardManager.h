@@ -26,6 +26,7 @@ enum MoveResult {
     KING_IN_CHECK,              //7
     EN_PASSANT,                 //8
     DISCOVERED_CHECK,           //9
+    CASTLING,
 };
 
 struct Move {
@@ -74,6 +75,7 @@ private:
     bool kingInCheck(const Move& move);
     bool checkWouldBeUncovered(Move& move);
     bool opponentInCheck(const Move& move) const;
+    bool isCastling(const Move& move) const;
 
     // do the move
     void makeMove(Move& move);

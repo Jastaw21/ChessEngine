@@ -91,6 +91,7 @@ public:
     void setOne(const Piece& piece, int rank, int file);
 
     bool test(uint64_t inBoard) const;
+
     int countPiece(const Piece& pieceToSearch) const;
 
 private:
