@@ -64,10 +64,10 @@ TEST(BoardManagerLegality, WhitePawnLegalityCorrect){
     manager.getBitboards()->loadFEN("8/8/8/8/3P4/8/8/8");
 
     // white pawn can only move north, move should fail in all previous cases
-    Move southMove{.piece = WP, .rankFrom = 4, .fileFrom = 4, .rankTo = 3, .fileTo = 4};
-    Move eastMove{.piece = WP, .rankFrom = 4, .fileFrom = 4, .rankTo = 4, .fileTo = 5};
-    Move westMove{.piece = WP, .rankFrom = 4, .fileFrom = 4, .rankTo = 4, .fileTo = 3};
-    Move northEastMove{.piece = WP, .rankFrom = 4, .fileFrom = 4, .rankTo = 5, .fileTo = 5};
+    Move southMove = createMove(WP, "d4d3");
+    Move eastMove = createMove(WP, "d4e4");
+    Move westMove = createMove(WP, "d4c4");
+    Move northEastMove = createMove(WP, "d4e5");
 
     Move northMove{.piece = WP, .rankFrom = 4, .fileFrom = 4, .rankTo = 5, .fileTo = 4};
 
@@ -78,12 +78,12 @@ TEST(BoardManagerLegality, WhitePawnLegalityCorrect){
 
     EXPECT_TRUE(manager.checkMove(northMove));
 
-    EXPECT_EQ(southMove.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
-    EXPECT_EQ(eastMove.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
-    EXPECT_EQ(westMove.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
-    EXPECT_EQ(northEastMove.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
+    EXPECT_EQ(southMove.result, MoveResult::ILLEGAL_MOVE);
+    EXPECT_EQ(eastMove.result, MoveResult::ILLEGAL_MOVE);
+    EXPECT_EQ(westMove.result, MoveResult::ILLEGAL_MOVE);
+    EXPECT_EQ(northEastMove.result, MoveResult::ILLEGAL_MOVE);
 
-    EXPECT_EQ(northMove.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+    EXPECT_EQ(northMove.result, MoveResult::PUSH);
 
     // if not on the first rank, move only 1 rank.
     Move northMoveTwoSquares{.piece = WP, .rankFrom = 4, .fileFrom = 4, .rankTo = 6, .fileTo = 4};
@@ -128,14 +128,14 @@ TEST(BoardManagerLegality, BlackPawnLegalityCorrect){
     manager.getBitboards()->loadFEN("8/3p4/8/8/8/8/8/8");
 
     // if on the starting pawn rank, move 1 or 2 ranks.
-    Move southMoveFromSecondRankOneSquare{.piece = BP, .rankFrom = 7, .fileFrom = 4, .rankTo = 6, .fileTo = 4};
-    Move northMoveFromSecondRankTwoSquares{.piece = BP, .rankFrom = 7, .fileFrom = 4, .rankTo = 5, .fileTo = 4};
-    Move southMoveFromSecondRankThreeSquares{
+    Move moveOneSouth{.piece = BP, .rankFrom = 7, .fileFrom = 4, .rankTo = 6, .fileTo = 4};
+    Move moveTwoSouth{.piece = BP, .rankFrom = 7, .fileFrom = 4, .rankTo = 5, .fileTo = 4};
+    Move moveThreeSouth{
                 .piece = BP, .rankFrom = 7, .fileFrom = 4, .rankTo = 4, .fileTo = 4
             };
-    EXPECT_TRUE(manager.checkMove(southMoveFromSecondRankOneSquare));
-    EXPECT_TRUE(manager.checkMove(northMoveFromSecondRankTwoSquares));
-    EXPECT_FALSE(manager.checkMove(southMoveFromSecondRankThreeSquares));
+    EXPECT_TRUE(manager.checkMove(moveOneSouth));
+    EXPECT_TRUE(manager.checkMove(moveTwoSouth));
+    EXPECT_FALSE(manager.checkMove(moveThreeSouth));
 }
 
 TEST(BoardManagerLegality, RookLegalityCorrect){
@@ -147,21 +147,21 @@ TEST(BoardManagerLegality, RookLegalityCorrect){
     for (int i = 1; i < 8; i++) {
         Move northEastMove{.piece = WR, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = i + 1};
         EXPECT_FALSE(manager.checkMove(northEastMove));
-        EXPECT_EQ(northEastMove.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
+        EXPECT_EQ(northEastMove.result, MoveResult::ILLEGAL_MOVE);
     }
 
     // can move vertically
     for (int i = 1; i < 8; i++) {
         Move verticalMove{.piece = WR, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = 1};
         EXPECT_TRUE(manager.checkMove(verticalMove));
-        EXPECT_EQ(verticalMove.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+        EXPECT_EQ(verticalMove.result, MoveResult::PUSH);
     }
 
     // can move horizontally
     for (int i = 1; i < 8; i++) {
         Move horizMove{.piece = WR, .rankFrom = 1, .fileFrom = 1, .rankTo = 1, .fileTo = i + 1};
         EXPECT_TRUE(manager.checkMove(horizMove));
-        EXPECT_EQ(horizMove.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+        EXPECT_EQ(horizMove.result, MoveResult::PUSH);
     }
 }
 
@@ -174,22 +174,21 @@ TEST(BoardManagerLegality, QueenLegalityCorrect){
     for (int i = 1; i < 8; i++) {
         Move northEastMove{.piece = WQ, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = i + 1};
         EXPECT_TRUE(manager.checkMove(northEastMove));
-        EXPECT_EQ(northEastMove.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
-
+        EXPECT_EQ(northEastMove.result, MoveResult::PUSH);
     }
 
     // can move vertically
     for (int i = 1; i < 8; i++) {
         Move verticalMove{.piece = WQ, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = 1};
         EXPECT_TRUE(manager.checkMove(verticalMove));
-        EXPECT_EQ(verticalMove.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+        EXPECT_EQ(verticalMove.result, MoveResult::PUSH);
     }
 
     // can move horizontally
     for (int i = 1; i < 8; i++) {
         Move horizMove{.piece = WQ, .rankFrom = 1, .fileFrom = 1, .rankTo = 1, .fileTo = i + 1};
         EXPECT_TRUE(manager.checkMove(horizMove));
-        EXPECT_EQ(horizMove.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+        EXPECT_EQ(horizMove.result, MoveResult::PUSH);
     }
 
     // can't do random moves
@@ -205,8 +204,14 @@ TEST(BoardManagerLegality, QueenLegalityCorrect){
             continue;
         auto move = Move{.piece = WQ, .rankFrom = 1, .fileFrom = 1, .rankTo = rank, .fileTo = file};
         EXPECT_FALSE(manager.checkMove(move));
-        EXPECT_EQ(move.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
+        EXPECT_EQ(move.result, MoveResult::ILLEGAL_MOVE);
     }
+
+    // can't do some random passes
+    manager.getBitboards()->loadFEN(Fen::STARTING_FEN);
+    Move move = createMove(WQ, "d8d1");
+    EXPECT_FALSE(manager.checkMove(move));
+    EXPECT_EQ(move.result, MoveResult::ILLEGAL_MOVE);
 }
 
 TEST(BoardManagerLegality, KingLegalityCorrect){
@@ -219,10 +224,10 @@ TEST(BoardManagerLegality, KingLegalityCorrect){
         Move northEastMove{.piece = BK, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = i + 1};
         if (i == 1) {
             EXPECT_TRUE(manager.checkMove(northEastMove));
-            EXPECT_EQ(northEastMove.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+            EXPECT_EQ(northEastMove.result, MoveResult::PUSH);
         } else {
             EXPECT_FALSE(manager.checkMove(northEastMove));
-            EXPECT_EQ(northEastMove.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
+            EXPECT_EQ(northEastMove.result, MoveResult::ILLEGAL_MOVE);
         }
     }
 
@@ -231,10 +236,10 @@ TEST(BoardManagerLegality, KingLegalityCorrect){
         Move verticalMove{.piece = BK, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = 1};
         if (i == 1) {
             EXPECT_TRUE(manager.checkMove(verticalMove));
-            EXPECT_EQ(verticalMove.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+            EXPECT_EQ(verticalMove.result, MoveResult::PUSH);
         } else {
             EXPECT_FALSE(manager.checkMove(verticalMove));
-            EXPECT_EQ(verticalMove.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
+            EXPECT_EQ(verticalMove.result, MoveResult::ILLEGAL_MOVE);
         }
     }
 
@@ -243,10 +248,10 @@ TEST(BoardManagerLegality, KingLegalityCorrect){
         Move horizMove{.piece = BK, .rankFrom = 1, .fileFrom = 1, .rankTo = 1, .fileTo = i + 1};
         if (i == 1) {
             EXPECT_TRUE(manager.checkMove(horizMove));
-            EXPECT_EQ(horizMove.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+            EXPECT_EQ(horizMove.result, MoveResult::PUSH);
         } else {
             EXPECT_FALSE(manager.checkMove(horizMove));
-            EXPECT_EQ(horizMove.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
+            EXPECT_EQ(horizMove.result, MoveResult::ILLEGAL_MOVE);
         }
     }
 
@@ -258,7 +263,7 @@ TEST(BoardManagerLegality, KingLegalityCorrect){
 
         if (rank > 2 || file > 2) {
             EXPECT_FALSE(manager.checkMove(move));
-            EXPECT_EQ(move.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
+            EXPECT_EQ(move.result, MoveResult::ILLEGAL_MOVE);
         }
     }
 }
@@ -270,7 +275,7 @@ TEST(BoardManagerLegality, KingCanTakeItselfOutOfCheck){
 
     auto move = createMove(WK, "d8d7");
     EXPECT_TRUE(manager.checkMove(move));
-    EXPECT_EQ(move.result, MoveResult::PIECE_CAPTURE);
+    EXPECT_EQ(move.result, MoveResult::CAPTURE);
 }
 
 TEST(BoardManagerLegality, BishopLegalityCorrect){
@@ -282,7 +287,7 @@ TEST(BoardManagerLegality, BishopLegalityCorrect){
     for (int i = 1; i < 8; i++) {
         Move northEastMove{.piece = BB, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = i + 1};
         EXPECT_TRUE(manager.checkMove(northEastMove));
-        EXPECT_EQ(northEastMove.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+        EXPECT_EQ(northEastMove.result, MoveResult::PUSH);
     }
 
     // can't move vertically
@@ -290,33 +295,33 @@ TEST(BoardManagerLegality, BishopLegalityCorrect){
         Move verticalMove{.piece = BB, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = 1};
 
         EXPECT_FALSE(manager.checkMove(verticalMove));
-        EXPECT_EQ(verticalMove.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
+        EXPECT_EQ(verticalMove.result, MoveResult::ILLEGAL_MOVE);
     }
 
     // can't move horizontally
     for (int i = 1; i < 8; i++) {
         Move horizMove{.piece = BB, .rankFrom = 1, .fileFrom = 1, .rankTo = 1, .fileTo = i + 1};
         EXPECT_FALSE(manager.checkMove(horizMove));
-        EXPECT_EQ(horizMove.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
+        EXPECT_EQ(horizMove.result, MoveResult::ILLEGAL_MOVE);
     }
 
     // can't jump over others
     manager.getBitboards()->loadFEN(Fen::STARTING_FEN);
     Move move = createMove(WB, "c1e3");
     EXPECT_FALSE(manager.checkMove(move));
-    EXPECT_EQ(move.result, MoveResult::BLOCKING_PIECE);
+    EXPECT_EQ(move.result, MoveResult::ILLEGAL_MOVE);
 
     // can't jump over others
     manager.getBitboards()->loadFEN(Fen::STARTING_FEN);
     Move blackMove = createMove(BB, "c8h3");
     EXPECT_FALSE(manager.checkMove(blackMove));
-    EXPECT_EQ(blackMove.result, MoveResult::BLOCKING_PIECE);
+    EXPECT_EQ(blackMove.result, MoveResult::ILLEGAL_MOVE);
 
     // can't capture over others
     manager.getBitboards()->loadFEN("rnbqkbnr/ppppppp1/7p/8/8/8/PPPPPPPP/RNBQKBNR");
     Move nextMove = createMove(WB, "c1h6");
     EXPECT_FALSE(manager.checkMove(nextMove));
-    EXPECT_EQ(nextMove.result, MoveResult::BLOCKING_PIECE);
+    EXPECT_EQ(nextMove.result, MoveResult::ILLEGAL_MOVE);
 }
 
 TEST(BoardManagerLegality, KnightLegalityCorrect){
@@ -328,7 +333,7 @@ TEST(BoardManagerLegality, KnightLegalityCorrect){
     for (int i = 1; i < 8; i++) {
         Move northEastMove{.piece = BN, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = i + 1};
         EXPECT_FALSE(manager.checkMove(northEastMove));
-        EXPECT_EQ(northEastMove.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
+        EXPECT_EQ(northEastMove.result, MoveResult::ILLEGAL_MOVE);
     }
 
     // can't move vertically
@@ -336,14 +341,14 @@ TEST(BoardManagerLegality, KnightLegalityCorrect){
         Move verticalMove{.piece = BN, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = 1};
 
         EXPECT_FALSE(manager.checkMove(verticalMove));
-        EXPECT_EQ(verticalMove.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
+        EXPECT_EQ(verticalMove.result, MoveResult::ILLEGAL_MOVE);
     }
 
     // can't move horizontally
     for (int i = 1; i < 8; i++) {
         Move horizMove{.piece = BN, .rankFrom = 1, .fileFrom = 1, .rankTo = 1, .fileTo = i + 1};
         EXPECT_FALSE(manager.checkMove(horizMove));
-        EXPECT_EQ(horizMove.result, MoveResult::MOVE_NOT_LEGAL_FOR_PIECE);
+        EXPECT_EQ(horizMove.result, MoveResult::ILLEGAL_MOVE);
     }
 
     manager.getBitboards()->loadFEN("8/8/8/8/3N4/8/8/8");
@@ -351,35 +356,35 @@ TEST(BoardManagerLegality, KnightLegalityCorrect){
     // can do its weird hop and jumps
     Move move = createMove(BN, "d4b3");
     EXPECT_TRUE(manager.checkMove(move));
-    EXPECT_EQ(move.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+    EXPECT_EQ(move.result, MoveResult::PUSH);
 
     move = createMove(BN, "d4c2");
     EXPECT_TRUE(manager.checkMove(move));
-    EXPECT_EQ(move.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+    EXPECT_EQ(move.result, MoveResult::PUSH);
 
     move = createMove(BN, "d4e2");
     EXPECT_TRUE(manager.checkMove(move));
-    EXPECT_EQ(move.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+    EXPECT_EQ(move.result, MoveResult::PUSH);
 
     move = createMove(BN, "d4f3");
     EXPECT_TRUE(manager.checkMove(move));
-    EXPECT_EQ(move.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+    EXPECT_EQ(move.result, MoveResult::PUSH);
 
     move = createMove(BN, "d4f5");
     EXPECT_TRUE(manager.checkMove(move));
-    EXPECT_EQ(move.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+    EXPECT_EQ(move.result, MoveResult::PUSH);
 
     move = createMove(BN, "d4e6");
     EXPECT_TRUE(manager.checkMove(move));
-    EXPECT_EQ(move.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+    EXPECT_EQ(move.result, MoveResult::PUSH);
 
     move = createMove(BN, "d4c6");
     EXPECT_TRUE(manager.checkMove(move));
-    EXPECT_EQ(move.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+    EXPECT_EQ(move.result, MoveResult::PUSH);
 
     move = createMove(BN, "d4b5");
     EXPECT_TRUE(manager.checkMove(move));
-    EXPECT_EQ(move.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+    EXPECT_EQ(move.result, MoveResult::PUSH);
 }
 
 TEST(BoardManagerLegality, CantMoveToOccupiedSquareWithSameColour){
@@ -390,7 +395,7 @@ TEST(BoardManagerLegality, CantMoveToOccupiedSquareWithSameColour){
     // the white queen can't move to where a white pawn is
     Move whiteQueenMove{.piece = WQ, .rankFrom = 1, .fileFrom = 4, .rankTo = 2, .fileTo = 4};
     EXPECT_FALSE(manager.checkMove(whiteQueenMove));
-    EXPECT_EQ(whiteQueenMove.result, MoveResult::SQUARE_OCCUPIED);
+    EXPECT_EQ(whiteQueenMove.result, MoveResult::ILLEGAL_MOVE);
 }
 
 TEST(BoardManagerLegality, CanMoveToOccupiedSquareWithOtherColour){
@@ -401,12 +406,12 @@ TEST(BoardManagerLegality, CanMoveToOccupiedSquareWithOtherColour){
     // the white rook can capture the black rook
     Move whiteRookMove{.piece = WR, .rankFrom = 1, .fileFrom = 1, .rankTo = 8, .fileTo = 1};
     EXPECT_TRUE(manager.checkMove(whiteRookMove));
-    EXPECT_EQ(whiteRookMove.result, MoveResult::PIECE_CAPTURE);
+    EXPECT_EQ(whiteRookMove.result, MoveResult::CAPTURE);
 
     // so can the black
     Move blackRookMove{.piece = WR, .rankFrom = 1, .fileFrom = 1, .rankTo = 8, .fileTo = 1};
     EXPECT_TRUE(manager.checkMove(blackRookMove));
-    EXPECT_EQ(blackRookMove.result, MoveResult::PIECE_CAPTURE);
+    EXPECT_EQ(blackRookMove.result, MoveResult::CAPTURE);
 }
 
 TEST(BoardManagerLegality, MostPiecesCantJumpOthers){
@@ -417,11 +422,11 @@ TEST(BoardManagerLegality, MostPiecesCantJumpOthers){
 
     Move moveA3{.piece = WR, .rankFrom = 1, .fileFrom = 1, .rankTo = 3, .fileTo = 1};
     EXPECT_FALSE(manager.checkMove(moveA3));
-    EXPECT_EQ(moveA3.result, MoveResult::BLOCKING_PIECE);
+    EXPECT_EQ(moveA3.result, MoveResult::ILLEGAL_MOVE);
 
     Move moveA5{.piece = WR, .rankFrom = 1, .fileFrom = 1, .rankTo = 5, .fileTo = 1};
     EXPECT_FALSE(manager.checkMove(moveA5));
-    EXPECT_EQ(moveA5.result, MoveResult::BLOCKING_PIECE);
+    EXPECT_EQ(moveA5.result, MoveResult::ILLEGAL_MOVE);
 }
 
 TEST(BoardManagerLegality, KnightsCanJumpOthers){
@@ -431,11 +436,20 @@ TEST(BoardManagerLegality, KnightsCanJumpOthers){
 
     Move moveA3{.piece = BN, .rankFrom = 1, .fileFrom = 1, .rankTo = 3, .fileTo = 2};
     EXPECT_TRUE(manager.checkMove(moveA3));
-    EXPECT_EQ(moveA3.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+    EXPECT_EQ(moveA3.result, MoveResult::PUSH);
 
     Move moveA5{.piece = BN, .rankFrom = 1, .fileFrom = 1, .rankTo = 2, .fileTo = 3};
     EXPECT_TRUE(manager.checkMove(moveA5));
-    EXPECT_EQ(moveA5.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+    EXPECT_EQ(moveA5.result, MoveResult::PUSH);
+}
+
+TEST(BoardManagerLegality, CheckWeirdQueenBehaviour){
+    auto manager = BoardManager();
+    // load a board with white queen in a1
+    manager.getBitboards()->loadFEN(Fen::STARTING_FEN);
+
+    auto move = createMove(WQ, "d8d1");
+    EXPECT_FALSE(manager.checkMove(move));
 }
 
 TEST(BoardManagerMoveExecution, EmptySquareMoveUpdates){
@@ -524,6 +538,30 @@ TEST(BoardManagerMoveExecution, UndoCaptureRestoresFullState){
     EXPECT_EQ(blackKnightBoardInitial, blackKnightBoardFinal);
 }
 
+TEST(BoardManagerMoveExecution, CastlingCanBeUndone){
+    auto manager = BoardManager();
+    // this is a white castling position
+    manager.getBitboards()->loadFEN("rnbqkbnr/p2ppppp/1pp5/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
+
+    // this would be the castling move
+    auto whiteMove = createMove(WK, "e1g1");
+    const auto initialWhiteKingBoard = manager.getBitboards()->getBitboard(WK);
+    const auto initialWhiteRookBoard = manager.getBitboards()->getBitboard(WR);
+    ASSERT_TRUE(manager.checkMove(whiteMove));
+    ASSERT_EQ(whiteMove.result, MoveResult::CASTLING);
+    EXPECT_EQ(manager.getBitboards()->getBitboard(WK), initialWhiteKingBoard);
+    EXPECT_EQ(manager.getBitboards()->getBitboard(WR), initialWhiteRookBoard);
+
+    manager.getBitboards()->loadFEN("rnbqk2r/p2p1ppp/1ppbpn2/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
+    auto blackMove = createMove(BK, "e8g8");
+    const auto initialBlackKingBoard = manager.getBitboards()->getBitboard(BK);
+    const auto initialBlackRookBoard = manager.getBitboards()->getBitboard(BR);
+    ASSERT_TRUE(manager.checkMove(blackMove));
+    ASSERT_EQ(blackMove.result, MoveResult::CASTLING);
+    EXPECT_EQ(manager.getBitboards()->getBitboard(BK), initialBlackKingBoard);
+    EXPECT_EQ(manager.getBitboards()->getBitboard(BR), initialBlackRookBoard);
+}
+
 TEST(BoardManagerMoveExecution, KingCantBeCaptured){
     auto manager = BoardManager();
     manager.getBitboards()->loadFEN("8/8/8/8/8/8/8/kP6");
@@ -536,7 +574,7 @@ TEST(BoardManagerMoveExecution, KingCantBeCaptured){
     EXPECT_FALSE(manager.tryMove(tryCapture2));
 }
 
-TEST(BoardManagerMoveExecution, PawnsOnlyCaptureDiagonally){
+TEST(BoardManagerLegality, PawnsOnlyCaptureDiagonally){
     auto manager = BoardManager();
     manager.getBitboards()->loadFEN("8/8/8/8/8/8/p7/kP6");
 
@@ -545,7 +583,7 @@ TEST(BoardManagerMoveExecution, PawnsOnlyCaptureDiagonally){
 
     auto tryCaptureNorthWest = Move{.piece = WP, .rankFrom = 1, .fileFrom = 2, .rankTo = 2, .fileTo = 1};
     EXPECT_TRUE(manager.tryMove(tryCaptureNorthWest));
-    EXPECT_EQ(tryCaptureNorthWest.result, MoveResult::PIECE_CAPTURE);
+    EXPECT_EQ(tryCaptureNorthWest.result, MoveResult::CAPTURE);
 }
 
 TEST(BoardManagerAdvancedRules, KingCantMoveInCheck){
@@ -563,7 +601,7 @@ TEST(BoardManagerAdvancedRules, KingCantBeInCheckThroughOtherPieces){
 
     auto move = createMove(BK, "h8g8");
     EXPECT_TRUE(manager.checkMove(move));
-    EXPECT_EQ(move.result, MoveResult::MOVE_TO_EMPTY_SQUARE);
+    EXPECT_EQ(move.result, MoveResult::PUSH);
 }
 
 TEST(BoardManagerAdvancedRules, PiecesCanSaveKingFromCheck){
@@ -573,7 +611,7 @@ TEST(BoardManagerAdvancedRules, PiecesCanSaveKingFromCheck){
     auto move = createMove(WR, "b4a4");
 
     EXPECT_TRUE(manager.checkMove(move));
-    EXPECT_EQ(move.result, MoveResult::PIECE_CAPTURE);
+    EXPECT_EQ(move.result, MoveResult::CAPTURE);
 }
 
 TEST(BoardManagerAdvancedRules, CheckCantBeExposed){
@@ -582,7 +620,7 @@ TEST(BoardManagerAdvancedRules, CheckCantBeExposed){
 
     auto rookMoveOutOfWay = createMove(WR, "a2b2");
     EXPECT_FALSE(manager.checkMove(rookMoveOutOfWay));
-    EXPECT_EQ(rookMoveOutOfWay.result, MoveResult::DISCOVERED_CHECK);
+    EXPECT_EQ(rookMoveOutOfWay.result, MoveResult::KING_IN_CHECK);
 }
 
 TEST(BoardManagerAdvancedRules, SimpleEnPassant){
@@ -655,13 +693,10 @@ TEST(BoardManagerAdvancedRules, KingSideCastlingUpdatesBoardState){
 
     EXPECT_EQ(manager.getBitboards()->toFEN(), "rnbqkbnr/p2ppppp/1pp5/8/4P3/3B1N2/PPPP1PPP/RNBQ1RK1");
 
-
     manager.getBitboards()->loadFEN("rnbqk2r/p2p1ppp/1ppbpn2/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
     auto blackMove = createMove(BK, "e8g8");
     ASSERT_TRUE(manager.tryMove(blackMove));
-    EXPECT_EQ(manager.getBitboards()->toFEN(),  "rnbq1rk1/p2p1ppp/1ppbpn2/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
-
-
+    EXPECT_EQ(manager.getBitboards()->toFEN(), "rnbq1rk1/p2p1ppp/1ppbpn2/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
 }
 
 TEST(BoardManagerAdvancedRules, QueenSideCastlingUpdatesBoardState){
@@ -694,15 +729,15 @@ TEST(BoardManagerMoveExecution, TurnChanges){
 TEST(RulesHeaderTests, WholeFile){
     for (int i = 0; i < 8; i++) {
         switch (i) {
-            case(0):
-                EXPECT_EQ(CrossBoardMoves::wholeFile(i), 0x101010101010100);
+            case 0:
+                EXPECT_EQ(Sliders::wholeFile(i), 0x101010101010100);
                 break;
 
-            case(1):
-                EXPECT_EQ(CrossBoardMoves::wholeFile(i), 0x202020202020200);
+            case 1:
+                EXPECT_EQ(Sliders::wholeFile(i), 0x202020202020200);
                 break;
-            case(7):
-                EXPECT_EQ(CrossBoardMoves::wholeFile(i), 0x8080808080808000);
+            case 7:
+                EXPECT_EQ(Sliders::wholeFile(i), 0x8080808080808000);
             default: ;
         }
     }
@@ -711,113 +746,200 @@ TEST(RulesHeaderTests, WholeFile){
 TEST(RulesHeaderTests, WholeRank){
     for (int i = 0; i < 8; i++) {
         switch (i) {
-            case(0):
-                EXPECT_EQ(CrossBoardMoves::wholeRank(i *8), 0xfe);
-                if (CrossBoardMoves::wholeRank(i *8) != 0xfe)
-                    std::cout << i << " "<< (CrossBoardMoves::wholeRank(i *8) == 0xfe )<< std::endl;
+            case 0:
+                EXPECT_EQ(Sliders::wholeRank(i *8), 0xfe);
+                if (Sliders::wholeRank(i * 8) != 0xfe)
+                    std::cout << i << " " << (Sliders::wholeRank(i * 8) == 0xfe) << std::endl;
                 break;
 
-            case(1):
-                EXPECT_EQ(CrossBoardMoves::wholeRank(i*8), 0xfe00);
-                if (CrossBoardMoves::wholeRank(i *8) != 0xfe00)
-                    std::cout << i << " "<< (CrossBoardMoves::wholeRank(i *8) == 0xfe00 )<< std::endl;
+            case 1:
+                EXPECT_EQ(Sliders::wholeRank(i*8), 0xfe00);
+                if (Sliders::wholeRank(i * 8) != 0xfe00)
+                    std::cout << i << " " << (Sliders::wholeRank(i * 8) == 0xfe00) << std::endl;
                 break;
-            case(7):
-                if (CrossBoardMoves::wholeRank(i *8) != 0xfe00000000000000)
-                    std::cout << i << " "<< (CrossBoardMoves::wholeRank(i *8) == 0xfe00000000000000) << std::endl;
-                EXPECT_EQ(CrossBoardMoves::wholeRank(i*8), 0xfe00000000000000);
+            case 7:
+                if (Sliders::wholeRank(i * 8) != 0xfe00000000000000)
+                    std::cout << i << " " << (Sliders::wholeRank(i * 8) == 0xfe00000000000000) << std::endl;
+                EXPECT_EQ(Sliders::wholeRank(i*8), 0xfe00000000000000);
             default: ;
         }
     }
 }
 
 TEST(RulesHeaderTests, Diags){
-    EXPECT_EQ(CrossBoardMoves::diags(18), 0x804020110a000a11);
+    EXPECT_EQ(Sliders::diags(18), 0x804020110a000a11);
 
-    EXPECT_EQ(CrossBoardMoves::diags(rankAndFileToSquare(6,6)), 0x8850005088040201);
+    EXPECT_EQ(Sliders::diags(rankAndFileToSquare(6,6)), 0x8850005088040201);
 
-    EXPECT_EQ(CrossBoardMoves::diags(rankAndFileToSquare(8,8)), 0x40201008040201);
+    EXPECT_EQ(Sliders::diags(rankAndFileToSquare(8,8)), 0x40201008040201);
 
-    EXPECT_EQ(CrossBoardMoves::diags(rankAndFileToSquare(1,1)), 0x8040201008040200);
-
+    EXPECT_EQ(Sliders::diags(rankAndFileToSquare(1,1)), 0x8040201008040200);
 }
 
 TEST(RulesHeaderTests, OnePieceMoves){
     constexpr uint64_t H1 = 7;
-    EXPECT_EQ( SingleMoves::north(H1),32768);
-    EXPECT_EQ( SingleMoves::south(H1),0);
-    EXPECT_EQ( SingleMoves::east(H1),0);
-    EXPECT_EQ( SingleMoves::west(H1),64);
+    EXPECT_EQ(SingleMoves::north(H1), 32768);
+    EXPECT_EQ(SingleMoves::south(H1), 0);
+    EXPECT_EQ(SingleMoves::east(H1), 0);
+    EXPECT_EQ(SingleMoves::west(H1), 64);
 
     constexpr uint64_t H8 = 63;
-    EXPECT_EQ( SingleMoves::north(H8),0);
-    EXPECT_EQ( SingleMoves::south(H8),0x80000000000000);
-    EXPECT_EQ( SingleMoves::east(H8),0);
-    EXPECT_EQ( SingleMoves::west(H8),0x4000000000000000);
+    EXPECT_EQ(SingleMoves::north(H8), 0);
+    EXPECT_EQ(SingleMoves::south(H8), 0x80000000000000);
+    EXPECT_EQ(SingleMoves::east(H8), 0);
+    EXPECT_EQ(SingleMoves::west(H8), 0x4000000000000000);
 
     constexpr uint64_t A8 = 56;
-    EXPECT_EQ( SingleMoves::north(A8),0);
-    EXPECT_EQ( SingleMoves::south(A8),0x1000000000000);
-    EXPECT_EQ( SingleMoves::east(A8),0x200000000000000);
-    EXPECT_EQ( SingleMoves::west(A8),0);
+    EXPECT_EQ(SingleMoves::north(A8), 0);
+    EXPECT_EQ(SingleMoves::south(A8), 0x1000000000000);
+    EXPECT_EQ(SingleMoves::east(A8), 0x200000000000000);
+    EXPECT_EQ(SingleMoves::west(A8), 0);
 
     constexpr uint64_t A1 = 0;
-    EXPECT_EQ( SingleMoves::north(A1),0x100);
-    EXPECT_EQ( SingleMoves::south(A1),0);
-    EXPECT_EQ( SingleMoves::east(A1),0x2);
-    EXPECT_EQ( SingleMoves::west(A1),0);
+    EXPECT_EQ(SingleMoves::north(A1), 0x100);
+    EXPECT_EQ(SingleMoves::south(A1), 0);
+    EXPECT_EQ(SingleMoves::east(A1), 0x2);
+    EXPECT_EQ(SingleMoves::west(A1), 0);
 }
 
 TEST(RulesHeaderTests, KnightMoves){
+    auto boards = BitBoards();
+    boards.loadFEN("8/8/8/8/8/8/8/k7");
+    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(0,WN, &boards), 0x20400);
 
-    EXPECT_EQ(SingleMoves::getKnightMoves(0), 0x20400);
-    EXPECT_EQ(SingleMoves::getKnightMoves(rankAndFileToSquare(4,4)), 0x142200221400);
+    boards.loadFEN("8/8/8/8/3n4/8/8/8");
+    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(4,4), BN, &boards), 0x142200221400);
 
-    EXPECT_EQ(SingleMoves::getKnightMoves(rankAndFileToSquare(1,2)), 0x50800);
+    boards.loadFEN("8/8/8/8/8/8/8/1n6");
+    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(1,2), WN, &boards), 0x50800);
 }
 
 TEST(RulesHeaderTests, PawnMoves){
     // all allow diags for simplicity
 
+    auto boards = BitBoards();
+
     // from starting rank - n, ne, 2xn
-    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(8,WP), 0x1030000);
+    boards.loadFEN("8/8/8/8/8/8/8/P7");
+    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(8,WP, &boards), 0x1030000);
 
     // from next rank - n, ne
-    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(16,WP), 0x3000000);
-
+    boards.loadFEN("8/8/8/8/8/8/P7/8");
+    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(16,WP, &boards), 0x3000000);
 
     // from centre - nw, n ,ne
-    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(4,4),WP), 0x1c00000000);
-    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(5,8),WP), 0xc00000000000);
+    boards.loadFEN("8/8/8/8/3P4/8/8/8");
+    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(4,4),WP, &boards), 0x1c00000000);
+    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(5,8),WP, &boards), 0xc00000000000);
 
     // can't wrap n/s
-    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(8,8),WP), 0);
+    boards.loadFEN("7Q/8/8/8/8/8/8/8");
+    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(8,8),WP, &boards), 0);
 }
 
 TEST(RulesHeaderTests, BishopMoves){
-    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(1,1),WB), 0x8040201008040200);
-    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(5,6),BB), 0x488500050880402);
+    auto boards = BitBoards();
+    boards.loadFEN("8/8/8/8/8/8/8/B7");
+    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(1,1),WB, &boards), 0x8040201008040200);
+    boards.loadFEN("8/8/8/5b2/8/8/8/8");
+    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(5,6),BB, &boards), 0x488500050880402);
+}
+
+TEST(RulesHeaderTests, AttackDoesntJump){
+    auto boards = BitBoards();
+    boards.loadFEN(Fen::STARTING_FEN);
+    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(8,3),BB, &boards), 0x0);
+    boards.loadFEN("8/8/8/5b2/8/8/8/8");
+
+    boards.loadFEN(Fen::KIWI_PETE_FEN);
+    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(7,7),BB, &boards), 0x2000800000000000);
 }
 
 TEST(RulesHeaderTests, RookMoves){
-
-    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(1,1),WR), 0x1010101010101fe);
-    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(6,6),WR), 0x2020df2020202020);
-
-    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(2,1),WR), 0x10101010101fe01);
-
+    auto boards = BitBoards();
+    boards.loadFEN("8/8/8/8/8/8/8/R7");
+    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(1,1),WR, &boards), 0x1010101010101fe);
+    boards.loadFEN("8/8/5R2/8/8/8/8/8");
+    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(6,6),WR, &boards), 0x2020df2020202020);
+    boards.loadFEN("8/8/8/8/8/8/R7/8");
+    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(2,1),WR, &boards), 0x10101010101fe01);
 }
 
 TEST(RulesHeaderTests, QueenMoves){
-    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(4,5),WQ), 0x11925438ef385492);
-    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(4,5),BQ), 0x11925438ef385492);
-    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(1,8),WQ), 0x8182848890a0c07f);
-    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(1,8),BQ), 0x8182848890a0c07f);
+    auto boards = BitBoards();
+    boards.loadFEN("8/8/8/8/4Q3/8/8/8");
+    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(4,5),WQ, &boards), 0x11925438ef385492);
+    boards.loadFEN("8/8/8/8/4q3/8/8/8");
+    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(4,5),BQ, &boards), 0x11925438ef385492);
+    boards.loadFEN("8/8/8/8/8/8/8/7Q");
+    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(1,8),WQ, &boards), 0x8182848890a0c07f);
+    boards.loadFEN("8/8/8/8/8/8/8/7q");
+    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(1,8),BQ, &boards), 0x8182848890a0c07f);
 }
 
 TEST(RulesHeaderTests, KingMoves){
-    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(4,5),WK), 0x3828380000);
-    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(1,8),BK), 0xc040);
-    EXPECT_EQ(RulesCheck::getPsuedoLegalMoves(rankAndFileToSquare(2,2),BK), 0x70507);
+    auto boards = BitBoards();
 
+    boards.loadFEN("8/8/8/8/4K3/8/8/8");
+    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(4,5),WK,&boards), 0x3828380000);
+    boards.loadFEN("8/8/8/8/8/8/8/7k");
+    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(1,8),BK,&boards), 0xc040);
+    boards.loadFEN("8/8/8/8/8/8/1k6/8");
+    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(2,2),BK,&boards), 0x70507);
+}
+
+TEST(RulesHeaderTests, CastlingMoves){
+    auto boards = BitBoards();
+    // this is a white castling position
+    boards.loadFEN("rnbqkbnr/p2ppppp/1pp5/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
+    EXPECT_EQ(RulesCheck::getCastlingMoves(4,WK, &boards), 0x40);
+}
+
+TEST(RulesHeaderTests, EnPassantVulnerable){
+    auto boards = BitBoards();
+    boards.loadFEN("rnbqkbnr/ppppp1pp/8/4Pp2/8/8/PPPP1PPP/RNBQKBNR");
+
+    EXPECT_EQ(RulesCheck::getEnPassantVulnerableSquares(&boards, WHITE), 0x200000000000);
+
+    boards.loadFEN("rnbqkbnr/ppppp1pp/5p2/4P3/8/8/PPPP1PPP/RNBQKBNR");
+    EXPECT_EQ(RulesCheck::getEnPassantVulnerableSquares(&boards, WHITE), 0);
+}
+
+
+TEST(BoardManagerLegality, CantCaptureOwnPieceKiwiPeteScenario){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN(Fen::KIWI_PETE_FEN);
+
+    auto whiteMove = createMove(WP, "b2c3");
+    EXPECT_FALSE(manager.checkMove(whiteMove));
+}
+
+TEST(BoardManagerLegality, PawnCantJumpOthers){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN(Fen::KIWI_PETE_FEN);
+
+    auto whiteMove = createMove(WP, "c2c4");
+    auto whiteMove2 = createMove(WP, "f2f4");
+    auto whiteMove3 = createMove(WP, "h2h4");
+
+    EXPECT_FALSE(manager.checkMove(whiteMove));
+    EXPECT_FALSE(manager.checkMove(whiteMove2));
+    EXPECT_FALSE(manager.checkMove(whiteMove3));
+}
+
+TEST(BoardManagerLegality, MissingKiwiPeteMoves){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN(Fen::KIWI_PETE_FEN);
+
+    auto queenMove = createMove(WQ, "f3f6");
+    auto bishopMove = createMove(WB, "d2h6");
+    auto castlingMove = createMove(WK, "e1g1");
+    auto otherCastlingMove = createMove(WK, "e1c1");
+    auto missingKingMove = createMove(WK, "e1d1");
+
+    EXPECT_TRUE(manager.checkMove(queenMove));
+    EXPECT_TRUE(manager.checkMove(bishopMove));
+    EXPECT_TRUE(manager.checkMove(castlingMove));
+    EXPECT_TRUE(manager.checkMove(otherCastlingMove));
+    EXPECT_TRUE(manager.checkMove(missingKingMove));
 }

@@ -13,6 +13,7 @@ enum Piece {
     PIECE_N
 };
 
+
 enum Colours {
     WHITE,
     BLACK,

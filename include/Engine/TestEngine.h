@@ -9,9 +9,6 @@
 #include "EngineBase.h"
 
 
-
-
-
 class TestEngine final : public EngineBase {
 public:
 
@@ -20,21 +17,24 @@ public:
 
 
     float evaluate(BoardManager& mgr) const;
-    float minMax(BoardManager& mgr, int depth, bool isMaximising) const;
-    Move search(int depth = 2) const;
-
+    Move search(int depth = 2);
     virtual Move makeMove() override;
-    std::vector<Move> generateValidMovesFromPosition(const BoardManager& mgr, Piece piece, int start_square) const;
-    std::vector<Move> generateMovesForPiece(BoardManager& mgr, const Piece& piece) const;
 
     void setManager(BoardManager* boardManager){ boardManager_ = boardManager; }
 
     static std::vector<Move> generateMoveList(BoardManager& mgr);
-    PerftResults perft(int depth, BoardManager& boardManager) const;
+
     PerftResults runPerftTest(const std::string& Fen, int depth) const;
 
 
     BoardManager* boardManager_ = nullptr;
+
+private:
+
+    static std::vector<Move> generateValidMovesFromPosition(BoardManager& mgr, const Piece& piece, int startSquare);
+    static std::vector<Move> generateMovesForPiece(BoardManager& mgr, const Piece& piece);
+    float minMax(BoardManager& mgr, int depth, bool isMaximising);
+    static PerftResults perft(int depth, BoardManager& boardManager);
 };
 
 

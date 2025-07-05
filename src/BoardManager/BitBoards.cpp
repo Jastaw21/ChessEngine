@@ -98,9 +98,17 @@ void BitBoards::setOne(const Piece& piece, const int rank, const int file){
 }
 
 
-bool BitBoards::test(const uint64_t inBoard) const{
+bool BitBoards::testBoard(const uint64_t inBoard) const{
     for (const auto& board: bitboards) {
         if ((board & inBoard) != 0)
+            return true;
+    }
+    return false;
+}
+
+bool BitBoards::testSquare(const int square) const{
+    for (const auto& board: bitboards) {
+        if ((board & (1ULL << square)) != 0)
             return true;
     }
     return false;
@@ -109,6 +117,21 @@ bool BitBoards::test(const uint64_t inBoard) const{
 int BitBoards::countPiece(const Piece& pieceToSearch) const{
     if (bitboards[pieceToSearch] != 0) { return std::bitset<64>(bitboards[pieceToSearch]).count(); }
     return 0;
+}
+
+std::vector<Piece> BitBoards::getAttackingPieces(const Piece& piece){
+
+    std::vector<Piece> attackingPieces;
+
+    for (int i = 0; i < PIECE_N; ++i) {
+        const auto pieceToSearch = static_cast<Piece>(i);
+        if (pieceColours[pieceToSearch] == pieceColours[piece]) {
+            attackingPieces.push_back(pieceToSearch);
+        }
+    }
+
+    return attackingPieces;
+
 }
 
 std::string &BitBoards::toFEN(){
@@ -152,3 +175,4 @@ std::string &BitBoards::toFEN(){
 
     return fen_;
 }
+

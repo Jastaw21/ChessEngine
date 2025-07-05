@@ -14,18 +14,18 @@ class BitBoards;
 
 enum MoveResult {
     // successes
-    MOVE_TO_EMPTY_SQUARE,       //0
-    PIECE_CAPTURE,              //1
+    PUSH, //0
+    CAPTURE, //1
 
     // failures
-    ILLEGAL_MOVE,               //2
-    SQUARE_OCCUPIED,            //3
-    MOVE_NOT_LEGAL_FOR_PIECE,   //4
-    MOVE_OUT_OF_BOUNDS,         //5
-    BLOCKING_PIECE,             //6
-    KING_IN_CHECK,              //7
-    EN_PASSANT,                 //8
-    DISCOVERED_CHECK,           //9
+    ILLEGAL_MOVE, //2
+    SQUARE_OCCUPIED, //3
+    MOVE_NOT_LEGAL_FOR_PIECE, //4
+    MOVE_OUT_OF_BOUNDS, //5
+    BLOCKING_PIECE, //6
+    KING_IN_CHECK, //7
+    EN_PASSANT, //8
+    DISCOVERED_CHECK, //9
     CASTLING,
 };
 
@@ -48,13 +48,13 @@ class BoardManager {
 public:
 
     explicit BoardManager();
-    explicit BoardManager(Colours colour) : currentTurn(colour) {};
-    static bool moveIsLegalForPiece(int squareFrom, int squareTo, const Piece& piece);
+    explicit BoardManager(Colours colour) : currentTurn(colour){};
 
     BitBoards *getBitboards(){ return &bitboards; }
     std::stack<Move> &getMoveHistory(){ return moveHistory; }
 
     bool tryMove(Move& move);
+    bool prelimCheckMove(Move& move);
 
     bool checkMove(Move& move);
     void undoMove(const Move& move);
@@ -64,18 +64,10 @@ public:
 
 private:
 
-    // internal move legality checkers
-    static bool captureIsLegal(Move& move);
-    static bool moveIsLegalForPiece(const Move& move);
-    static bool moveInBounds(const Move& move);
-    bool pieceInWay(const Move& move) const;
-    [[nodiscard]] bool moveDestinationIsEmpty(const Move& move) const;
-    bool moveDestOccupiedByColour(const Move& move);
     bool moveIsEnPassant(Move& move);
-    bool kingInCheck(const Move& move);
-    bool checkWouldBeUncovered(Move& move);
-    bool opponentInCheck(const Move& move) const;
+    bool friendlyKingInCheck(const Move& move);
     bool isCastling(const Move& move) const;
+    std::vector<int> getStartingSquaresOfPiece(const Piece& piece);
 
     // do the move
     void makeMove(Move& move);

@@ -124,15 +124,29 @@ TEST(BitBoards, SquareToRankAndFile){
     EXPECT_EQ(1, file);
 }
 
-TEST(BitBoards, TestFunction){
+TEST(BitBoards, TestBoardFunction){
     auto board = BitBoards();
     board.loadFEN(Fen::STARTING_FEN);
 
     const uint64_t a1 = 1;
     const uint64_t a4 = 0x1000000;
 
-    EXPECT_TRUE(board.test(a1));
-    EXPECT_FALSE(board.test(a4));
+    EXPECT_TRUE(board.testBoard(a1));
+    EXPECT_FALSE(board.testBoard(a4));
+}
+
+TEST(BitBoards, TestSquareFunction){
+    auto board = BitBoards();
+    board.loadFEN(Fen::STARTING_FEN);
+
+    for (int i = 0; i < 64; i++) {
+        if (i <=15 || i >=48) {
+            bool test = board.testSquare(i);
+            EXPECT_TRUE(board.testSquare(i));
+        }
+        else
+            EXPECT_FALSE(board.testSquare(i));
+    }
 }
 
 TEST(BitBoards, GetPieceFindsPieces){

@@ -47,18 +47,14 @@ float TestEngine::evaluate(BoardManager& mgr) const{
         int opponentPieceValue = 0;
         if (pieceColours[pieceName] == colour) {
             ourPieceValue += pieceValues[pieceName] * mgr.getBitboards()->countPiece(pieceName);
-        }
-
-        else {
-            opponentPieceValue += pieceValues[pieceName] * mgr.getBitboards()->countPiece(pieceName);
-        }
+        } else { opponentPieceValue += pieceValues[pieceName] * mgr.getBitboards()->countPiece(pieceName); }
 
         materialScore += ourPieceValue - opponentPieceValue;
     }
     return materialScore;
 }
 
-float TestEngine::minMax(BoardManager& mgr, const int depth, const bool isMaximising) const{
+float TestEngine::minMax(BoardManager& mgr, const int depth, const bool isMaximising){
     if (depth == 0) { return evaluate(mgr); }
 
     auto moves = generateMoveList(mgr);
@@ -72,14 +68,13 @@ float TestEngine::minMax(BoardManager& mgr, const int depth, const bool isMaximi
         int eval = minMax(mgr, depth - 1, !isMaximising);
         mgr.undoMove();
 
-        if (isMaximising) { bestEval = std::max(bestEval, eval); }
-        else { bestEval = std::min(bestEval, eval); }
+        if (isMaximising) { bestEval = std::max(bestEval, eval); } else { bestEval = std::min(bestEval, eval); }
     }
     return bestEval;
 }
 
 
-Move TestEngine::search(int depth) const{
+Move TestEngine::search(int depth){
     BoardManager startingManager = *boardManager_;
 
     auto moves = generateMoveList(startingManager);
@@ -92,7 +87,6 @@ Move TestEngine::search(int depth) const{
     float bestEval = -100000;
 
     const Colours thisTurn = startingManager.getCurrentTurn();
-
 
     for (Move& move: moves) {
         startingManager.tryMove(move);
@@ -120,16 +114,35 @@ Move TestEngine::makeMove(){
     return move;
 }
 
-std::vector<Move> TestEngine::generateValidMovesFromPosition(const BoardManager& mgr, Piece piece,
-                                                             int start_square) const{}
+std::vector<Move> TestEngine::generateValidMovesFromPosition(BoardManager& mgr, const Piece& piece,
+                                                             const int startSquare){
+    std::vector<Move> validMoves;
+    const auto possibleMoves = std::bitset<64>(
+        RulesCheck::getPseudoLegalMoves(startSquare, piece, mgr.getBitboards()));
+
+    for (int endSquare = 0; endSquare < possibleMoves.size(); endSquare++) {
+        if (!possibleMoves.test(endSquare)) { continue; }
+
+        int startRank, startFile;
+        int endRank, endFile;
+        squareToRankAndFile(startSquare, startRank, startFile);
+        squareToRankAndFile(endSquare, endRank, endFile);
+        Move candidateMove{piece, startRank, startFile, endRank, endFile};
+
+        if (mgr.checkMove(candidateMove))
+            validMoves.push_back(candidateMove);
+    }
+
+    return validMoves;
+}
 
 
-std::vector<Move> TestEngine::generateMovesForPiece(BoardManager& mgr, const Piece& piece) const{
+std::vector<Move> TestEngine::generateMovesForPiece(BoardManager& mgr, const Piece& piece){
     std::vector<Move> pieceMoves;
 
     const auto& piecePositions = std::bitset<64>(mgr.getBitboards()->getBitboard(piece));
 
-    for (int startSquare = 0 ; startSquare < piecePositions.size(); startSquare++) {
+    for (int startSquare = 0; startSquare < piecePositions.size(); startSquare++) {
         if (!piecePositions.test(startSquare))
             continue;
 
@@ -139,6 +152,8 @@ std::vector<Move> TestEngine::generateMovesForPiece(BoardManager& mgr, const Pie
         auto validMoves = generateValidMovesFromPosition(mgr, piece, startSquare);
         pieceMoves.insert(pieceMoves.end(), validMoves.begin(), validMoves.end());
     }
+
+    return pieceMoves;
 }
 
 std::vector<Move> TestEngine::generateMoveList(BoardManager& mgr){
@@ -150,43 +165,23 @@ std::vector<Move> TestEngine::generateMoveList(BoardManager& mgr){
         if (pieceColours[pieceName] != mgr.getCurrentTurn())
             continue;
 
-        // get all the starting squares for this piece
-        auto bits = std::bitset<64>(mgr.getBitboards()->getBitboard(pieceName));
-        for (int bit = 0; bit < bits.size(); bit++) {
-            if (bits.test(bit)) {
-                int startRank, startFile;
-                squareToRankAndFile(bit, startRank, startFile);
-                // get all the squares we can get to
-
-                const auto destMoves = RulesCheck::getPsuedoLegalMoves(bit, pieceName);
-                auto attackBits = std::bitset<64>(destMoves);
-                for (int attackBit = 0; attackBit < attackBits.size(); attackBit++) {
-                    if (attackBits.test(attackBit)) {
-                        int destRank, destFile;
-                        squareToRankAndFile(attackBit, destRank, destFile);
-                        // ReSharper disable once CppTooWideScopeInitStatement
-                        Move move = {pieceName, startRank, startFile, destRank, destFile};
-                        if (mgr.checkMove(move))
-                            moves.push_back(move);
-                    }
-                }
-            }
-        }
+        auto pieceMoves = generateMovesForPiece(mgr, pieceName);
+        moves.insert(moves.end(), pieceMoves.begin(), pieceMoves.end());
     }
     return moves;
 }
 
-
-PerftResults TestEngine::perft(const int depth, BoardManager& boardManager) const{
+PerftResults TestEngine::perft(const int depth, BoardManager& boardManager){
     if (depth == 0) return PerftResults(1, 0);
 
     PerftResults perft_results{0, 0};
     std::vector<Move> moves = generateMoveList(boardManager);
 
-    for (Move& move : moves) {
+    for (Move& move: moves) {
         boardManager.tryMove(move);
-        perft_results.captures += move.result == PIECE_CAPTURE ? 1 : 0;
+        perft_results.captures += move.result == CAPTURE ? 1 : 0;
         perft_results.enPassant += move.result == EN_PASSANT ? 1 : 0;
+        perft_results.castling += move.result == CASTLING ? 1 : 0;
 
         const PerftResults child_perft_results = perft(depth - 1, boardManager);
         perft_results += child_perft_results;
@@ -198,7 +193,7 @@ PerftResults TestEngine::perft(const int depth, BoardManager& boardManager) cons
 }
 
 PerftResults TestEngine::runPerftTest(const std::string& Fen, const int depth) const{
-    BoardManager mgr = BoardManager(colour);
+    auto mgr = BoardManager(colour);
     mgr.getBitboards()->loadFEN(Fen);
     return perft(depth, mgr);
 }

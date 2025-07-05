@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <vector>
 
 #include "Engine/Piece.h"
 
@@ -90,9 +91,12 @@ public:
     void setZero(int rank, int file);
     void setOne(const Piece& piece, int rank, int file);
 
-    bool test(uint64_t inBoard) const;
+    bool testBoard(uint64_t inBoard) const;
+    bool testSquare(const int square) const;
 
     int countPiece(const Piece& pieceToSearch) const;
+
+    std::vector<Piece> getAttackingPieces(const Piece& piece);
 
 private:
 

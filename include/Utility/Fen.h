@@ -10,6 +10,7 @@
 namespace Fen {
     inline std::string STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
     inline std::string STARTING_FEN_TEST = "r7/8/8/8/8/8/8/8";
+    inline std::string KIWI_PETE_FEN = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R";
 
     inline std::string rankAndFileToFen(const int rank, const int file){
         std::string returnString;

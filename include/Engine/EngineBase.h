@@ -12,15 +12,20 @@ struct PerftResults {
     uint64_t nodes;
     uint64_t captures;
     uint64_t enPassant;
+    uint64_t castling;
 
     PerftResults operator+(const PerftResults& rhs) const{
-        return PerftResults{.nodes = this->nodes + rhs.nodes, .captures =  this->captures + rhs.captures, .enPassant = this->enPassant + rhs.enPassant};
+        return PerftResults{
+                    .nodes = this->nodes + rhs.nodes, .captures = this->captures + rhs.captures,
+                    .enPassant = this->enPassant + rhs.enPassant, .castling = this->castling + rhs.castling
+                };
     }
 
-    PerftResults& operator+=(const PerftResults& rhs){
+    PerftResults &operator+=(const PerftResults& rhs){
         nodes += rhs.nodes;
         captures += rhs.captures;
         enPassant += rhs.enPassant;
+        castling += rhs.castling;
         return *this;
     }
 };
@@ -34,6 +39,7 @@ public:
     virtual Move makeMove() override;
 
 private:
+
     SearchTree searchTree = SearchTree();
 };
 
