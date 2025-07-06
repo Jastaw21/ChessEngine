@@ -208,6 +208,7 @@ bool BoardManager::prelimCheckMove(Move& move){
             move.result = ILLEGAL_MOVE;
             return false;
         }
+        // can't capture kings
         if (capturedPiece.value() == WK || capturedPiece.value() == BK) {
             move.result = ILLEGAL_MOVE;
             return false;
@@ -225,8 +226,8 @@ bool BoardManager::checkMove(Move& move){
     if (!prelimCheckMove(move)) { return false; }
     makeMove(move);
     if (friendlyKingInCheck(move)) {
-        move.result = KING_IN_CHECK;
         undoMove(move);
+        move.result = KING_IN_CHECK;
         return false;
     }
     undoMove(move);
@@ -245,7 +246,11 @@ void BoardManager::undoMove(const Move& move){
     }
 
     // if it was an en_passant capture, restore the correct square to one
-    if (move.result == EN_PASSANT) { bitboards.setOne(moveHistory.top().piece, moveHistory.top().rankTo, move.fileTo); }
+    if (move.result == EN_PASSANT) {
+        const auto opponentPawn = pieceColours[move.piece] == WHITE ? BP : WP;
+        const auto rankOffset = pieceColours[move.piece] == WHITE ? -1 : 1;
+        bitboards.setOne(opponentPawn, move.rankTo + rankOffset, move.fileTo);
+    }
 
     // if it was a castling, restore the rooks to their original positions
     if (move.result == CASTLING) {

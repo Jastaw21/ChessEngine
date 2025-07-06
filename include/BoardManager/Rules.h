@@ -236,19 +236,19 @@ namespace SingleMoves {
     }
 
     inline uint64_t oneSquareAllDirections(const int square){
-        uint64_t prelimLegalMoves = north(square) | south(square) | east(square)
-                                    | west(square) | northEast(square) | northWest(square) |
-                                    southEast(square) | southWest(square);
+        const uint64_t prelimLegalMoves = north(square) | south(square) | east(square)
+                                          | west(square) | northEast(square) | northWest(square) |
+                                          southEast(square) | southWest(square);
 
         return prelimLegalMoves;
     }
 
     inline uint64_t oneSquareAllDirections(const int square, BitBoards* boards, const bool isPush,
                                            const Colours& movingColour){
-        uint64_t prelimLegalMoves = north(square) | south(square)
-                                    | east(square) | west(square)
-                                    | northEast(square) | northWest(square)
-                                    | southEast(square) | southWest(square);
+        const uint64_t prelimLegalMoves = north(square) | south(square)
+                                          | east(square) | west(square)
+                                          | northEast(square) | northWest(square)
+                                          | southEast(square) | southWest(square);
 
         if (!boards->testBoard(prelimLegalMoves))
             return prelimLegalMoves;
@@ -723,6 +723,32 @@ namespace RulesCheck {
                     canCastle = false;
                     break; // if we cross anything on the way, break out and don't continue checking the others
                 }
+
+                uint64_t attackedSquares = 0ULL;
+                // also check if it's attacked by anything
+                for (int i = 0; i < PIECE_N; ++i) {
+                    const auto pieceName = static_cast<Piece>(i);
+                    if (pieceColours[pieceName] == pieceColours[piece])
+                        continue;
+
+                    auto startingBits = std::bitset<64>(boards->getBitboard(pieceName));
+                    for (int index = 0; index < startingBits.size(); ++index) {
+                        if (startingBits.test(index)) {
+                            const uint64_t attacks = getAttackMoves(index, pieceName, boards);
+                            const uint64_t pushes = getPushMoves(index, pieceName, boards);
+                            const uint64_t allMoves = attacks | pushes;
+                            attackedSquares |= allMoves;
+                            if (attackedSquares & 1ULL << rankAndFileToSquare(rankFrom, intermediateFile)) {
+                                canCastle = false;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (attackedSquares & 1ULL << rankAndFileToSquare(rankFrom, intermediateFile)) {
+                    canCastle = false;
+                    break;
+                }
             }
             // if we can castle, add the move
             if (canCastle)
@@ -754,7 +780,7 @@ namespace RulesCheck {
                 continue;
 
             const bool isWhite = pieceName == WP;
-            int squareOffset = isWhite ? -8 : 8;
+            const int squareOffset = isWhite ? -8 : 8;
 
             const auto& otherPawnLocations = std::bitset<64>(boards->getBitboard(pieceName));
 

@@ -6,6 +6,7 @@
 #include "BoardManager/BoardManager.h"
 #include "Utility/Fen.h"
 #include "BoardManager/Rules.h"
+#include "Engine/TestEngine.h"
 
 TEST(MoveStruct, ToUCICorrect){
     constexpr Move move{.piece = WP, .rankFrom = 1, .fileFrom = 1, .rankTo = 2, .fileTo = 1};
@@ -541,7 +542,7 @@ TEST(BoardManagerMoveExecution, UndoCaptureRestoresFullState){
 TEST(BoardManagerMoveExecution, CastlingCanBeUndone){
     auto manager = BoardManager();
     // this is a white castling position
-    manager.getBitboards()->loadFEN("rnbqkbnr/p2ppppp/1pp5/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
+    manager.getBitboards()->loadFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R");
 
     // this would be the castling move
     auto whiteMove = createMove(WK, "e1g1");
@@ -552,7 +553,16 @@ TEST(BoardManagerMoveExecution, CastlingCanBeUndone){
     EXPECT_EQ(manager.getBitboards()->getBitboard(WK), initialWhiteKingBoard);
     EXPECT_EQ(manager.getBitboards()->getBitboard(WR), initialWhiteRookBoard);
 
-    manager.getBitboards()->loadFEN("rnbqk2r/p2p1ppp/1ppbpn2/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
+    manager.getBitboards()->loadFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R");
+    auto whiteQueenSideMove = createMove(WK, "e1c1");
+    const auto qsInitialWhiteRook = manager.getBitboards()->getBitboard(WR);
+    const auto qsInitialWhiteKing = manager.getBitboards()->getBitboard(WK);
+    ASSERT_TRUE(manager.checkMove(whiteMove));
+    ASSERT_EQ(whiteMove.result, MoveResult::CASTLING);
+    EXPECT_EQ(manager.getBitboards()->getBitboard(WR), qsInitialWhiteRook);
+    EXPECT_EQ(manager.getBitboards()->getBitboard(WK), qsInitialWhiteKing);
+
+    manager.getBitboards()->loadFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R");
     auto blackMove = createMove(BK, "e8g8");
     const auto initialBlackKingBoard = manager.getBitboards()->getBitboard(BK);
     const auto initialBlackRookBoard = manager.getBitboards()->getBitboard(BR);
@@ -560,6 +570,15 @@ TEST(BoardManagerMoveExecution, CastlingCanBeUndone){
     ASSERT_EQ(blackMove.result, MoveResult::CASTLING);
     EXPECT_EQ(manager.getBitboards()->getBitboard(BK), initialBlackKingBoard);
     EXPECT_EQ(manager.getBitboards()->getBitboard(BR), initialBlackRookBoard);
+
+    manager.getBitboards()->loadFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R");
+    auto ksblackMove = createMove(BK, "e8c8");
+    const auto ksinitialBlackKingBoard = manager.getBitboards()->getBitboard(BK);
+    const auto ksinitialBlackRookBoard = manager.getBitboards()->getBitboard(BR);
+    ASSERT_TRUE(manager.checkMove(ksblackMove));
+    ASSERT_EQ(ksblackMove.result, MoveResult::CASTLING);
+    EXPECT_EQ(manager.getBitboards()->getBitboard(BK), ksinitialBlackKingBoard);
+    EXPECT_EQ(manager.getBitboards()->getBitboard(BR), ksinitialBlackRookBoard);
 }
 
 TEST(BoardManagerMoveExecution, KingCantBeCaptured){
@@ -664,6 +683,15 @@ TEST(BoardManagerAdvancedRules, EnPassantCanBeUndone){
 
     EXPECT_EQ(initialWhiteBitboard, finalWhiteBitboard);
     EXPECT_EQ(initialBlackBitboard, finalBlackBitboard);
+
+    manager.getBitboards()->loadFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/Pp2P3/2N2Q1p/1PPBBPPP/R3K2R");
+    auto move = createMove(BP, "b4a3");
+
+    auto blackEnPassantStartingState = manager.getBitboards()->toFEN();
+    manager.tryMove(move);
+    manager.undoMove(move);
+    auto blackEnPassantFinalState = manager.getBitboards()->toFEN();
+    EXPECT_EQ(blackEnPassantStartingState, blackEnPassantFinalState);
 }
 
 TEST(BoardManagerAdvancedRules, CastlingKingSideWorks){
@@ -942,4 +970,104 @@ TEST(BoardManagerLegality, MissingKiwiPeteMoves){
     EXPECT_TRUE(manager.checkMove(castlingMove));
     EXPECT_TRUE(manager.checkMove(otherCastlingMove));
     EXPECT_TRUE(manager.checkMove(missingKingMove));
+}
+
+TEST(BoardManagerMoveExecution, KiwiPeteRestoresState){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN(Fen::KIWI_PETE_FEN);
+    auto engine = TestEngine(WHITE);
+
+    auto moves = engine.generateMoveList(manager);
+    ASSERT_EQ(moves.size(), 48);
+
+    int failureCount = 0;
+    std::vector<Move> failedMoves;
+    // walk each move to see where it goes wrong
+    for (auto& move: moves) {
+        auto initialState = manager.getBitboards()->toFEN();
+        manager.tryMove(move);
+        auto parentUCI = move.toUCI();
+
+        // also check the chile moves
+        auto childMoves = engine.generateMoveList(manager);
+        for (auto& childMove: childMoves) {
+            // used for debugging
+            auto childUCI = childMove.toUCI();
+            // does the state restore?
+            auto initialChildState = manager.getBitboards()->toFEN();
+            manager.tryMove(childMove);
+            manager.undoMove();
+            auto finalChildState = manager.getBitboards()->toFEN();
+            const bool childFailure = initialChildState != finalChildState;
+
+            // log it if not
+            if (childFailure)
+                std::cout << "Child Move Failed: " << move.toUCI() << " : " << childMove.toUCI() <<
+                        std::endl;
+        }
+        manager.undoMove();
+        auto finalState = manager.getBitboards()->toFEN();
+        const bool failure = initialState != finalState;
+        if (failure) {
+            failureCount++;
+            failedMoves.push_back(move);
+        }
+        EXPECT_EQ(initialState, finalState);
+    }
+    std::cout << "Failed " << failureCount << " times" << std::endl;
+    std::cout << "Failed Root Level Moves: " << std::endl;
+    for (auto& move: failedMoves) { std::cout << move.toUCI() << std::endl; }
+}
+
+TEST(BoardManagerMoveExecution, check_e8c8_KP_doesntChangeBoardState){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN(Fen::KIWI_PETE_FEN);
+    auto engine = TestEngine(WHITE);
+
+    auto move = createMove(WB, "e2a6");
+    ASSERT_TRUE(manager.tryMove(move));
+
+    auto failingMove = createMove(WK, "e8c8");
+
+    auto initialState = manager.getBitboards()->toFEN();
+    manager.checkMove(failingMove);
+    auto finalState = manager.getBitboards()->toFEN();
+
+    EXPECT_EQ(initialState, finalState);
+}
+
+TEST(BoardManagerAdvancedRules, CantCastleThroughAttackedSquares){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN("r3k2r/p1ppqNb1/bn2pnp1/3P4/1p2P3/2N2Q1p/PPPBBPPP/R3K2R");
+
+    auto attemptedCastling = createMove(BK, "e8c8");
+    EXPECT_FALSE(manager.checkMove(attemptedCastling));
+}
+
+TEST(BoardManagerMoveExecution, FixPosition3CapturesNotFound){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN(Fen::POSITION_3_FEN);
+
+    auto firstMove = createMove(WP, "e2e3");
+    ASSERT_TRUE(manager.tryMove(firstMove));
+
+    auto secondMove = createMove(BR, "h5b5");
+    ASSERT_TRUE(manager.tryMove(secondMove));
+    EXPECT_EQ(secondMove.result, CAPTURE);
+}
+
+TEST(BoardManagerMoveExecution, Position3TurnChangesIncorrectly){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN(Fen::POSITION_3_FEN);
+
+    auto startingTurn = manager.getCurrentTurn();
+    auto firstMove = createMove(WP, "g2g3");
+    ASSERT_TRUE(manager.tryMove(firstMove));
+
+    auto endingTurn = manager.getCurrentTurn();
+
+    EXPECT_EQ(startingTurn, WHITE);
+    EXPECT_EQ(endingTurn, BLACK);
+
+    // auto secondMove = createMove(WP)
 }

@@ -8,9 +8,10 @@
 
 
 namespace Fen {
-    inline std::string STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
-    inline std::string STARTING_FEN_TEST = "r7/8/8/8/8/8/8/8";
-    inline std::string KIWI_PETE_FEN = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R";
+    inline const std::string STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
+    inline const std::string STARTING_FEN_TEST = "r7/8/8/8/8/8/8/8";
+    inline const std::string KIWI_PETE_FEN = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R";
+    inline const std::string POSITION_3_FEN = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8";
 
     inline std::string rankAndFileToFen(const int rank, const int file){
         std::string returnString;

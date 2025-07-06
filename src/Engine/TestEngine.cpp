@@ -129,8 +129,12 @@ std::vector<Move> TestEngine::generateValidMovesFromPosition(BoardManager& mgr, 
         squareToRankAndFile(endSquare, endRank, endFile);
         Move candidateMove{piece, startRank, startFile, endRank, endFile};
 
+        auto initialState = mgr.getBitboards()->toFEN();
         if (mgr.checkMove(candidateMove))
             validMoves.push_back(candidateMove);
+        auto finalState = mgr.getBitboards()->toFEN();
+        if (initialState != finalState)
+            std::cout << "Invalid Move: " << candidateMove.toUCI() << std::endl;
     }
 
     return validMoves;
@@ -192,7 +196,47 @@ PerftResults TestEngine::perft(const int depth, BoardManager& boardManager){
     return perft_results;
 }
 
-PerftResults TestEngine::runPerftTest(const std::string& Fen, const int depth) const{
+auto TestEngine::simplePerft(const int depth, BoardManager& boardManager){
+    if (depth == 0)
+        return 1;
+
+    int nodes = 0;
+    auto moves = generateMoveList(boardManager);
+    for (Move& move: moves) {
+        boardManager.tryMove(move);
+        nodes += simplePerft(depth - 1, boardManager);
+        boardManager.undoMove();
+    }
+
+    return nodes;
+}
+
+auto TestEngine::perftDivide(const int depth, BoardManager& boardManager){
+    auto moves = generateMoveList(boardManager);
+    std::vector<testPerftResult> results;
+
+    for (auto& move: moves) {
+        boardManager.tryMove(move);
+        auto uci = move.toUCI();
+        int childNodes = simplePerft(depth - 1, boardManager);
+        boardManager.undoMove();
+
+        results.push_back(testPerftResult{
+                .fen = move.toUCI(),
+                .nodes = childNodes
+            });
+    }
+
+    return results;
+}
+
+std::vector<testPerftResult> TestEngine::runDivideTest(const std::string& Fen, const int depth){
+    auto mgr = BoardManager(colour);
+    mgr.getBitboards()->loadFEN(Fen);
+    return perftDivide(depth, mgr);
+}
+
+PerftResults TestEngine::runPerftTest(const std::string& Fen, const int depth){
     auto mgr = BoardManager(colour);
     mgr.getBitboards()->loadFEN(Fen);
     return perft(depth, mgr);

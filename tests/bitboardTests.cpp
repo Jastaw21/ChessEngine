@@ -118,7 +118,7 @@ TEST(BitBoards, RankAndFileToSquare){
 
 TEST(BitBoards, SquareToRankAndFile){
     int rank, file;
-    const int a1 = 0;
+    constexpr int a1 = 0;
     squareToRankAndFile(a1, rank, file);
     EXPECT_EQ(1, rank);
     EXPECT_EQ(1, file);
@@ -128,8 +128,8 @@ TEST(BitBoards, TestBoardFunction){
     auto board = BitBoards();
     board.loadFEN(Fen::STARTING_FEN);
 
-    const uint64_t a1 = 1;
-    const uint64_t a4 = 0x1000000;
+    constexpr uint64_t a1 = 1;
+    constexpr uint64_t a4 = 0x1000000;
 
     EXPECT_TRUE(board.testBoard(a1));
     EXPECT_FALSE(board.testBoard(a4));

@@ -30,6 +30,11 @@ struct PerftResults {
     }
 };
 
+struct testPerftResult {
+    std::string fen;
+    int nodes;
+};
+
 
 class EngineBase : public ChessPlayer {
 public:
