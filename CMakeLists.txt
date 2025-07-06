@@ -41,6 +41,7 @@ add_library(
         src/Engine/SearchTree.cpp
         include/Engine/SearchTree.h
         include/BoardManager/Rules.h
+        src/BoardManager/Rules.cpp
 )
 
 target_include_directories(chess_lib PUBLIC include)

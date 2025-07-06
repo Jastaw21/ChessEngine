@@ -120,18 +120,14 @@ int BitBoards::countPiece(const Piece& pieceToSearch) const{
 }
 
 std::vector<Piece> BitBoards::getAttackingPieces(const Piece& piece){
-
     std::vector<Piece> attackingPieces;
 
     for (int i = 0; i < PIECE_N; ++i) {
         const auto pieceToSearch = static_cast<Piece>(i);
-        if (pieceColours[pieceToSearch] == pieceColours[piece]) {
-            attackingPieces.push_back(pieceToSearch);
-        }
+        if (pieceColours[pieceToSearch] == pieceColours[piece]) { attackingPieces.push_back(pieceToSearch); }
     }
 
     return attackingPieces;
-
 }
 
 std::string &BitBoards::toFEN(){

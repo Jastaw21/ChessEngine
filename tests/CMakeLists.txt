@@ -8,6 +8,7 @@ add_executable(chess_tests
         humanPlayerTests.cpp
         searchTreeTests.cpp
         engineTests.cpp
+        rulesTests.cpp
         # Add more test files here
 )
 

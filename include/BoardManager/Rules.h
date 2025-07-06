@@ -11,6 +11,53 @@
 #include "BitBoards.h"
 #include "Utility/math.h"
 
+constexpr void buildRankAttacks(const int square, uint64_t& inBoard){
+    const int rank = square / 8 + 1;
+
+    // east then west
+    const auto directions = {1, -1};
+
+    for (const auto& dir: directions) {
+        // bounds check
+        const int cutoffFile = dir == 1 ? 8 : 1;
+        for (int file = squareToFile(square) + dir; abs(file - cutoffFile) >= 0; file += dir) {
+            if (file == 0 || file == 9)
+                break;
+            inBoard |= 1ULL << rankAndFileToSquare(rank, file);
+        }
+    }
+}
+
+constexpr void buildFileAttacks(const int square, uint64_t& inBoard){
+    const int file = square % 8 + 1;
+
+    // go north then south
+    const auto directions = {1, -1};
+
+    for (const auto& dir: directions) {
+        // bounds check
+        const int cutoffRank = dir == 1 ? 8 : 1;
+        for (int rank = squareToRank(square) + dir; abs(rank - cutoffRank) >= 0; rank += dir) {
+            if (rank == 0 || rank == 9)
+                break;
+            inBoard |= 1ULL << rankAndFileToSquare(rank, file);
+        }
+    }
+}
+
+class Rules {
+public:
+
+    Rules();
+    uint64_t getAttackMoves(const int square, const Piece& piece, BitBoards* boards);
+    uint64_t getPushMoves(const int square, const Piece& piece, BitBoards* boards);
+    uint64_t getPseudoLegalMoves(const int square, const Piece& piece, BitBoards* bitBoards);
+    uint64_t getCastlingMoves(const int square, const Piece& piece, BitBoards* boards);
+
+    std::unordered_map<int, uint64_t> rankAttacks;
+    std::unordered_map<int, uint64_t> fileAttacks;
+};
+
 namespace SingleMoves {
     inline void southInPlace(uint64_t& inBitBoard){ inBitBoard &= 1ULL >> 8; }
     inline void northInPlace(uint64_t& inBitBoard){ inBitBoard &= 1ULL << 8; }
