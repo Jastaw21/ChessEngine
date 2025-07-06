@@ -9,6 +9,21 @@ def get_moves(fen):
     return moves
 
 
+class PerftResult:
+    nodes = 0
+    captures = 0
+    en_passant = 0
+    castling = 0
+
+    def __add__(self, other):
+        result = PerftResult()
+        result.nodes = self.nodes + other.nodes
+        result.captures = self.captures + other.captures
+        result.en_passant = self.en_passant + other.en_passant
+        result.castling = self.castling + other.castling
+        return result
+
+
 def perft(board, depth):
     if depth == 0:
         return 1
@@ -21,11 +36,44 @@ def perft(board, depth):
     return nodes
 
 
+def perft_complex(board, depth):
+    if depth == 0:
+        result = PerftResult()
+        result.nodes = 1
+        return result
+
+    perft_result = PerftResult()
+
+    for move in board.legal_moves:
+
+        is_cap = board.is_capture(move)
+        is_ep = board.is_en_passant(move)
+        is_castle = board.is_castling(move)
+        board.push(move)
+
+        if depth == 1:
+            perft_result.nodes += 1
+            if is_ep:
+                perft_result.en_passant += 1
+                perft_result.captures += 1
+            elif is_cap:
+                perft_result.captures += 1
+            elif is_castle:
+                perft_result.castling += 1
+        else:
+            perft_result += perft_complex(board, depth - 1)
+
+        board.pop()
+    return perft_result
+
+
 def divide_perft(board, depth):
     result = {}
+
     for move in board.legal_moves:
+        count = PerftResult()
         board.push(move)
-        count = perft(board, depth - 1)
+        count += perft_complex(board, depth - 1)
         board.pop()
         result[move.uci()] = count
     return result
@@ -74,7 +122,8 @@ def main(argv):
 
     with open(dest_file, "w+") as f:
         for move in moves:
-            f.write(move + ' ' + str(moves[move]) + "\n")
+            f.write(move + ' ' + str(moves[move].nodes) + ' ' + str(moves[move].captures) + ' ' + str(
+                moves[move].en_passant) + ' ' + str(moves[move].castling) + "\n")
 
 
 if __name__ == "__main__":

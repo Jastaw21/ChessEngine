@@ -76,6 +76,10 @@ private:
     BitBoards bitboards{};
     std::stack<Move> moveHistory;
     Colours currentTurn = WHITE;
+
+public:
+
+    void setCurrentTurn(const Colours current_turn){ currentTurn = current_turn; }
 };
 
 

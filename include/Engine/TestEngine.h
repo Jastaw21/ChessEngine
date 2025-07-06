@@ -22,10 +22,11 @@ public:
 
     void setManager(BoardManager* boardManager){ boardManager_ = boardManager; }
 
-    std::vector<Move> generateMoveList(BoardManager& mgr);
+    static std::vector<Move> generateMoveList(BoardManager& mgr);
 
-    PerftResults runPerftTest(const std::string& Fen, int depth);
-    std::vector<testPerftResult> runDivideTest(const std::string& Fen, int depth);
+    PerftResults runPerftTest(const std::string& Fen, int depth) const;
+    std::vector<PerftResults> runDivideTest(const std::string& Fen, int depth) const;
+    static std::vector<PerftResults> runDivideTest(BoardManager& mgr, int depth);
 
 
     BoardManager* boardManager_ = nullptr;
@@ -35,9 +36,9 @@ private:
     static std::vector<Move> generateValidMovesFromPosition(BoardManager& mgr, const Piece& piece, int startSquare);
     static std::vector<Move> generateMovesForPiece(BoardManager& mgr, const Piece& piece);
     float minMax(BoardManager& mgr, int depth, bool isMaximising);
-    PerftResults perft(int depth, BoardManager& boardManager);
-    auto simplePerft(int depth, BoardManager& boardManager);
-    auto perftDivide(int depth, BoardManager& boardManager);
+    static PerftResults perft(int depth, BoardManager& boardManager);
+    static auto simplePerft(int depth, BoardManager& boardManager);
+    static auto perftDivide(int depth, BoardManager& boardManager);
 };
 
 

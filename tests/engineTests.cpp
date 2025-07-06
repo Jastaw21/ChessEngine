@@ -11,25 +11,28 @@
 #include "Engine/TestEngine.h"
 #include "Utility/Fen.h"
 
-inline const std::string fileRoot = "C:\\Users\\jacks\\source\\repos\\Chess\\tests\\output\\";
+inline const std::string fileRoot = R"(C:\Users\jacks\source\repos\Chess\tests\output\)";
 inline const std::string divideCmd =
-        "C:\\Users\\jacks\\source\\repos\\Chess\\.venv\\Scripts\\python.exe C:\\Users\\jacks\\source\\repos\\Chess\\tests\\moveGetterSF.py";
+        R"(C:\Users\jacks\source\repos\Chess\.venv\Scripts\python.exe C:\Users\jacks\source\repos\Chess\tests\moveGetterSF.py)";
 
 inline const std::string moveCmd =
-        "C:\\Users\\jacks\\source\\repos\\Chess\\.venv\\Scripts\\python.exe C:\\Users\\jacks\\source\\repos\\Chess\\tests\\getMovesFromPosition.py";
+        R"(C:\Users\jacks\source\repos\Chess\.venv\Scripts\python.exe C:\Users\jacks\source\repos\Chess\tests\getMovesFromPosition.py)";
 
 
-std::vector<testPerftResult> getPerftDivideResults(const std::string& filename){
+std::vector<PerftResults> getPerftDivideResults(const std::string& filename){
     const std::string filePath = fileRoot + filename;
     std::ifstream file(filePath);
-    std::vector<testPerftResult> results;
+    std::vector<PerftResults> results;
     std::string line;
     while (std::getline(file, line)) {
         std::string rootMoveUCI;
         int nodes;
+        int captures;
+        int enPassant;
+        int castling;
         std::istringstream iss(line);
-        iss >> rootMoveUCI >> nodes;
-        results.push_back(testPerftResult{.fen = rootMoveUCI, .nodes = nodes});
+        iss >> rootMoveUCI >> nodes >> captures >> enPassant >> castling;
+        results.push_back(PerftResults{nodes, captures, enPassant, castling, rootMoveUCI});
     }
 
     return results;
@@ -103,6 +106,101 @@ inline bool runGetMoveResults(const std::string& fen, const std::string& outputF
 
     return result == 0;
 }
+
+bool divideTest(const std::string& desiredFen, const std::string& outputFile, const int depth,
+                const Colours& colourToMove = WHITE){
+    bool passing = true;
+    const std::string fenAppendage = colourToMove == WHITE ? " w KQkq -" : " b KQkq -";
+    const std::string fen = desiredFen + fenAppendage;
+
+    generateExternalEngineMoves(fen, outputFile, depth);
+    const auto pyMoves = getPerftDivideResults(outputFile);
+    PerftResults totalPy;
+    for (const auto& move: pyMoves) { totalPy += move; }
+
+    std::cout << "Total Py Nodes: " << totalPy.nodes << std::endl;
+    std::cout << "Total Py Captures: " << totalPy.captures << std::endl;
+    std::cout << "Total Py Castles: " << totalPy.castling << std::endl;
+    std::cout << "Total Py EP: " << totalPy.enPassant << std::endl;
+
+    // get our own starting moves
+    auto manager = BoardManager();
+    manager.setCurrentTurn(colourToMove);
+    manager.getBitboards()->loadFEN(desiredFen);
+    TestEngine whiteEngine(WHITE);
+
+    std::vector<PerftResults> engineResults = whiteEngine.runDivideTest(manager, depth);
+
+    std::vector<PerftResults> inPyNotInEngine;
+    for (const auto& pyMove: pyMoves) {
+        const auto matching = std::ranges::find_if(engineResults, [&](const auto& move) {
+            return move.fen == pyMove.fen;
+        });
+        if (matching == engineResults.end())
+            passing = false;
+        if (*matching != pyMove)
+            passing = false;
+        if (pyMove != *matching)
+            inPyNotInEngine.push_back(pyMove);
+    }
+
+    std::cout << "External Engine Believes: " << std::endl;
+    for (const auto& move: inPyNotInEngine) {
+        const auto engineResult = std::ranges::find_if(engineResults, [&](const auto& engineMove) {
+            return engineMove.fen == move.fen;
+        });
+
+        std::cout << move.fen << std::endl << "Py: " << move.toString() << std::endl << "En: " <<
+                engineResult->toString() <<
+                std::endl;
+    }
+
+    return passing;
+}
+
+// USE THIS FOR COPYING
+TEST(PerftDivide, kiwiPeteDivide){
+    constexpr int depth = 1;
+    // get the moves the actual engine think are possible
+    const std::string outputFile = "startPos.txt";
+    EXPECT_TRUE(divideTest(Fen::KIWI_PETE_FEN, outputFile, depth));
+}
+
+TEST(PerftDivide, kiwiPeteDivide2){
+    constexpr int depth = 2;
+    // get the moves the actual engine think are possible
+    const std::string outputFile = "startPos.txt";
+    EXPECT_TRUE(divideTest(Fen::KIWI_PETE_FEN, outputFile, depth));
+}
+
+TEST(PerftDivide, perft1Divide){
+    int depth = 1;
+    // get the moves the actual engine think are possible
+    const std::string outputFile = "startPos.txt";
+    EXPECT_TRUE(divideTest(Fen::STARTING_FEN, outputFile, depth));
+}
+
+TEST(PerftDivide, perft2Divide){
+    constexpr int depth = 2;
+    // get the moves the actual engine think are possible
+    const std::string outputFile = "startPos.txt";
+    EXPECT_TRUE(divideTest(Fen::STARTING_FEN, outputFile, depth));
+}
+
+TEST(PerftDivide, position3Divide){
+    constexpr int depth = 1;
+    // get the moves the actual engine think are possible
+    const std::string outputFile = "pos3.txt";
+    EXPECT_TRUE(divideTest(Fen::POSITION_3_FEN, outputFile, depth));
+}
+
+TEST(PerftDivide, position3Divide2){
+    constexpr int depth = 2;
+    // get the moves the actual engine think are possible
+    const std::string outputFile = "pos3.txt";
+    EXPECT_TRUE(divideTest(Fen::POSITION_3_FEN, outputFile, depth));
+}
+
 
 TEST(Perft, perft1){
     TestEngine blackEngine(BLACK);
@@ -190,270 +288,6 @@ TEST(Perft, position3Depth2){
     EXPECT_EQ(perftResults.captures, 14);
 }
 
-TEST(PerftDivide, perft1Divide){
-    int depth = 1;
-
-    // get the moves the actual engine think are possible
-    const std::string outputFile = "startPos.txt";
-    const std::string fen = Fen::STARTING_FEN + " w KQkq -";
-    generateExternalEngineMoves(fen, outputFile, depth);
-    const auto pyMoves = getPerftDivideResults(outputFile);
-
-    // get our own starting moves
-    auto manager = BoardManager();
-    manager.getBitboards()->loadFEN(Fen::STARTING_FEN);
-    TestEngine whiteEngine(WHITE);
-    const auto startingMoves = whiteEngine.generateMoveList(manager);
-
-    std::vector<testPerftResult> engineResults = whiteEngine.runDivideTest(Fen::STARTING_FEN, depth);
-
-    std::vector<testPerftResult> inPyNotInEngine;
-    for (const auto& pyMove: pyMoves) {
-        const auto matching = std::ranges::find_if(engineResults, [&](const auto& move) {
-            return move.fen == pyMove.fen;
-        });
-        EXPECT_TRUE(matching != engineResults.end());
-        EXPECT_EQ(matching->nodes, pyMove.nodes);
-        if (pyMove.nodes != matching->nodes)
-            inPyNotInEngine.push_back(pyMove);
-    }
-
-    std::vector<testPerftResult> inEngineNotInPy;
-    for (const auto& engineMove: engineResults) {
-        const auto matching = std::ranges::find_if(
-            pyMoves, [&](auto& move) { return move.fen == engineMove.fen; });
-        EXPECT_TRUE(matching != pyMoves.end());
-        EXPECT_EQ(matching->nodes, engineMove.nodes);
-        if (engineMove.nodes != matching->nodes)
-            inEngineNotInPy.push_back(engineMove);
-    }
-
-    std::cout << "External Engine Believes: " << std::endl;
-    for (const auto& move: inPyNotInEngine) {
-        auto engineResult = std::ranges::find_if(engineResults, [&](const auto& engineMove) {
-            return engineMove.fen == move.fen;
-        });
-
-        std::cout << "Py: " << move.fen << " " << move.nodes << " Engine: " << engineResult->nodes << std::endl;
-    }
-}
-
-TEST(PerftDivide, perft2Divide){
-    int depth = 2;
-
-    // get the moves the actual engine think are possible
-    const std::string outputFile = "startPos.txt";
-    const std::string fen = Fen::STARTING_FEN + " w KQkq -";
-    generateExternalEngineMoves(fen, outputFile, depth);
-    const auto pyMoves = getPerftDivideResults(outputFile);
-
-    // get our own starting moves
-    auto manager = BoardManager();
-    manager.getBitboards()->loadFEN(Fen::STARTING_FEN);
-    TestEngine whiteEngine(WHITE);
-    const auto startingMoves = whiteEngine.generateMoveList(manager);
-
-    std::vector<testPerftResult> engineResults = whiteEngine.runDivideTest(Fen::STARTING_FEN, depth);
-
-    std::vector<testPerftResult> inPyNotInEngine;
-    for (const auto& pyMove: pyMoves) {
-        const auto matching = std::ranges::find_if(engineResults, [&](const auto& move) {
-            return move.fen == pyMove.fen;
-        });
-        EXPECT_TRUE(matching != engineResults.end());
-        EXPECT_EQ(matching->nodes, pyMove.nodes);
-        if (pyMove.nodes != matching->nodes)
-            inPyNotInEngine.push_back(pyMove);
-    }
-
-    std::vector<testPerftResult> inEngineNotInPy;
-    for (const auto& engineMove: engineResults) {
-        const auto matching = std::ranges::find_if(
-            pyMoves, [&](auto& move) { return move.fen == engineMove.fen; });
-        EXPECT_TRUE(matching != pyMoves.end());
-        EXPECT_EQ(matching->nodes, engineMove.nodes);
-        if (engineMove.nodes != matching->nodes)
-            inEngineNotInPy.push_back(engineMove);
-    }
-
-    std::cout << "External Engine Believes: " << std::endl;
-    for (const auto& move: inPyNotInEngine) {
-        auto engineResult = std::ranges::find_if(engineResults, [&](const auto& engineMove) {
-            return engineMove.fen == move.fen;
-        });
-
-        std::cout << "Py: " << move.fen << " " << move.nodes << " Engine: " << engineResult->nodes << std::endl;
-    }
-}
-
-TEST(PerftDivide, position3Divide){
-    int depth = 1;
-
-    // get the moves the actual engine think are possible
-    const std::string outputFile = "position4.txt";
-    const std::string fen = Fen::POSITION_3_FEN + " w KQkq -";
-    generateExternalEngineMoves(fen, outputFile, depth);
-    const auto pyMoves = getPerftDivideResults(outputFile);
-
-    // get our own starting moves
-    auto manager = BoardManager();
-    manager.getBitboards()->loadFEN(Fen::POSITION_3_FEN);
-    TestEngine whiteEngine(WHITE);
-    const auto startingMoves = whiteEngine.generateMoveList(manager);
-
-    std::vector<testPerftResult> engineResults = whiteEngine.runDivideTest(Fen::POSITION_3_FEN, depth);
-
-    std::vector<testPerftResult> inPyNotInEngine;
-    for (const auto& pyMove: pyMoves) {
-        const auto matching = std::ranges::find_if(engineResults, [&](const auto& move) {
-            return move.fen == pyMove.fen;
-        });
-        EXPECT_TRUE(matching != engineResults.end());
-        EXPECT_EQ(matching->nodes, pyMove.nodes);
-        if (pyMove.nodes != matching->nodes)
-            inPyNotInEngine.push_back(pyMove);
-    }
-
-    std::vector<testPerftResult> inEngineNotInPy;
-    for (const auto& engineMove: engineResults) {
-        const auto matching = std::ranges::find_if(
-            pyMoves, [&](auto& move) { return move.fen == engineMove.fen; });
-        EXPECT_TRUE(matching != pyMoves.end());
-        EXPECT_EQ(matching->nodes, engineMove.nodes);
-        if (engineMove.nodes != matching->nodes)
-            inEngineNotInPy.push_back(engineMove);
-    }
-
-    std::cout << "External Engine Believes: " << std::endl;
-    for (const auto& move: inPyNotInEngine) {
-        auto engineResult = std::ranges::find_if(engineResults, [&](const auto& engineMove) {
-            return engineMove.fen == move.fen;
-        });
-
-        std::cout << "Py: " << move.fen << " " << move.nodes << " Engine: " << engineResult->nodes << std::endl;
-    }
-}
-
-TEST(PerftDivide, position3Divide2){
-    constexpr int depth = 2;
-
-    // get the moves the actual engine thinks are possible
-    const std::string outputFile = "pos3.txt";
-    const std::string fen = Fen::POSITION_3_FEN + " w KQkq -";
-    generateExternalEngineMoves(fen, outputFile, depth);
-    const auto externalMoves = getPerftDivideResults(outputFile);
-
-    // get our own starting moves
-    auto manager = BoardManager();
-    manager.getBitboards()->loadFEN(Fen::POSITION_3_FEN);
-    TestEngine whiteEngine(WHITE);
-
-    std::vector<testPerftResult> engineResults = whiteEngine.runDivideTest(Fen::POSITION_3_FEN, depth);
-
-    std::vector<testPerftResult> externalDisagreesWithEngine;
-    for (const auto& externalMove: externalMoves) {
-        const auto equivalentMove = std::ranges::find_if(engineResults, [&](const auto& move) {
-            return move.fen == externalMove.fen;
-        });
-        EXPECT_TRUE(equivalentMove != engineResults.end());
-        EXPECT_EQ(equivalentMove->nodes, externalMove.nodes);
-        if (externalMove.nodes != equivalentMove->nodes) { externalDisagreesWithEngine.push_back(externalMove); }
-    }
-
-    std::cout << "External Engine Believes: " << std::endl;
-    for (const auto& move: externalDisagreesWithEngine) {
-        const auto engineResult = std::ranges::find_if(engineResults, [&](const auto& engineMove) {
-            return engineMove.fen == move.fen;
-        });
-
-        std::cout << "Py: " << move.fen << " " << move.nodes << " Engine: " << engineResult->nodes << std::endl;
-    }
-}
-
-TEST(PerftDivide, kiwiPeteDivide){
-    int depth = 1;
-
-    // get the moves the actual engine think are possible
-    const std::string outputFile = "kiwipete.txt";
-    const std::string fen = Fen::KIWI_PETE_FEN + " w KQkq -";
-    generateExternalEngineMoves(fen, outputFile, depth);
-    const auto pyMoves = getPerftDivideResults(outputFile);
-
-    // get our own starting moves
-    auto manager = BoardManager();
-    manager.getBitboards()->loadFEN(Fen::KIWI_PETE_FEN);
-    TestEngine whiteEngine(WHITE);
-    const auto startingMoves = whiteEngine.generateMoveList(manager);
-
-    std::vector<testPerftResult> engineResults = whiteEngine.runDivideTest(Fen::KIWI_PETE_FEN, depth);
-
-    std::vector<testPerftResult> inPyNotInEngine;
-    for (const auto& pyMove: pyMoves) {
-        const auto matching = std::ranges::find_if(engineResults, [&](const auto& move) {
-            return move.fen == pyMove.fen;
-        });
-        EXPECT_TRUE(matching != engineResults.end());
-        EXPECT_EQ(matching->nodes, pyMove.nodes);
-        if (pyMove.nodes != matching->nodes)
-            inPyNotInEngine.push_back(pyMove);
-    }
-
-    std::vector<testPerftResult> inEngineNotInPy;
-    for (const auto& engineMove: engineResults) {
-        const auto matching = std::ranges::find_if(
-            pyMoves, [&](auto& move) { return move.fen == engineMove.fen; });
-        EXPECT_TRUE(matching != pyMoves.end());
-        EXPECT_EQ(matching->nodes, engineMove.nodes);
-        if (engineMove.nodes != matching->nodes)
-            inEngineNotInPy.push_back(engineMove);
-    }
-
-    std::cout << "External Engine Believes: " << std::endl;
-    for (const auto& move: inPyNotInEngine) {
-        auto engineResult = std::ranges::find_if(engineResults, [&](const auto& engineMove) {
-            return engineMove.fen == move.fen;
-        });
-
-        std::cout << "Py: " << move.fen << " " << move.nodes << " Engine: " << engineResult->nodes << std::endl;
-    }
-}
-
-// USE THIS FOR COPYING
-TEST(PerftDivide, kiwiPeteDivide2){
-    constexpr int depth = 2;
-
-    // get the moves the actual engine thinks are possible
-    const std::string outputFile = "kiwipete.txt";
-    const std::string fen = Fen::KIWI_PETE_FEN + " w KQkq -";
-    generateExternalEngineMoves(fen, outputFile, depth);
-    const auto externalMoves = getPerftDivideResults(outputFile);
-
-    // get our own starting moves
-    auto manager = BoardManager();
-    manager.getBitboards()->loadFEN(Fen::KIWI_PETE_FEN);
-    TestEngine whiteEngine(WHITE);
-
-    std::vector<testPerftResult> engineResults = whiteEngine.runDivideTest(Fen::KIWI_PETE_FEN, depth);
-
-    std::vector<testPerftResult> externalDisagreesWithEngine;
-    for (const auto& externalMove: externalMoves) {
-        const auto equivalentMove = std::ranges::find_if(engineResults, [&](const auto& move) {
-            return move.fen == externalMove.fen;
-        });
-        EXPECT_TRUE(equivalentMove != engineResults.end());
-        EXPECT_EQ(equivalentMove->nodes, externalMove.nodes);
-        if (externalMove.nodes != equivalentMove->nodes) { externalDisagreesWithEngine.push_back(externalMove); }
-    }
-
-    std::cout << "External Engine Believes: " << std::endl;
-    for (const auto& move: externalDisagreesWithEngine) {
-        const auto engineResult = std::ranges::find_if(engineResults, [&](const auto& engineMove) {
-            return engineMove.fen == move.fen;
-        });
-
-        std::cout << "Py: " << move.fen << " " << move.nodes << " Engine: " << engineResult->nodes << std::endl;
-    }
-}
 
 TEST(Engine, EngineEvaluatesCorrectly){
     const auto whiteEngine = TestEngine(WHITE);
@@ -751,3 +585,13 @@ TEST(depr, kiwi2CapturesCorrect){
     EXPECT_EQ(totalCaptures, 351);
 }
 
+TEST(PerftDivide, Kiwi2FixedCaptures){
+    auto manager = BoardManager();
+    auto engine = TestEngine(WHITE, &manager);
+    manager.getBitboards()->loadFEN(Fen::KIWI_PETE_FEN);
+    auto firstMove = createMove(WP, "a2a4");
+    ASSERT_TRUE(manager.tryMove(firstMove));
+    ASSERT_EQ(manager.getCurrentTurn(), BLACK);
+
+    EXPECT_TRUE(divideTest(manager.getBitboards()->toFEN(),"newTest.txt",1,BLACK));
+}

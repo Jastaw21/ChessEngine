@@ -338,8 +338,11 @@ void BoardManager::makeMove(Move& move){
         bitboards.setZero(move.rankTo, move.fileTo);
 
     // if it was an en_passant capture, set the correct square to zero
-    if (move.result == EN_PASSANT)
-        bitboards.setZero(moveHistory.top().rankTo, move.fileTo);
+    if (move.result == EN_PASSANT) {
+        const auto opponentPawn = pieceColours[move.piece] == WHITE ? BP : WP;
+        const auto rankOffset = pieceColours[move.piece] == WHITE ? -1 : 1;
+        bitboards.setZero(move.rankTo + rankOffset, move.fileTo);
+    }
 
     // set the to square of the moving piece to one
     bitboards.setOne(move.piece, move.rankTo, move.fileTo);
