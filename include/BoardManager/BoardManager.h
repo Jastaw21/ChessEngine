@@ -53,20 +53,20 @@ public:
     BitBoards *getBitboards(){ return &bitboards; }
     std::stack<Move> &getMoveHistory(){ return moveHistory; }
 
-    bool tryMove(Move& move);
-    bool prelimCheckMove(Move& move);
-
     bool checkMove(Move& move);
+    bool tryMove(Move& move);
     void undoMove(const Move& move);
     void undoMove();
 
     Colours getCurrentTurn() const{ return currentTurn; }
+    void setCurrentTurn(const Colours current_turn){ currentTurn = current_turn; }
 
 private:
 
+    bool prelimCheckMove(Move& move);
+
     bool moveIsEnPassant(Move& move);
     bool friendlyKingInCheck(const Move& move);
-    bool isCastling(const Move& move) const;
     std::vector<int> getStartingSquaresOfPiece(const Piece& piece);
 
     // do the move
@@ -76,10 +76,6 @@ private:
     BitBoards bitboards{};
     std::stack<Move> moveHistory;
     Colours currentTurn = WHITE;
-
-public:
-
-    void setCurrentTurn(const Colours current_turn){ currentTurn = current_turn; }
 };
 
 

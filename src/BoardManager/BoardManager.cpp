@@ -11,7 +11,6 @@
 
 #include "BoardManager/BitBoards.h"
 #include "BoardManager/Rules.h"
-#include "Utility/math.h"
 
 std::string Move::toUCI() const{
     std::string uci;
@@ -48,114 +47,15 @@ Move createMove(const Piece& piece, const std::string& moveUCI){
 
 BoardManager::BoardManager() = default;
 
-
-bool BoardManager::moveIsEnPassant(Move& move){
-    if (abs(moveHistory.top().rankTo - moveHistory.top().rankFrom) != 2)
-        return false;
-    const uint64_t attackedSquare = 1ULL << rankAndFileToSquare(move.rankTo, move.fileTo);
-    const auto& otherPawnPiece = pieceColours[move.piece] == WHITE ? BP : WP;
-    const auto& locationsOfOtherPawns = bitboards[otherPawnPiece];
-    const std::bitset<64> locationsOfOtherPawnsBits(locationsOfOtherPawns);
-    int offset = pieceColours[move.piece] == WHITE ? 8 : -8;
-
-    // track the locations of the opponent's pawns, shifted correctly
-    uint64_t otherPawnLocations = 0ULL;
-    for (int bit = 0; bit < locationsOfOtherPawnsBits.size(); ++bit) {
-        if (locationsOfOtherPawnsBits.test(bit) && bit >= 8 && bit <= 55) {
-            otherPawnLocations |= 1ULL << (bit + offset);
-        }
-    }
-
-    const bool isEnPassant = (attackedSquare & otherPawnLocations) > 0 && (
-                                 abs(moveHistory.top().rankTo - moveHistory.top().rankFrom) == 2);
-
-    if (!isEnPassant)
-        return false;
-
-    move.result = EN_PASSANT;
-    move.capturedPiece = otherPawnPiece;
-    return true;
-}
-
-
-bool BoardManager::friendlyKingInCheck(const Move& move){
-    const auto relevantKing = pieceColours[move.piece] == BLACK ? BK : WK;
-    const auto& kingLocation = bitboards[relevantKing];
-
-    if (kingLocation == 0)
-        return false;
-    for (int piece = 0; piece < PIECE_N; ++piece) {
-        auto pieceName = static_cast<Piece>(piece);
-        if (pieceColours[pieceName] == pieceColours[move.piece])
-            continue; // our pieces can't check our king
-
-        // check all the starting points of our opponent
-        auto startingSquares = getStartingSquaresOfPiece(pieceName);
-        for (const auto& startingSquare: startingSquares) {
-            const auto attackedSquares = RulesCheck::getAttackMoves(startingSquare, pieceName, &bitboards);
-            // if they attack our king, we're in check
-            if ((attackedSquares & kingLocation) != 0)
-                return true;
-        }
-    }
-    return false;
-}
-
-bool BoardManager::isCastling(const Move& move) const{
-    if (move.piece != WK && move.piece != BK)
-        return false;
-
-    // has to be from king start pos
-    if (move.fileFrom != 5)
-        return false;
-    // has to end up in one of the castling positions
-    if (move.fileTo != 3 && move.fileTo != 7)
-        return false;
-
-    // only works on rank 1 if white
-    if (move.piece == WK)
-        if (move.rankFrom != 1 && move.rankTo != 1)
-            return false;
-
-    // only works on rank 8 if black
-    if (move.piece == BK)
-        if (move.rankFrom != 8 && move.rankTo != 8)
-            return false;
-
-    // can't go there if the place is occupied
-    if (bitboards.testSquare(rankAndFileToSquare(move.rankTo, move.fileTo)))
-        return false;
-
-    // also can't go there if we cross pieces
-    int deltaFile = move.fileTo - move.fileFrom;
-
-    for (int
-         intermediateFile = move.fileFrom + sign(deltaFile);
-         intermediateFile != move.fileTo;
-         intermediateFile += sign(deltaFile)) {
-        if (bitboards.testSquare(rankAndFileToSquare(move.rankTo, intermediateFile)))
-            return false;
-    }
-
-    return true;
-}
-
-std::vector<int> BoardManager::getStartingSquaresOfPiece(const Piece& piece){
-    std::vector<int> startingSquares;
-
-    const auto& pieceLocation = std::bitset<64>(bitboards[piece]);
-    if (!pieceLocation.any())
-        return startingSquares;
-
-    for (int index = 0; index < pieceLocation.size(); ++index) {
-        if (pieceLocation.test(index)) { startingSquares.push_back(index); }
-    }
-    return startingSquares;
-}
-
-bool BoardManager::tryMove(Move& move){
-    if (!checkMove(move)) { return false; }
+bool BoardManager::checkMove(Move& move){
+    if (!prelimCheckMove(move)) { return false; }
     makeMove(move);
+    if (friendlyKingInCheck(move)) {
+        undoMove(move);
+        move.result = KING_IN_CHECK;
+        return false;
+    }
+    undoMove(move);
     return true;
 }
 
@@ -169,7 +69,7 @@ bool BoardManager::prelimCheckMove(Move& move){
     const auto castlingMoves = RulesCheck::getCastlingMoves(fromSquare, move.piece, &bitboards);
     const auto attacks = rawAttacks ^ pushes;
 
-    if (1ULL << toSquare & castlingMoves) {
+    if (castlingMoves && (1ULL << toSquare & castlingMoves)) {
         move.result = CASTLING;
         return true;
     }
@@ -222,16 +122,68 @@ bool BoardManager::prelimCheckMove(Move& move){
     return false;
 }
 
-bool BoardManager::checkMove(Move& move){
-    if (!prelimCheckMove(move)) { return false; }
+bool BoardManager::tryMove(Move& move){
+    if (!checkMove(move)) { return false; }
     makeMove(move);
-    if (friendlyKingInCheck(move)) {
-        undoMove(move);
-        move.result = KING_IN_CHECK;
-        return false;
-    }
-    undoMove(move);
     return true;
+}
+
+void BoardManager::makeMove(Move& move){
+    if (move.result == CASTLING) {
+        bitboards.setZero(move.rankFrom, move.fileFrom);
+        bitboards.setOne(move.piece, move.rankTo, move.fileTo);
+
+        const auto relevantRook = move.piece == WK ? WR : BR;
+
+        int movedRookFileTo;
+        int movedRookFileFrom;
+        // queen side
+        if (move.fileTo == 3) {
+            // set the new rook location
+            movedRookFileTo = move.fileTo + 1;
+            movedRookFileFrom = 1;
+        }
+        // king side
+        else if (move.fileTo == 7) {
+            movedRookFileTo = move.fileTo - 1;
+            movedRookFileFrom = 8;
+        }
+
+        // ReSharper disable once CppLocalVariableMightNotBeInitialized
+        bitboards.setOne(relevantRook, move.rankTo, movedRookFileTo);
+        // ReSharper disable once CppLocalVariableMightNotBeInitialized
+        bitboards.setZero(move.rankTo, movedRookFileFrom);
+    }
+
+    // set the "from" square of the moving piece to zero
+    bitboards.setZero(move.rankFrom, move.fileFrom);
+
+    // check to see if discovered capture
+    if (const auto discoveredPiece = bitboards.getPiece(move.rankTo, move.fileTo);
+        discoveredPiece.has_value() && pieceColours[discoveredPiece.value()] != pieceColours[move.piece]) {
+        move.result = CAPTURE;
+        move.capturedPiece = discoveredPiece.value();
+    }
+
+    // if it was a capture, set that piece to zero
+    if (move.result == CAPTURE)
+        bitboards.setZero(move.rankTo, move.fileTo);
+
+    // if it was an en_passant capture, set the correct square to zero
+    if (move.result == EN_PASSANT) {
+        const auto rankOffset = pieceColours[move.piece] == WHITE ? -1 : 1;
+        bitboards.setZero(move.rankTo + rankOffset, move.fileTo);
+    }
+
+    // set the to square of the moving piece to one
+    bitboards.setOne(move.piece, move.rankTo, move.fileTo);
+
+    if (currentTurn == WHITE)
+        currentTurn = BLACK;
+    else
+        currentTurn = WHITE;
+
+    moveHistory.push(move);
 }
 
 void BoardManager::undoMove(const Move& move){
@@ -296,61 +248,81 @@ void BoardManager::undoMove(){
     undoMove(moveHistory.top());
 }
 
-void BoardManager::makeMove(Move& move){
-    if (move.result == CASTLING) {
-        bitboards.setZero(move.rankFrom, move.fileFrom);
-        bitboards.setOne(move.piece, move.rankTo, move.fileTo);
+bool BoardManager::moveIsEnPassant(Move& move){
+    if (abs(moveHistory.top().rankTo - moveHistory.top().rankFrom) != 2)
+        return false;
+    const uint64_t attackedSquare = 1ULL << rankAndFileToSquare(move.rankTo, move.fileTo);
+    const auto& otherPawnPiece = pieceColours[move.piece] == WHITE ? BP : WP;
+    const auto& locationsOfOtherPawns = bitboards[otherPawnPiece];
+    const std::bitset<64> locationsOfOtherPawnsBits(locationsOfOtherPawns);
+    int offset = pieceColours[move.piece] == WHITE ? 8 : -8;
 
-        const auto relevantRook = move.piece == WK ? WR : BR;
-
-        int movedRookFileTo;
-        int movedRookFileFrom;
-        // queen side
-        if (move.fileTo == 3) {
-            // set the new rook location
-            movedRookFileTo = move.fileTo + 1;
-            movedRookFileFrom = 1;
+    // track the locations of the opponent's pawns, shifted correctly
+    uint64_t otherPawnLocations = 0ULL;
+    for (int bit = 0; bit < locationsOfOtherPawnsBits.size(); ++bit) {
+        if (locationsOfOtherPawnsBits.test(bit) && bit >= 8 && bit <= 55) {
+            otherPawnLocations |= 1ULL << (bit + offset);
         }
-        // king side
-        else if (move.fileTo == 7) {
-            movedRookFileTo = move.fileTo - 1;
-            movedRookFileFrom = 8;
-        }
-
-        // ReSharper disable once CppLocalVariableMightNotBeInitialized
-        bitboards.setOne(relevantRook, move.rankTo, movedRookFileTo);
-        // ReSharper disable once CppLocalVariableMightNotBeInitialized
-        bitboards.setZero(move.rankTo, movedRookFileFrom);
     }
 
-    // set the "from" square of the moving piece to zero
-    bitboards.setZero(move.rankFrom, move.fileFrom);
+    const bool isEnPassant = (attackedSquare & otherPawnLocations) > 0 && (
+                                 abs(moveHistory.top().rankTo - moveHistory.top().rankFrom) == 2);
 
-    // check to see if discovered capture
-    if (const auto discoveredPiece = bitboards.getPiece(move.rankTo, move.fileTo);
-        discoveredPiece.has_value() && pieceColours[discoveredPiece.value()] != pieceColours[move.piece]) {
-        move.result = CAPTURE;
-        move.capturedPiece = discoveredPiece.value();
-    }
+    if (!isEnPassant)
+        return false;
 
-    // if it was a capture, set that piece to zero
-    if (move.result == CAPTURE)
-        bitboards.setZero(move.rankTo, move.fileTo);
-
-    // if it was an en_passant capture, set the correct square to zero
-    if (move.result == EN_PASSANT) {
-        const auto opponentPawn = pieceColours[move.piece] == WHITE ? BP : WP;
-        const auto rankOffset = pieceColours[move.piece] == WHITE ? -1 : 1;
-        bitboards.setZero(move.rankTo + rankOffset, move.fileTo);
-    }
-
-    // set the to square of the moving piece to one
-    bitboards.setOne(move.piece, move.rankTo, move.fileTo);
-
-    if (currentTurn == WHITE)
-        currentTurn = BLACK;
-    else
-        currentTurn = WHITE;
-
-    moveHistory.push(move);
+    move.result = EN_PASSANT;
+    move.capturedPiece = otherPawnPiece;
+    return true;
 }
+
+bool BoardManager::friendlyKingInCheck(const Move& move){
+    const Colours friendlyColor = pieceColours[move.piece];
+    const Piece friendlyKing = (friendlyColor == BLACK) ? BK : WK;
+    const uint64_t kingLocation = bitboards[friendlyKing];
+
+    if (kingLocation == 0) {
+        return false; // No king on board
+    }
+
+    const Colours enemyColor = (friendlyColor == BLACK) ? WHITE : BLACK;
+
+    // Iterate through enemy pieces
+    for (Piece piece: {WP, WN, WB, WR, WQ, WK, BP, BN, BB, BR, BQ, BK}) {
+        if (pieceColours[piece] != enemyColor) { continue; }
+
+        const auto pieceLocations = getStartingSquaresOfPiece(piece);
+        for (const int startSquare: pieceLocations) {
+            const uint64_t attackedSquares = RulesCheck::getAttackMoves(startSquare, piece, &bitboards);
+            const bool kingIsAttacked = (attackedSquares & kingLocation) != 0;
+
+            if (kingIsAttacked) { return true; }
+        }
+    }
+
+    return false;
+}
+
+std::vector<int> BoardManager::getStartingSquaresOfPiece(const Piece& piece){
+    std::vector<int> startingSquares;
+
+    const auto& pieceLocation = std::bitset<64>(bitboards[piece]);
+    if (!pieceLocation.any())
+        return startingSquares;
+
+    for (int index = 0; index < pieceLocation.size(); ++index) {
+        if (pieceLocation.test(index)) { startingSquares.push_back(index); }
+    }
+    return startingSquares;
+}
+
+
+
+
+
+
+
+
+
+
+

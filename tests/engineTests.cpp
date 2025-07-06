@@ -187,6 +187,13 @@ TEST(PerftDivide, perft2Divide){
     EXPECT_TRUE(divideTest(Fen::STARTING_FEN, outputFile, depth));
 }
 
+TEST(PerftDivide, perft4Divide){
+    constexpr int depth = 4;
+    // get the moves the actual engine think are possible
+    const std::string outputFile = "startPos.txt";
+    EXPECT_TRUE(divideTest(Fen::STARTING_FEN, outputFile, depth));
+}
+
 TEST(PerftDivide, position3Divide){
     constexpr int depth = 1;
     // get the moves the actual engine think are possible
@@ -242,19 +249,21 @@ TEST(Perft, perft3){
     EXPECT_EQ(whiteResultDepth1.enPassant, 0);
 }
 
-TEST(depr, perft4){
+TEST(Perft, perft4){
     TestEngine blackEngine(BLACK);
 
     const auto blackResultDepth1 = blackEngine.runPerftTest(Fen::STARTING_FEN, 4);
     EXPECT_EQ(blackResultDepth1.nodes, 197281);
     EXPECT_EQ(blackResultDepth1.captures, 1576);
     EXPECT_EQ(blackResultDepth1.enPassant, 0);
+    EXPECT_EQ(blackResultDepth1.castling, 0);
 
     TestEngine whiteEngine(WHITE);
     const auto whiteResultDepth1 = whiteEngine.runPerftTest(Fen::STARTING_FEN, 4);
     EXPECT_EQ(whiteResultDepth1.nodes, 197281);
     EXPECT_EQ(whiteResultDepth1.captures, 1576);
     EXPECT_EQ(whiteResultDepth1.enPassant, 0);
+    EXPECT_EQ(whiteResultDepth1.castling, 0);
 }
 
 TEST(Perft, kiwiPete1){
