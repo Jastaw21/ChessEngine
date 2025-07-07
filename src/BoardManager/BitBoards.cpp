@@ -130,6 +130,33 @@ std::vector<Piece> BitBoards::getAttackingPieces(const Piece& piece){
     return attackingPieces;
 }
 
+uint64_t BitBoards::getOccupancy() const{
+    uint64_t result = 0ULL;
+    for (int i = 0; i < PIECE_N; ++i) {
+        const auto pieceToSearch = static_cast<Piece>(i);
+        result |= bitboards[pieceToSearch];
+    }
+    return result;
+}
+
+uint64_t BitBoards::getOccupancy(const Piece& piece) const{
+    uint64_t result = 0ULL;
+    for (int i = 0; i < PIECE_N; ++i) {
+        const auto pieceToSearch = static_cast<Piece>(i);
+        if (pieceToSearch == piece) { result |= bitboards[pieceToSearch]; }
+    }
+    return result;
+}
+
+uint64_t BitBoards::getOccupancy(const Colours& colour) const{
+    uint64_t result = 0ULL;
+    for (int i = 0; i < PIECE_N; ++i) {
+        const auto pieceToSearch = static_cast<Piece>(i);
+        if (pieceColours[pieceToSearch] == colour) { result |= bitboards[pieceToSearch]; }
+    }
+    return result;
+}
+
 std::string &BitBoards::toFEN(){
     fen_ = "";
     // rank by rank

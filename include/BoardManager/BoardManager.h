@@ -8,6 +8,7 @@
 #include <stack>
 
 #include "BitBoards.h"
+#include "Rules.h"
 #include "Engine/Piece.h"
 
 class BitBoards;
@@ -76,6 +77,8 @@ private:
     BitBoards bitboards{};
     std::stack<Move> moveHistory;
     Colours currentTurn = WHITE;
+
+    Rules rules;
 };
 
 

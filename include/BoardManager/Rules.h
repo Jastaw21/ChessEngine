@@ -45,17 +45,113 @@ constexpr void buildFileAttacks(const int square, uint64_t& inBoard){
     }
 }
 
+constexpr void buildDiagonalAttacks(const int square, uint64_t& inBoard){
+    const int rank = square / 8 + 1;
+    const int file = square % 8 + 1;
+
+    struct DiagonalMove {
+        int dRank;
+        int dFile;
+    };
+
+    constexpr DiagonalMove diagonalMovePatterns[] = {
+                {1, 1}, {-1, 1}, {-1, -1}, {1, -1}
+            };
+
+    for (const auto& move: diagonalMovePatterns) {
+        const int fileCutoff = move.dFile == 1 ? 8 : 1;
+        const int rankCutoff = move.dRank == 1 ? 8 : 1;
+        const int steps = std::min(abs(file - fileCutoff), abs(rank - rankCutoff));
+
+        for (int step = 1; step <= steps; ++step) {
+            inBoard |= 1ULL << rankAndFileToSquare(rank + move.dRank * step, file + move.dFile * step);
+        }
+    }
+}
+
+constexpr void buildKnightAttacks(const int square, uint64_t& inBoard){
+    struct KnightMove {
+        int rankOffset;
+        int fileOffset;
+    };
+
+    // All possible knight moves patterns
+    constexpr KnightMove knightMovePatterns[] = {
+                {2, -1}, {2, 1}, // Up 2, left/right 1
+                {1, -2}, {1, 2}, // Up 1, left/right 2
+                {-1, -2}, {-1, 2}, // Down 1, left/right 2
+                {-2, -1}, {-2, 1} // Down 2, left/right 1
+            };
+    const int rank = square / 8 + 1;
+    const int file = square % 8 + 1;
+
+    for (const auto& move: knightMovePatterns) {
+        const int targetRank = rank + move.rankOffset;
+        const int targetFile = file + move.fileOffset;
+
+        if (!(targetFile >= 1 && targetFile <= 8))
+            continue; // Check if the target position is within the board boundaries
+        if (!(targetRank >= 1 && targetRank <= 8))
+            continue;
+        inBoard |= 1ULL << rankAndFileToSquare(targetRank, targetFile);
+    }
+}
+
+constexpr void buildWhitePawnPushes(const int square, uint64_t& inBoard){
+    const int rank = square / 8 + 1;
+    if (rank != 8)
+        inBoard |= 1ULL << square + 8;
+    if (rank == 2)
+        inBoard |= 1ULL << square + 16;
+}
+
+constexpr void buildBlackPawnPushes(const int square, uint64_t& inBoard){
+    const int rank = square / 8 + 1;
+    if (rank != 1)
+        inBoard |= 1ULL << square - 8;
+    if (rank == 7)
+        inBoard |= 1ULL << square - 16;
+}
+
+constexpr void buildWhitePawnAttacks(const int square, uint64_t& inBoard){
+    const int rank = square / 8 + 1;
+    const int file = square % 8 + 1;
+    if (rank != 8) {
+        if (file != 1)
+            inBoard |= 1ULL << square + 7;
+        if (file != 8)
+            inBoard |= 1ULL << square + 9;
+    }
+}
+
+constexpr void buildBlackPawnAttacks(const int square, uint64_t& inBoard){
+    const int rank = square / 8 + 1;
+    const int file = square % 8 + 1;
+    if (rank != 1) {
+        if (file != 1)
+            inBoard |= 1ULL << square - 9;
+        if (file != 8)
+            inBoard |= 1ULL << square - 7;
+    }
+}
+
 class Rules {
 public:
 
     Rules();
-    uint64_t getAttackMoves(const int square, const Piece& piece, BitBoards* boards);
-    uint64_t getPushMoves(const int square, const Piece& piece, BitBoards* boards);
-    uint64_t getPseudoLegalMoves(const int square, const Piece& piece, BitBoards* bitBoards);
-    uint64_t getCastlingMoves(const int square, const Piece& piece, BitBoards* boards);
+    uint64_t getAttackMoves(int square, const Piece& piece);
+    uint64_t getPushMoves(int square, const Piece& piece);
+    uint64_t getPseudoLegalMoves(int square, const Piece& piece);
+    uint64_t getCastlingMoves(int square, const Piece& piece);
 
     std::unordered_map<int, uint64_t> rankAttacks;
     std::unordered_map<int, uint64_t> fileAttacks;
+    std::unordered_map<int, uint64_t> diagAttacks;
+    std::unordered_map<int, uint64_t> knightAttacks;
+    std::unordered_map<int, uint64_t> whitePawnPushes;
+    std::unordered_map<int, uint64_t> whitePawnAttacks;
+    std::unordered_map<int, uint64_t> blackPawnPushes;
+    std::unordered_map<int, uint64_t> blackPawnAttacks;
 };
 
 namespace SingleMoves {
@@ -121,7 +217,8 @@ namespace SingleMoves {
     }
 
     inline uint64_t southWest(const int square){
-        if (squareToFile(square) == 1 || squareToRank(square) == 1)
+        if (squareToFile(square) == 1
+            || squareToRank(square) == 1)
             return 0ULL;
         return 1ULL << square_southWest(square);
     }
@@ -476,38 +573,24 @@ namespace Sliders {
         int rank, file;
         squareToRankAndFile(startSquare, rank, file);
 
-        // go north-west
-        int nextSquareNW = SingleMoves::square_northWest(startSquare);
-        const int stepsNW = std::min(8 - rank, file - 1);
-        for (int step = 0; step < stepsNW; step++) {
-            result |= 1ULL << nextSquareNW;
-            nextSquareNW = SingleMoves::square_northWest(nextSquareNW);
-        }
+        struct DiagonalMove {
+            int dRank;
+            int dFile;
+        };
 
-        // go north-east
-        int northEastTrackingSquare = SingleMoves::square_northEast(startSquare);
-        const int maxNorthEastSteps = std::min(8 - rank, 8 - file);
-        for (int step = 0; step < maxNorthEastSteps; step++) {
-            result |= 1ULL << northEastTrackingSquare;
-            northEastTrackingSquare = SingleMoves::square_northEast(northEastTrackingSquare);
-        }
+        constexpr DiagonalMove diagonalMovePatterns[] = {
+                    {1, 1}, {-1, 1}, {-1, -1}, {1, -1}
+                };
 
-        // go south-east
-        int southEastTrackingSquare = SingleMoves::square_southEast(startSquare);
-        const int maxSouthEastSteps = std::min(rank - 1, 8 - file);
-        for (int step = 0; step < maxSouthEastSteps; step++) {
-            result |= 1ULL << southEastTrackingSquare;
-            southEastTrackingSquare = SingleMoves::square_southEast(southEastTrackingSquare);
-        }
+        for (const auto& move: diagonalMovePatterns) {
+            const int fileCutoff = move.dFile == 1 ? 8 : 1;
+            const int rankCutoff = move.dRank == 1 ? 8 : 1;
+            const int steps = std::min(abs(file - fileCutoff), abs(rank - rankCutoff));
 
-        // go south-west
-        int southWestTrackingSquare = SingleMoves::square_southWest(startSquare);
-        const int maxSouthWestSteps = std::min(rank - 1, file - 1);
-        for (int step = 0; step < maxSouthWestSteps; step++) {
-            result |= 1ULL << southWestTrackingSquare;
-            southWestTrackingSquare = SingleMoves::square_southWest(southWestTrackingSquare);
+            for (int step = 1; step <= steps; ++step) {
+                result |= 1ULL << rankAndFileToSquare(rank + move.dRank * step, file + move.dFile * step);
+            }
         }
-
         return result;
     }
 
@@ -517,84 +600,38 @@ namespace Sliders {
         int rank, file;
         squareToRankAndFile(startSquare, rank, file);
 
-        // go north-west
-        int squareNW = SingleMoves::square_northWest(startSquare); // get the first square
-        const int stepsNW = std::min(8 - rank, file - 1); // how far can we go before falling off the baord
-        for (int step = 0; step < stepsNW; step++) {
-            if (bitBoards->testSquare(squareNW)) {
-                // if we find a piece, break immediately if it's a friendly piece, move once more if enemy
-                if (isPush) { break; }
-                const auto collidedPiece = bitBoards->getPiece(squareNW);
-                // if the piece is friendly, just break
-                if (pieceColours[collidedPiece.value()] == movingColour)
-                    break;
-                // otherwise, advance a square before breaking
-                result |= 1ULL << squareNW;
-                break;
-            }
-            // no collision found, add the square to the result and move forwards
-            result |= 1ULL << squareNW;
-            squareNW = SingleMoves::square_northWest(squareNW);
-        }
+        struct DiagonalMove {
+            int dRank;
+            int dFile;
+        };
 
-        // go north-east
-        int squareNE = SingleMoves::square_northEast(startSquare);
-        const int stepsNE = std::min(8 - rank, 8 - file);
-        for (int step = 0; step < stepsNE; step++) {
-            if (bitBoards->testSquare(squareNE)) {
-                // if we find a piece, break immediately if it's a friendly piece, move once more if enemy
-                if (isPush) { break; }
-                const auto collidedPiece = bitBoards->getPiece(squareNE);
-                // if the piece is friendly, just break
-                if (pieceColours[collidedPiece.value()] == movingColour)
-                    break;
-                // otherwise, advance a square before breaking
-                result |= 1ULL << squareNE;
-                break;
-            }
-            // no collision found, add the square to the result and move forwards
-            result |= 1ULL << squareNE;
-            squareNE = SingleMoves::square_northEast(squareNE);
-        }
+        constexpr DiagonalMove diagonalMovePatterns[] = {
+                    {1, 1}, {-1, 1}, {-1, -1}, {1, -1}
+                };
 
-        // go south-east
-        int squareSE = SingleMoves::square_southEast(startSquare);
-        const int stepsSE = std::min(rank - 1, 8 - file);
-        for (int step = 0; step < stepsSE; step++) {
-            if (bitBoards->testSquare(squareSE)) {
-                // if we find a piece, break immediately if it's a friendly piece, move once more if enemy
-                if (isPush) { break; }
-                const auto collidedPiece = bitBoards->getPiece(squareSE);
-                // if the piece is friendly, just break
-                if (pieceColours[collidedPiece.value()] == movingColour)
-                    break;
-                // otherwise, advance a square before breaking
-                result |= 1ULL << squareSE;
-                break;
-            }
-            // no collision found, add the square to the result and move forwards
-            result |= 1ULL << squareSE;
-            squareSE = SingleMoves::square_southEast(squareSE);
-        }
+        for (const auto& move: diagonalMovePatterns) {
+            const int fileCutoff = move.dFile == 1 ? 8 : 1;
+            const int rankCutoff = move.dRank == 1 ? 8 : 1;
+            const int steps = std::min(abs(file - fileCutoff), abs(rank - rankCutoff));
 
-        // go south-west
-        int squareSW = SingleMoves::square_southWest(startSquare);
-        const int stepsSW = std::min(rank - 1, file - 1);
-        for (int step = 0; step < stepsSW; step++) {
-            if (bitBoards->testSquare(squareSW)) {
-                // if we find a piece, break immediately if it's a friendly piece, move once more if enemy
-                if (isPush) { break; }
-                const auto collidedPiece = bitBoards->getPiece(squareSW);
-                // if the piece is friendly, just break
-                if (pieceColours[collidedPiece.value()] == movingColour)
-                    break;
-                // otherwise, advance a square before breaking
-                result |= 1ULL << squareSW;
-                break;
+            for (int step = 1; step <= steps; ++step) {
+                const auto square = rankAndFileToSquare(rank + move.dRank * step, file + move.dFile * step);
+                if (bitBoards->testSquare(square)) {
+                    if (isPush)
+                        break;
+                    // otherwise, we're checking if it's friendly or enemy
+                    const auto collidedPiece = bitBoards->getPiece(square);
+
+                    // friendly case, just return
+                    if (pieceColours[collidedPiece.value()] == movingColour) { break; }
+
+                    // opponent case, move to that square and exit
+
+                    result |= 1ULL << square;
+                    break; // then duck out
+                }
+                result |= 1ULL << square;
             }
-            // no collision found, add the square to the result and move forwards
-            result |= 1ULL << squareSW;
-            squareSW = SingleMoves::square_southWest(squareSW);
         }
 
         return result;

@@ -14,13 +14,12 @@
 #include "Engine/Piece.h"
 
 
-
 struct Move;
 
 int rankAndFileToSquare(int rank, int file);
 void squareToRankAndFile(int square, int& rank, int& file);
-int squareToFile(const int square);
-int squareToRank(const int square);
+int squareToFile(int square);
+int squareToRank(int square);
 
 namespace Comparisons {
     constexpr uint64_t buildFileBoard(const char file){
@@ -68,10 +67,6 @@ namespace Comparisons {
     inline uint64_t northWest(const uint64_t& inBitBoard){ return inBitBoard >> 7; }
     inline uint64_t southEast(const uint64_t& inBitBoard){ return inBitBoard << 7; }
     inline uint64_t southWest(const uint64_t& inBitBoard){ return inBitBoard << 9; }
-
-
-
-
 }
 
 
@@ -84,7 +79,7 @@ public:
     std::string &toFEN();
 
     [[nodiscard]] uint64_t getBitboard(const Piece& piece) const;
-    uint64_t &operator[] (const Piece piece){ return bitboards[piece]; }
+    uint64_t &operator[](const Piece piece){ return bitboards[piece]; }
 
     std::optional<Piece> getPiece(int rank, int file) const;
     std::optional<Piece> getPiece(int square) const;
@@ -92,11 +87,15 @@ public:
     void setOne(const Piece& piece, int rank, int file);
 
     bool testBoard(uint64_t inBoard) const;
-    bool testSquare(const int square) const;
+    bool testSquare(int square) const;
 
     int countPiece(const Piece& pieceToSearch) const;
 
     std::vector<Piece> getAttackingPieces(const Piece& piece);
+
+    uint64_t getOccupancy() const;
+    uint64_t getOccupancy(const Piece& piece) const;
+    uint64_t getOccupancy(const Colours& colour) const;
 
 private:
 

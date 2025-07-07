@@ -59,8 +59,7 @@ TEST(BitBoards, BitboardsLocationsCorrect){
     EXPECT_EQ(board[Piece::WQ], 0x8);
 }
 
-TEST(BitBoards,ToFenWorksAfterInit){
-
+TEST(BitBoards, ToFenWorksAfterInit){
     auto board = BitBoards();
     board.loadFEN(Fen::STARTING_FEN);
     EXPECT_EQ(board.toFEN(), Fen::STARTING_FEN);
@@ -140,11 +139,10 @@ TEST(BitBoards, TestSquareFunction){
     board.loadFEN(Fen::STARTING_FEN);
 
     for (int i = 0; i < 64; i++) {
-        if (i <=15 || i >=48) {
+        if (i <= 15 || i >= 48) {
             bool test = board.testSquare(i);
             EXPECT_TRUE(board.testSquare(i));
-        }
-        else
+        } else
             EXPECT_FALSE(board.testSquare(i));
     }
 }
@@ -181,17 +179,14 @@ TEST(BitBoards, GetPieceOverloadsMatch){
 }
 
 TEST(BitBoards, CountPieces){
-
     auto boards = BitBoards();
     boards.loadFEN(Fen::STARTING_FEN);
 
     EXPECT_EQ(boards.countPiece(WP), 8);
     EXPECT_EQ(boards.countPiece(WK), 1);
-
 }
 
 TEST(BitBoards, WeirdBlackRookInWrongPlace){
-
     auto boards = BitBoards();
     boards.loadFEN("3K4/3r4/8/8/8/8/8/8");
 
@@ -200,5 +195,18 @@ TEST(BitBoards, WeirdBlackRookInWrongPlace){
 
     const auto& whiteRookBoard = boards[WR];
     EXPECT_EQ(whiteRookBoard, 0x0);
+}
 
+
+TEST(BitBoards, Occupancy){
+    auto boards = BitBoards();
+    boards.loadFEN(Fen::STARTING_FEN);
+
+    EXPECT_EQ(boards.getOccupancy(), 0xffff00000000ffff);
+    EXPECT_EQ(boards.getOccupancy(WHITE), 0xffff);
+    EXPECT_EQ(boards.getOccupancy(BLACK), 0xffff000000000000);
+    EXPECT_EQ(boards.getOccupancy(WP), 0xff00);
+    EXPECT_EQ(boards.getOccupancy(BP), 0xff000000000000);
+    EXPECT_EQ(boards.getOccupancy(BR), 0x8100000000000000);
+    EXPECT_EQ(boards.getOccupancy(WR), 0x81);
 }

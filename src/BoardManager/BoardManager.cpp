@@ -63,9 +63,26 @@ bool BoardManager::prelimCheckMove(Move& move){
     const int fromSquare = rankAndFileToSquare(move.rankFrom, move.fileFrom);
     const int toSquare = rankAndFileToSquare(move.rankTo, move.fileTo);
 
+    uint64_t pushes;
+    uint64_t rawAttacks;
+
+    if (move.piece == WP) {
+        const auto opponentColour = pieceColours[move.piece] == WHITE ? BLACK : WHITE;
+
+        const auto pseudoPushes = rules.whitePawnPushes[fromSquare];
+        const auto allOccupiedSquares = bitboards.getOccupancy();
+        pushes = pseudoPushes & ~allOccupiedSquares;
+
+        auto friendlyOccupiedSquares = bitboards.getOccupancy(pieceColours[move.piece]);
+        auto opponentOccupiedSquares = bitboards.getOccupancy(opponentColour);
+        rawAttacks = (rules.whitePawnAttacks[fromSquare] & opponentOccupiedSquares) | pushes;
+    }
+
     // boards
-    const auto pushes = RulesCheck::getPushMoves(fromSquare, move.piece, &bitboards);
-    const auto rawAttacks = RulesCheck::getAttackMoves(fromSquare, move.piece, &bitboards);
+    else {
+        pushes = RulesCheck::getPushMoves(fromSquare, move.piece, &bitboards);
+        rawAttacks = RulesCheck::getAttackMoves(fromSquare, move.piece, &bitboards);
+    }
     const auto castlingMoves = RulesCheck::getCastlingMoves(fromSquare, move.piece, &bitboards);
     const auto attacks = rawAttacks ^ pushes;
 
