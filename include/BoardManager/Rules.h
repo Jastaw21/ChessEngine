@@ -153,7 +153,7 @@ public:
 
         // must end up north or south (if black) of the other pawns
         auto allValidEnPassantTargetSquares = opponentPawnStarts << (8 * piece == WP ? 1 : -1);
-        return getPseudoPawnPushes(piece, fromSquare) & allValidEnPassantTargetSquares;
+        return getPseudoPawnAttacks(piece, fromSquare) & allValidEnPassantTargetSquares;
     }
 
     uint64_t getPseudoPawnPushes(const Piece& piece, const int fromSquare){
