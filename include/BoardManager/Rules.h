@@ -144,6 +144,30 @@ public:
     uint64_t getPseudoLegalMoves(int square, const Piece& piece);
     uint64_t getCastlingMoves(int square, const Piece& piece);
 
+    uint64_t getPseudoPawnEP(const Piece& piece, const int fromSquare, const uint64_t& opponentPawnOccupancy){
+        constexpr uint64_t opponentPawnStarts = 0xff00000000;
+
+        // need to check if the opponent pawns are even in the right starting places
+        if (opponentPawnOccupancy & opponentPawnStarts == 0)
+            return 0ULL;
+
+        // must end up north or south (if black) of the other pawns
+        auto allValidEnPassantTargetSquares = opponentPawnStarts << (8 * piece == WP ? 1 : -1);
+        return getPseudoPawnPushes(piece, fromSquare) & allValidEnPassantTargetSquares;
+    }
+
+    uint64_t getPseudoPawnPushes(const Piece& piece, const int fromSquare){
+        if (piece == WP) { return whitePawnPushes[fromSquare]; }
+        if (piece == BP) { return blackPawnPushes[fromSquare]; }
+        return 0ULL;
+    }
+
+    uint64_t getPseudoPawnAttacks(const Piece& piece, const int fromSquare){
+        if (piece == WP) { return whitePawnAttacks[fromSquare]; }
+        if (piece == BP) { return blackPawnAttacks[fromSquare]; }
+        return 0ULL;
+    }
+
     std::unordered_map<int, uint64_t> rankAttacks;
     std::unordered_map<int, uint64_t> fileAttacks;
     std::unordered_map<int, uint64_t> diagAttacks;

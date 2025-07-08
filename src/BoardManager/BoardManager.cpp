@@ -66,16 +66,20 @@ bool BoardManager::prelimCheckMove(Move& move){
     uint64_t pushes;
     uint64_t rawAttacks;
 
-    if (move.piece == WP) {
+    if (move.piece == WP || move.piece == BP) {
         const auto opponentColour = pieceColours[move.piece] == WHITE ? BLACK : WHITE;
-
-        const auto pseudoPushes = rules.whitePawnPushes[fromSquare];
+        const auto opponentPawn = pieceColours[move.piece] == WHITE ? BP : WP;
         const auto allOccupiedSquares = bitboards.getOccupancy();
+        auto opponentOccupiedSquares = bitboards.getOccupancy(opponentColour);
+
+        const auto pseudoPushes = rules.getPseudoPawnPushes(move.piece, fromSquare);
         pushes = pseudoPushes & ~allOccupiedSquares;
 
-        auto friendlyOccupiedSquares = bitboards.getOccupancy(pieceColours[move.piece]);
-        auto opponentOccupiedSquares = bitboards.getOccupancy(opponentColour);
-        rawAttacks = (rules.whitePawnAttacks[fromSquare] & opponentOccupiedSquares) | pushes;
+        if (move.rankFrom == 2) {
+            if (bitboards.testSquare(rankAndFileToSquare(move.rankFrom + 1, move.fileFrom))) { pushes = 0ULL; }
+        }
+        rawAttacks = rules.getPseudoPawnAttacks(move.piece, fromSquare) & opponentOccupiedSquares | pushes;
+        rawAttacks |= rules.getPseudoPawnEP(move.piece, fromSquare, bitboards.getOccupancy(opponentPawn));
     }
 
     // boards
@@ -86,7 +90,7 @@ bool BoardManager::prelimCheckMove(Move& move){
     const auto castlingMoves = RulesCheck::getCastlingMoves(fromSquare, move.piece, &bitboards);
     const auto attacks = rawAttacks ^ pushes;
 
-    if (castlingMoves && (1ULL << toSquare & castlingMoves)) {
+    if (castlingMoves && 1ULL << toSquare & castlingMoves) {
         move.result = CASTLING;
         return true;
     }
