@@ -1086,3 +1086,11 @@ TEST(BoardManagerLegality, kiwpeteA2A4EnPassant){
     EXPECT_TRUE(manager.checkMove(blackb4b3));
     EXPECT_EQ(blackb4b3.result, EN_PASSANT);
 }
+
+TEST(BoardManagerLegality, KingCanEscapeCheck){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN("1nbr3r/7p/8/1P4p1/8/2b4P/4PP1P/2B1KBNR");
+
+    auto escapeMove = createMove(WK, "e1d1");
+    EXPECT_TRUE(manager.checkMove(escapeMove));
+}
