@@ -78,10 +78,7 @@ Move TestEngine::search(const int depth){
     BoardManager startingManager = *boardManager_;
 
     auto moves = generateMoveList(startingManager);
-    if (moves.empty()) {
-        std::cout << "No Moves" << std::endl;
-        return Move();
-    }
+    if (moves.empty()) { return Move(); }
 
     Move bestMove = moves[0];
     float bestEval = -100000;

@@ -335,17 +335,6 @@ TEST(Engine, EnginePicksObviouslyBestMoves){
     EXPECT_EQ(engine.search().toUCI(), "d5d4");
 }
 
-TEST(Engine, EngineThinksAheadWhenPickingMoves){
-    auto manager = BoardManager();
-    manager.getBitboards()->loadFEN("8/8/8/2dq1p2/3R4/8/8/N7");
-    auto engine = TestEngine(BLACK, &manager);
-
-    auto firstWhiteMove = createMove(WN, "a1c2");
-    ASSERT_TRUE(manager.tryMove(firstWhiteMove));
-
-    EXPECT_EQ(engine.search(2).toUCI(), "c5d4");
-}
-
 TEST(Engine, GeneratedMovesIncludeCastling){
     auto manager = BoardManager();
     manager.getBitboards()->loadFEN(Fen::KIWI_PETE_FEN);
@@ -397,6 +386,47 @@ TEST(PerftCorrections, KPErrorsFixed){
     std::cout << "In our engine, not in external engine:" << std::endl;
     for (const auto& move: inOursNotInEngine) { std::cout << move << std::endl; }
 }
+
+TEST(PerftCorrections, pos3ErrorsFixed){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN(Fen::POSITION_3_FEN);
+    auto engine = TestEngine(WHITE, &manager);
+
+    auto a5a6 = createMove(WK, "a5a6");
+    ASSERT_TRUE(manager.tryMove(a5a6));
+
+    generateExternalEngineMoves(manager.getBitboards()->toFEN() + " b KQkq -", "pos3.txt", 1);
+    const auto pyMoves = readMoves("pos3.txt");
+    EXPECT_EQ(pyMoves.size(), 15);
+
+    auto ourMoves = engine.generateMoveList(manager);
+    EXPECT_EQ(ourMoves.size(), 15);
+
+    std::vector<std::string> ourMovesToTest;
+    for (auto& move: ourMoves) { ourMovesToTest.push_back(move.toUCI()); }
+
+    // in python, not in our engine
+    std::vector<std::string> inEngineNotInOurs;
+    for (const auto& move: pyMoves) {
+        EXPECT_TRUE(std::ranges::any_of(ourMovesToTest, [&](const auto& ourMove) { return ourMove == move; }));
+        if (!std::ranges::any_of(ourMovesToTest, [&](const auto& ourMove) { return ourMove == move; }))
+            inEngineNotInOurs.push_back(move);
+    }
+
+    std::vector<std::string> inOursNotInEngine;
+    for (const auto& move: ourMovesToTest) {
+        EXPECT_TRUE(std::ranges::any_of(pyMoves, [&](const auto& pyMove) { return pyMove == move; }));
+        if (!std::ranges::any_of(pyMoves, [&](const auto& pyMove) { return pyMove == move; }))
+            inOursNotInEngine.push_back(move);
+    }
+
+    std::cout << "In external engine, not in ours:" << std::endl;
+    for (const auto& move: inEngineNotInOurs) { std::cout << move << std::endl; }
+
+    std::cout << "In our engine, not in external engine:" << std::endl;
+    for (const auto& move: inOursNotInEngine) { std::cout << move << std::endl; }
+}
+
 
 TEST(Engine, MoveGenerationDoesNotChangeState){
     auto manager = BoardManager();

@@ -554,7 +554,6 @@ TEST(BoardManagerMoveExecution, CastlingCanBeUndone){
     EXPECT_EQ(manager.getBitboards()->getBitboard(WR), initialWhiteRookBoard);
 
     manager.getBitboards()->loadFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R");
-    auto whiteQueenSideMove = createMove(WK, "e1c1");
     const auto qsInitialWhiteRook = manager.getBitboards()->getBitboard(WR);
     const auto qsInitialWhiteKing = manager.getBitboards()->getBitboard(WK);
     ASSERT_TRUE(manager.checkMove(whiteMove));
@@ -640,6 +639,11 @@ TEST(BoardManagerAdvancedRules, CheckCantBeExposed){
     auto rookMoveOutOfWay = createMove(WR, "a2b2");
     EXPECT_FALSE(manager.checkMove(rookMoveOutOfWay));
     EXPECT_EQ(rookMoveOutOfWay.result, MoveResult::KING_IN_CHECK);
+
+    manager.getBitboards()->loadFEN("8/2p5/K2p4/1P5r/1R3p1k/8/4P1P1/8");
+    auto BPMovesOutOfWay = createMove(BP, "f4f3");
+    EXPECT_FALSE(manager.checkMove(BPMovesOutOfWay));
+    EXPECT_EQ(BPMovesOutOfWay.result, MoveResult::KING_IN_CHECK);
 }
 
 TEST(BoardManagerAdvancedRules, SimpleEnPassant){
@@ -648,11 +652,11 @@ TEST(BoardManagerAdvancedRules, SimpleEnPassant){
 
     // e5e6 e5d5 then into en passant
     auto whiteMove1 = createMove(WP, "e2e4");
-    manager.tryMove(whiteMove1);
+    ASSERT_TRUE(manager.tryMove(whiteMove1));
     auto whiteMove2 = createMove(WP, "e4e5");
-    manager.tryMove(whiteMove2);
+    ASSERT_TRUE(manager.tryMove(whiteMove2));
     auto blackMove1 = createMove(BP, "f7f5");
-    manager.tryMove(blackMove1);
+    ASSERT_TRUE(manager.tryMove(blackMove1));
 
     auto testEnPassant = createMove(WP, "e5f6");
     EXPECT_TRUE(manager.tryMove(testEnPassant));
@@ -855,7 +859,7 @@ TEST(RulesHeaderTests, PawnMoves){
     boards.loadFEN("8/8/8/8/8/8/P7/8");
     EXPECT_EQ(RulesCheck::getPseudoLegalMoves(16,WP, &boards), 0x3000000);
 
-    // from centre - nw, n ,ne
+    // from centre - NW, N, NE
     boards.loadFEN("8/8/8/8/3P4/8/8/8");
     EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(4,4),WP, &boards), 0x1c00000000);
     EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(5,8),WP, &boards), 0xc00000000000);
@@ -998,17 +1002,15 @@ TEST(BoardManagerMoveExecution, KiwiPeteRestoresState){
             manager.tryMove(childMove);
             manager.undoMove();
             auto finalChildState = manager.getBitboards()->toFEN();
-            const bool childFailure = initialChildState != finalChildState;
 
             // log it if not
-            if (childFailure)
+            if (initialChildState != finalChildState)
                 std::cout << "Child Move Failed: " << move.toUCI() << " : " << childMove.toUCI() <<
                         std::endl;
         }
         manager.undoMove();
         auto finalState = manager.getBitboards()->toFEN();
-        const bool failure = initialState != finalState;
-        if (failure) {
+        if (initialState != finalState) {
             failureCount++;
             failedMoves.push_back(move);
         }
@@ -1070,4 +1072,17 @@ TEST(BoardManagerMoveExecution, Position3TurnChangesIncorrectly){
     EXPECT_EQ(endingTurn, BLACK);
 
     // auto secondMove = createMove(WP)
+}
+
+TEST(BoardManagerLegality, kiwpeteA2A4EnPassant){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN(Fen::KIWI_PETE_FEN);
+
+    auto whitea2a4 = createMove(WP, "a2a4");
+    ASSERT_TRUE(manager.tryMove(whitea2a4));
+
+    // this should work as EP
+    auto blackb4b3 = createMove(BP, "b4a3");
+    EXPECT_TRUE(manager.checkMove(blackb4b3));
+    EXPECT_EQ(blackb4b3.result, EN_PASSANT);
 }

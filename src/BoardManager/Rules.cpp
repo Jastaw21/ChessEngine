@@ -36,5 +36,9 @@ Rules::Rules(){
         uint64_t blackPawnAttackResult = 0ULL;
         buildBlackPawnAttacks(square, blackPawnAttackResult);
         blackPawnAttacks.insert({square, blackPawnAttackResult});
+
+        uint64_t kingPushResult = 0ULL;
+        buildKingMoves(square, kingPushResult);
+        kingMoves.insert({square, kingPushResult});
     }
 }

@@ -135,6 +135,28 @@ constexpr void buildBlackPawnAttacks(const int square, uint64_t& inBoard){
     }
 }
 
+constexpr void buildKingMoves(const int square, uint64_t& inBoard){
+    struct KingDirections {
+        int dRank;
+        int dFile;
+    };
+    constexpr KingDirections knightMovePatterns[] = {
+                {-1, -1}, {-1, 0}, {-1, 1}, // Up 2, left/right 1
+                {0, -1}, {0, 1},
+                {1, -1}, {1, 0}, {1, 1}
+            };
+
+    const int rank = square / 8 + 1;
+    const int file = square % 8 + 1;
+
+    for (const auto& move: knightMovePatterns) {
+        const int targetRank = rank + move.dRank;
+        const int targetFile = file + move.dFile;
+        if (targetRank >= 1 && targetRank <= 8 && targetFile >= 1 && targetFile <= 8)
+            inBoard |= 1ULL << rankAndFileToSquare(targetRank, targetFile);
+    }
+}
+
 class Rules {
 public:
 
@@ -145,14 +167,16 @@ public:
     uint64_t getCastlingMoves(int square, const Piece& piece);
 
     uint64_t getPseudoPawnEP(const Piece& piece, const int fromSquare, const uint64_t& opponentPawnOccupancy){
-        constexpr uint64_t opponentPawnStarts = 0xff00000000;
+        uint64_t opponentPawnStarts = piece == WP ? 0xff00000000 : 0xff000000;
 
         // need to check if the opponent pawns are even in the right starting places
         if (opponentPawnOccupancy & opponentPawnStarts == 0)
             return 0ULL;
 
         // must end up north or south (if black) of the other pawns
-        auto allValidEnPassantTargetSquares = opponentPawnStarts << (8 * piece == WP ? 1 : -1);
+        if (piece == WP) { opponentPawnStarts <<= 8; } else { opponentPawnStarts >>= 8; }
+
+        auto allValidEnPassantTargetSquares = opponentPawnStarts;
         return getPseudoPawnAttacks(piece, fromSquare) & allValidEnPassantTargetSquares;
     }
 
@@ -168,6 +192,32 @@ public:
         return 0ULL;
     }
 
+    uint64_t getPseudoAttacks(const Piece& piece, const int fromSquare){
+        switch (piece) {
+            case BP:
+            case WP:
+                return getPseudoPawnAttacks(piece, fromSquare);
+            case WN:
+            case BN:
+                return knightAttacks[fromSquare];
+            case WQ:
+            case BQ:
+                return rankAttacks[fromSquare] | fileAttacks[fromSquare] | diagAttacks[fromSquare];
+            case WB:
+            case BB:
+                return diagAttacks[fromSquare];
+            case WR:
+            case BR:
+                return rankAttacks[fromSquare] | fileAttacks[fromSquare];
+
+            case WK:
+            case BK:
+                return kingMoves[fromSquare];
+            default:
+                return 0ULL;
+        }
+    }
+
     std::unordered_map<int, uint64_t> rankAttacks;
     std::unordered_map<int, uint64_t> fileAttacks;
     std::unordered_map<int, uint64_t> diagAttacks;
@@ -176,6 +226,7 @@ public:
     std::unordered_map<int, uint64_t> whitePawnAttacks;
     std::unordered_map<int, uint64_t> blackPawnPushes;
     std::unordered_map<int, uint64_t> blackPawnAttacks;
+    std::unordered_map<int, uint64_t> kingMoves;
 };
 
 namespace SingleMoves {
@@ -247,7 +298,8 @@ namespace SingleMoves {
         return 1ULL << square_southWest(square);
     }
 
-    inline bool collisionOK(const int toSquare, BitBoards* boards, const bool isPush, const Colours& movingColour){
+    inline bool collisionOK(const int toSquare, const BitBoards* boards, const bool isPush,
+                            const Colours& movingColour){
         if (isPush)
             return false; // if we're pushing, we can't move to any occupied square
 
@@ -259,7 +311,8 @@ namespace SingleMoves {
         return true;
     }
 
-    inline uint64_t southChecked(const int square, BitBoards* boards, const bool isPush, const Colours& movingColour){
+    inline uint64_t southChecked(const int square, const BitBoards* boards, const bool isPush,
+                                 const Colours& movingColour){
         if (squareToRank(square) == 1)
             return 0ULL; // can't go south from the first rank
 
@@ -277,7 +330,8 @@ namespace SingleMoves {
         return 1ULL << square_south(square);
     }
 
-    inline uint64_t northChecked(const int square, BitBoards* boards, const bool isPush, const Colours& movingColour){
+    inline uint64_t northChecked(const int square, const BitBoards* boards, const bool isPush,
+                                 const Colours& movingColour){
         if (squareToRank(square) == 8)
             return 0ULL; // can't go north from the last rank
 
@@ -295,7 +349,8 @@ namespace SingleMoves {
         return 1ULL << square_north(square);
     }
 
-    inline uint64_t eastChecked(const int square, BitBoards* boards, const bool isPush, const Colours& movingColour){
+    inline uint64_t eastChecked(const int square, const BitBoards* boards, const bool isPush,
+                                const Colours& movingColour){
         if (squareToFile(square) == 8)
             return 0ULL; // can't go east from the last rank
 
@@ -311,7 +366,8 @@ namespace SingleMoves {
         return 1ULL << square_east(square);
     }
 
-    inline uint64_t westChecked(const int square, BitBoards* boards, const bool isPush, const Colours& movingColour){
+    inline uint64_t westChecked(const int square, const BitBoards* boards, const bool isPush,
+                                const Colours& movingColour){
         if (squareToFile(square) == 1)
             return 0ULL; // can't go west from the first file
 
@@ -327,7 +383,7 @@ namespace SingleMoves {
         return 1ULL << square_west(square);
     }
 
-    inline uint64_t northEastChecked(const int square, BitBoards* boards, const bool isPush,
+    inline uint64_t northEastChecked(const int square, const BitBoards* boards, const bool isPush,
                                      const Colours& movingColour){
         if (squareToFile(square) == 8 || squareToRank(square) == 8)
             return 0ULL; // can't go northEast from last rank or last file
@@ -346,10 +402,10 @@ namespace SingleMoves {
         return 1ULL << square_northEast(square);
     }
 
-    inline uint64_t northWestChecked(const int square, BitBoards* boards, const bool isPush,
+    inline uint64_t northWestChecked(const int square, const BitBoards* boards, const bool isPush,
                                      const Colours& movingColour){
         if (squareToFile(square) == 1 || squareToRank(square) == 8)
-            return 0ULL; // can't go northWest from first file or last rank
+            return 0ULL; // can't go northWest from the first file or last rank
 
         // check for collisions
         if (boards->testSquare(square_northWest(square))) {
@@ -365,7 +421,7 @@ namespace SingleMoves {
         return 1ULL << square_northWest(square);
     }
 
-    inline uint64_t southEastChecked(const int square, BitBoards* boards, const bool isPush,
+    inline uint64_t southEastChecked(const int square, const BitBoards* boards, const bool isPush,
                                      const Colours& movingColour){
         if (squareToFile(square) == 8 || squareToRank(square) == 1)
             return 0ULL; // can't go southEast from the last file or first rank
@@ -384,7 +440,7 @@ namespace SingleMoves {
         return 1ULL << square_southEast(square);
     }
 
-    inline uint64_t southWestChecked(const int square, BitBoards* boards, const bool isPush,
+    inline uint64_t southWestChecked(const int square, const BitBoards* boards, const bool isPush,
                                      const Colours& movingColour){
         if (squareToFile(square) == 1 || squareToRank(square) == 1)
             return 0ULL; // can't go southWest from the first file or first rank
@@ -411,7 +467,7 @@ namespace SingleMoves {
         return prelimLegalMoves;
     }
 
-    inline uint64_t oneSquareAllDirections(const int square, BitBoards* boards, const bool isPush,
+    inline uint64_t oneSquareAllDirections(const int square, const BitBoards* boards, const bool isPush,
                                            const Colours& movingColour){
         const uint64_t prelimLegalMoves = north(square) | south(square)
                                           | east(square) | west(square)
@@ -430,7 +486,7 @@ namespace SingleMoves {
                 occupiedSquares |= collidedSquares;
             }
 
-            // other wise, ony remove the friendly pieces
+            // otherwise, ony remove the friendly pieces
             else {
                 if (pieceColours[pieceName] == movingColour) {
                     const uint64_t collidedSquares = boards->getBitboard(pieceName);
@@ -443,7 +499,7 @@ namespace SingleMoves {
     }
 
 
-    inline uint64_t getKnightMoves(const int square, BitBoards* boards, const bool isPush,
+    inline uint64_t getKnightMoves(const int square, const BitBoards* boards, const bool isPush,
                                    const Colours& movingColour){
         struct KnightMove {
             int rankOffset;
@@ -663,7 +719,7 @@ namespace Sliders {
 }
 
 namespace RulesCheck {
-    inline uint64_t getPushMoves(const int square, const Piece& piece, BitBoards* boards){
+    inline uint64_t getPushMoves(const int square, const Piece& piece, const BitBoards* boards){
         uint64_t result = 0ULL;
         switch (piece) {
             case WP:
@@ -680,7 +736,7 @@ namespace RulesCheck {
                     if (boards->testSquare(SingleMoves::square_north(SingleMoves::square_north(square))))
                         break;
 
-                    // otherwise can go two north
+                    // otherwise can go two squares north
                     result |= SingleMoves::north(SingleMoves::square_north(square));
                 }
                 break;
@@ -698,7 +754,7 @@ namespace RulesCheck {
                     if (boards->testSquare(SingleMoves::square_south(SingleMoves::square_south(square))))
                         break;
 
-                    // otherwise can go two south
+                    // otherwise can go two squares south
                     result |= SingleMoves::south(SingleMoves::square_south(square));
                 }
                 break;
@@ -736,7 +792,7 @@ namespace RulesCheck {
         return result;
     }
 
-    inline uint64_t getAttackMoves(const int square, const Piece& piece, BitBoards* boards){
+    inline uint64_t getAttackMoves(const int square, const Piece& piece, const BitBoards* boards){
         uint64_t result = 0ULL;
         switch (piece) {
             case WP:
@@ -796,7 +852,7 @@ namespace RulesCheck {
         return result;
     }
 
-    inline uint64_t getCastlingMoves(const int square, const Piece& piece, BitBoards* boards){
+    inline uint64_t getCastlingMoves(const int square, const Piece& piece, const BitBoards* boards){
         // only kings
         if (piece != WK && piece != BK)
             return 0ULL;
@@ -818,7 +874,7 @@ namespace RulesCheck {
         uint64_t result = 0ULL;
         for (const auto& file: destinationFiles) {
             if (boards->testSquare(rankAndFileToSquare(rankFrom, file))) {
-                continue; // if there's a piece here, just continue on to the next direction
+                continue; // if there's a piece here, continue on to the next direction
             }
 
             // also can't go there if we cross pieces
@@ -866,7 +922,7 @@ namespace RulesCheck {
         return result;
     }
 
-    inline uint64_t getPseudoLegalMoves(const int square, const Piece& piece, BitBoards* bitBoards){
+    inline uint64_t getPseudoLegalMoves(const int square, const Piece& piece, const BitBoards* bitBoards){
         uint64_t result = 0ULL;
         result |= getPushMoves(square, piece, bitBoards);
         result |= getAttackMoves(square, piece, bitBoards);
@@ -875,7 +931,7 @@ namespace RulesCheck {
         return result;
     }
 
-    inline uint64_t getEnPassantVulnerableSquares(BitBoards* boards, const Colours& moveColour){
+    inline uint64_t getEnPassantVulnerableSquares(const BitBoards* boards, const Colours& moveColour){
         uint64_t result = 0ULL;
         for (int piece = 0; piece < PIECE_N; ++piece) {
             const auto pieceName = static_cast<Piece>(piece);
@@ -896,7 +952,7 @@ namespace RulesCheck {
                 // no opponent pawns here
                 if (!otherPawnLocations.test(square))
                     continue;
-                // is the square occupied
+                // is the square occupied?
                 if (boards->testSquare(square + squareOffset))
                     continue;
 
