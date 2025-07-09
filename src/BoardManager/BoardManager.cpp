@@ -1,4 +1,4 @@
-//
+///
 // Created by jacks on 18/06/2025.
 //
 
@@ -47,28 +47,50 @@ Move createMove(const Piece& piece, const std::string& moveUCI){
 
 BoardManager::BoardManager() = default;
 
+bool BoardManager::opponentKingInCheck(Move& move){
+    const auto& opponentKing = pieceColours[move.piece] == WHITE ? BK : WK;
+    const auto& opponentKingLocation = bitboards[opponentKing];
+
+    if (opponentKingLocation == 0) {
+        return false; // No king on board
+    }
+
+    const auto attacks = RulesCheck::getAttackMoves(rankAndFileToSquare(move.rankTo, move.fileTo), move.piece,
+                                                    &bitboards);
+
+    if ((attacks & opponentKingLocation) != 0) {
+        move.checkedOpponent = true;
+        return true;
+    }
+
+    return false;
+}
+
 bool BoardManager::checkMove(Move& move){
     if (!prelimCheckMove(move)) { return false; }
     makeMove(move);
     if (friendlyKingInCheck(move)) {
         undoMove(move);
         move.result = KING_IN_CHECK;
+        move.resultBits |= bKING_IN_CHECK;
         return false;
     }
+    if (opponentKingInCheck(move)) { move.checkedOpponent = true; }
     undoMove(move);
     return true;
 }
 
 bool BoardManager::prelimCheckMove(Move& move){
+    move.resultBits = 0; // reset
     const int fromSquare = rankAndFileToSquare(move.rankFrom, move.fileFrom);
     const int toSquare = rankAndFileToSquare(move.rankTo, move.fileTo);
 
     uint64_t pushes;
     uint64_t rawAttacks;
+    const auto attackedKing = pieceColours[move.piece] == WHITE ? BK : WK;
 
     if (move.piece == WP || move.piece == BP) {
         const auto opponentColour = pieceColours[move.piece] == WHITE ? BLACK : WHITE;
-        const auto opponentPawn = pieceColours[move.piece] == WHITE ? BP : WP;
         const auto allOccupiedSquares = bitboards.getOccupancy();
         auto opponentOccupiedSquares = bitboards.getOccupancy(opponentColour);
 
@@ -99,15 +121,18 @@ bool BoardManager::prelimCheckMove(Move& move){
     }
     const auto castlingMoves = RulesCheck::getCastlingMoves(fromSquare, move.piece, &bitboards);
     const auto attacks = rawAttacks ^ pushes;
+    const auto allMoves = attacks | pushes;
 
     if (castlingMoves && 1ULL << toSquare & castlingMoves) {
         move.result = CASTLING;
+        move.resultBits |= bCASTLING;
         return true;
     }
 
     // check if it's a plain old push move
     if (pushes & 1ULL << rankAndFileToSquare(move.rankTo, move.fileTo)) {
         move.result = PUSH;
+        move.resultBits |= bPUSH;
         return true;
     }
 
@@ -129,6 +154,7 @@ bool BoardManager::prelimCheckMove(Move& move){
                     // this move is to an en passant viable square
                     if (enPassantVulnerableSquares & 1ULL << rankAndFileToSquare(move.rankTo, move.fileTo)) {
                         move.result = EN_PASSANT;
+                        move.resultBits |= bEN_PASSANT;
                         return true;
                     }
                 }
@@ -137,19 +163,23 @@ bool BoardManager::prelimCheckMove(Move& move){
             }
 
             move.result = ILLEGAL_MOVE;
+            move.resultBits |= bILLEGAL_MOVE;
             return false;
         }
         // can't capture kings
         if (capturedPiece.value() == WK || capturedPiece.value() == BK) {
             move.result = ILLEGAL_MOVE;
+            move.resultBits |= bILLEGAL_MOVE;
             return false;
         }
         move.result = CAPTURE;
+        move.resultBits |= bCAPTURE;
         move.capturedPiece = capturedPiece.value();
         return true;
     }
 
     move.result = ILLEGAL_MOVE;
+    move.resultBits |= bILLEGAL_MOVE;
     return false;
 }
 
@@ -160,7 +190,7 @@ bool BoardManager::tryMove(Move& move){
 }
 
 void BoardManager::makeMove(Move& move){
-    if (move.result == CASTLING) {
+    if (move.result == CASTLING || move.resultBits & bCASTLING) {
         bitboards.setZero(move.rankFrom, move.fileFrom);
         bitboards.setOne(move.piece, move.rankTo, move.fileTo);
 
@@ -193,15 +223,16 @@ void BoardManager::makeMove(Move& move){
     if (const auto discoveredPiece = bitboards.getPiece(move.rankTo, move.fileTo);
         discoveredPiece.has_value() && pieceColours[discoveredPiece.value()] != pieceColours[move.piece]) {
         move.result = CAPTURE;
+        move.resultBits |= bCAPTURE;
         move.capturedPiece = discoveredPiece.value();
     }
 
     // if it was a capture, set that piece to zero
-    if (move.result == CAPTURE)
+    if (move.result == CAPTURE || move.resultBits & bCAPTURE)
         bitboards.setZero(move.rankTo, move.fileTo);
 
     // if it was an en_passant capture, set the correct square to zero
-    if (move.result == EN_PASSANT) {
+    if (move.result == EN_PASSANT || move.resultBits & bEN_PASSANT) {
         const auto rankOffset = pieceColours[move.piece] == WHITE ? -1 : 1;
         bitboards.setZero(move.rankTo + rankOffset, move.fileTo);
     }
@@ -223,20 +254,20 @@ void BoardManager::undoMove(const Move& move){
     bitboards[move.piece] |= 1ULL << squareFrom;
 
     // if it was a capture, restore that piece to one
-    if (move.result == CAPTURE) {
+    if (move.result == CAPTURE || move.resultBits & bCAPTURE) {
         const auto squareTo = rankAndFileToSquare(move.rankTo, move.fileTo);
         bitboards[move.capturedPiece] |= 1ULL << squareTo;
     }
 
     // if it was an en_passant capture, restore the correct square to one
-    if (move.result == EN_PASSANT) {
+    if (move.result == EN_PASSANT || move.resultBits & bEN_PASSANT) {
         const auto opponentPawn = pieceColours[move.piece] == WHITE ? BP : WP;
         const auto rankOffset = pieceColours[move.piece] == WHITE ? -1 : 1;
         bitboards.setOne(opponentPawn, move.rankTo + rankOffset, move.fileTo);
     }
 
     // if it was a castling, restore the rooks to their original positions
-    if (move.result == CASTLING) {
+    if (move.result == CASTLING || move.resultBits & bCASTLING) {
         bitboards.setZero(move.rankTo, move.fileTo);
 
         const auto relevantRook = move.piece == WK ? WR : BR;
@@ -296,27 +327,28 @@ bool BoardManager::moveIsEnPassant(Move& move){
         }
     }
 
-    const bool isEnPassant = (attackedSquare & otherPawnLocations) > 0 && (
-                                 abs(moveHistory.top().rankTo - moveHistory.top().rankFrom) == 2);
+    const bool isEnPassant = (attackedSquare & otherPawnLocations) > 0 && abs(
+                                 moveHistory.top().rankTo - moveHistory.top().rankFrom) == 2;
 
     if (!isEnPassant)
         return false;
 
     move.result = EN_PASSANT;
+    move.resultBits |= bEN_PASSANT;
     move.capturedPiece = otherPawnPiece;
     return true;
 }
 
 bool BoardManager::friendlyKingInCheck(const Move& move){
     const Colours friendlyColor = pieceColours[move.piece];
-    const Piece friendlyKing = (friendlyColor == BLACK) ? BK : WK;
+    const Piece friendlyKing = friendlyColor == BLACK ? BK : WK;
     const uint64_t kingLocation = bitboards[friendlyKing];
 
     if (kingLocation == 0) {
         return false; // No king on board
     }
 
-    const Colours enemyColor = (friendlyColor == BLACK) ? WHITE : BLACK;
+    const Colours enemyColor = friendlyColor == BLACK ? WHITE : BLACK;
 
     // Iterate through enemy pieces
     for (int pieceIndex = 0; pieceIndex < PIECE_N; pieceIndex++) {

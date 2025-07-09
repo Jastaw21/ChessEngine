@@ -30,9 +30,10 @@ std::vector<PerftResults> getPerftDivideResults(const std::string& filename){
         int captures;
         int enPassant;
         int castling;
+        int checks;
         std::istringstream iss(line);
-        iss >> rootMoveUCI >> nodes >> captures >> enPassant >> castling;
-        results.push_back(PerftResults{nodes, captures, enPassant, castling, rootMoveUCI});
+        iss >> rootMoveUCI >> nodes >> captures >> enPassant >> castling >> checks;
+        results.push_back(PerftResults{nodes, captures, enPassant, castling, checks, rootMoveUCI});
     }
 
     return results;
@@ -241,12 +242,14 @@ TEST(Perft, perft3){
     EXPECT_EQ(blackResultDepth1.nodes, 8902);
     EXPECT_EQ(blackResultDepth1.captures, 34);
     EXPECT_EQ(blackResultDepth1.enPassant, 0);
+    EXPECT_EQ(blackResultDepth1.checks, 12);
 
     TestEngine whiteEngine(WHITE);
     const auto whiteResultDepth1 = whiteEngine.runPerftTest(Fen::STARTING_FEN, 3);
     EXPECT_EQ(whiteResultDepth1.nodes, 8902);
     EXPECT_EQ(whiteResultDepth1.captures, 34);
     EXPECT_EQ(whiteResultDepth1.enPassant, 0);
+    EXPECT_EQ(whiteResultDepth1.checks, 12);
 }
 
 TEST(Perft, perft4){
@@ -257,6 +260,7 @@ TEST(Perft, perft4){
     EXPECT_EQ(blackResultDepth1.captures, 1576);
     EXPECT_EQ(blackResultDepth1.enPassant, 0);
     EXPECT_EQ(blackResultDepth1.castling, 0);
+    EXPECT_EQ(blackResultDepth1.checks, 469);
 
     TestEngine whiteEngine(WHITE);
     const auto whiteResultDepth1 = whiteEngine.runPerftTest(Fen::STARTING_FEN, 4);
@@ -264,6 +268,7 @@ TEST(Perft, perft4){
     EXPECT_EQ(whiteResultDepth1.captures, 1576);
     EXPECT_EQ(whiteResultDepth1.enPassant, 0);
     EXPECT_EQ(whiteResultDepth1.castling, 0);
+    EXPECT_EQ(whiteResultDepth1.checks, 469);
 }
 
 TEST(Perft, kiwiPete1){
@@ -281,6 +286,7 @@ TEST(Perft, kiwiPete2){
     EXPECT_EQ(perftResults.captures, 351);
     EXPECT_EQ(perftResults.castling, 91);
     EXPECT_EQ(perftResults.enPassant, 1);
+    EXPECT_EQ(perftResults.checks, 3);
 }
 
 TEST(Perft, position3Depth1){
@@ -288,6 +294,7 @@ TEST(Perft, position3Depth1){
     const auto perftResults = engine.runPerftTest(Fen::POSITION_3_FEN, 1);
     EXPECT_EQ(perftResults.nodes, 14);
     EXPECT_EQ(perftResults.captures, 1);
+    EXPECT_EQ(perftResults.checks, 2);
 }
 
 TEST(Perft, position3Depth2){
@@ -295,6 +302,7 @@ TEST(Perft, position3Depth2){
     const auto perftResults = engine.runPerftTest(Fen::POSITION_3_FEN, 2);
     EXPECT_EQ(perftResults.nodes, 191);
     EXPECT_EQ(perftResults.captures, 14);
+    EXPECT_EQ(perftResults.checks, 10);
 }
 
 

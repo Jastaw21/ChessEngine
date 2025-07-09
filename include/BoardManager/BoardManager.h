@@ -13,6 +13,25 @@
 
 class BitBoards;
 
+enum MoveResultBits {
+    // successes
+    bPUSH = 1 << 0, // 0000 0001
+    bCAPTURE = 1 << 1, // 0000 0010
+    bEN_PASSANT = 1 << 2, // 0000 0100
+    bCASTLING = 1 << 3, // 0000 1000
+    bCHECK = 1 << 4, // 0001 0000
+
+    // failures
+    bILLEGAL_MOVE = 1 << 5,
+    bSQUARE_OCCUPIED = 1 << 6,
+    bMOVE_NOT_LEGAL_FOR_PIECE = 1 << 7,
+    bMOVE_OUT_OF_BOUNDS = 1 << 8,
+    bBLOCKING_PIECE = 1 << 9,
+    bKING_IN_CHECK = 1 << 10,
+    bDISCOVERED_CHECK = 1 << 11
+};
+
+
 enum MoveResult {
     // successes
     PUSH, //0
@@ -27,7 +46,8 @@ enum MoveResult {
     KING_IN_CHECK, //7
     EN_PASSANT, //8
     DISCOVERED_CHECK, //9
-    CASTLING,
+    CASTLING, //10
+    CHECK, //11
 };
 
 struct Move {
@@ -37,7 +57,10 @@ struct Move {
     int rankTo;
     int fileTo;
 
+    bool checkedOpponent = false;
+
     MoveResult result;
+    int resultBits;
     Piece capturedPiece = PIECE_N;
 
     std::string toUCI() const;
@@ -54,6 +77,7 @@ public:
     BitBoards *getBitboards(){ return &bitboards; }
     std::stack<Move> &getMoveHistory(){ return moveHistory; }
 
+    bool opponentKingInCheck(Move& move);
     bool checkMove(Move& move);
     bool tryMove(Move& move);
     void undoMove(const Move& move);

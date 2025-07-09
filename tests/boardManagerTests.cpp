@@ -4,9 +4,9 @@
 
 #include <gtest/gtest.h>
 #include "BoardManager/BoardManager.h"
-#include "Utility/Fen.h"
 #include "BoardManager/Rules.h"
 #include "Engine/TestEngine.h"
+#include "Utility/Fen.h"
 
 TEST(MoveStruct, ToUCICorrect){
     constexpr Move move{.piece = WP, .rankFrom = 1, .fileFrom = 1, .rankTo = 2, .fileTo = 1};
@@ -84,7 +84,13 @@ TEST(BoardManagerLegality, WhitePawnLegalityCorrect){
     EXPECT_EQ(westMove.result, MoveResult::ILLEGAL_MOVE);
     EXPECT_EQ(northEastMove.result, MoveResult::ILLEGAL_MOVE);
 
+    EXPECT_TRUE(southMove.resultBits & MoveResultBits::bILLEGAL_MOVE);
+    EXPECT_TRUE(eastMove.resultBits & MoveResultBits::bILLEGAL_MOVE);
+    EXPECT_TRUE(westMove.resultBits & MoveResultBits::bILLEGAL_MOVE);
+    EXPECT_TRUE(northEastMove.resultBits & MoveResultBits::bILLEGAL_MOVE);
+
     EXPECT_EQ(northMove.result, MoveResult::PUSH);
+    EXPECT_TRUE(northMove.resultBits & MoveResultBits::bPUSH);
 
     // if not on the first rank, move only 1 rank.
     Move northMoveTwoSquares{.piece = WP, .rankFrom = 4, .fileFrom = 4, .rankTo = 6, .fileTo = 4};
@@ -149,6 +155,7 @@ TEST(BoardManagerLegality, RookLegalityCorrect){
         Move northEastMove{.piece = WR, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = i + 1};
         EXPECT_FALSE(manager.checkMove(northEastMove));
         EXPECT_EQ(northEastMove.result, MoveResult::ILLEGAL_MOVE);
+        EXPECT_TRUE(northEastMove.resultBits & MoveResultBits::bILLEGAL_MOVE);
     }
 
     // can move vertically
@@ -156,6 +163,7 @@ TEST(BoardManagerLegality, RookLegalityCorrect){
         Move verticalMove{.piece = WR, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = 1};
         EXPECT_TRUE(manager.checkMove(verticalMove));
         EXPECT_EQ(verticalMove.result, MoveResult::PUSH);
+        EXPECT_TRUE(verticalMove.resultBits & MoveResultBits::bPUSH);
     }
 
     // can move horizontally
@@ -163,6 +171,7 @@ TEST(BoardManagerLegality, RookLegalityCorrect){
         Move horizMove{.piece = WR, .rankFrom = 1, .fileFrom = 1, .rankTo = 1, .fileTo = i + 1};
         EXPECT_TRUE(manager.checkMove(horizMove));
         EXPECT_EQ(horizMove.result, MoveResult::PUSH);
+        EXPECT_TRUE(horizMove.resultBits & MoveResultBits::bPUSH);
     }
 }
 
@@ -277,6 +286,7 @@ TEST(BoardManagerLegality, KingCanTakeItselfOutOfCheck){
     auto move = createMove(WK, "d8d7");
     EXPECT_TRUE(manager.checkMove(move));
     EXPECT_EQ(move.result, MoveResult::CAPTURE);
+    EXPECT_TRUE(move.resultBits & MoveResultBits::bCAPTURE);
 }
 
 TEST(BoardManagerLegality, BishopLegalityCorrect){
@@ -289,6 +299,7 @@ TEST(BoardManagerLegality, BishopLegalityCorrect){
         Move northEastMove{.piece = BB, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = i + 1};
         EXPECT_TRUE(manager.checkMove(northEastMove));
         EXPECT_EQ(northEastMove.result, MoveResult::PUSH);
+        EXPECT_TRUE(northEastMove.resultBits & MoveResultBits::bPUSH);
     }
 
     // can't move vertically
@@ -297,6 +308,7 @@ TEST(BoardManagerLegality, BishopLegalityCorrect){
 
         EXPECT_FALSE(manager.checkMove(verticalMove));
         EXPECT_EQ(verticalMove.result, MoveResult::ILLEGAL_MOVE);
+        EXPECT_TRUE(verticalMove.resultBits & MoveResultBits::bILLEGAL_MOVE);
     }
 
     // can't move horizontally
@@ -304,6 +316,7 @@ TEST(BoardManagerLegality, BishopLegalityCorrect){
         Move horizMove{.piece = BB, .rankFrom = 1, .fileFrom = 1, .rankTo = 1, .fileTo = i + 1};
         EXPECT_FALSE(manager.checkMove(horizMove));
         EXPECT_EQ(horizMove.result, MoveResult::ILLEGAL_MOVE);
+        EXPECT_TRUE(horizMove.resultBits & MoveResultBits::bILLEGAL_MOVE);
     }
 
     // can't jump over others
@@ -311,18 +324,21 @@ TEST(BoardManagerLegality, BishopLegalityCorrect){
     Move move = createMove(WB, "c1e3");
     EXPECT_FALSE(manager.checkMove(move));
     EXPECT_EQ(move.result, MoveResult::ILLEGAL_MOVE);
+    EXPECT_TRUE(move.resultBits & MoveResultBits::bILLEGAL_MOVE);
 
     // can't jump over others
     manager.getBitboards()->loadFEN(Fen::STARTING_FEN);
     Move blackMove = createMove(BB, "c8h3");
     EXPECT_FALSE(manager.checkMove(blackMove));
     EXPECT_EQ(blackMove.result, MoveResult::ILLEGAL_MOVE);
+    EXPECT_TRUE(blackMove.resultBits & MoveResultBits::bILLEGAL_MOVE);
 
     // can't capture over others
     manager.getBitboards()->loadFEN("rnbqkbnr/ppppppp1/7p/8/8/8/PPPPPPPP/RNBQKBNR");
     Move nextMove = createMove(WB, "c1h6");
     EXPECT_FALSE(manager.checkMove(nextMove));
     EXPECT_EQ(nextMove.result, MoveResult::ILLEGAL_MOVE);
+    EXPECT_TRUE(nextMove.resultBits & MoveResultBits::bILLEGAL_MOVE);
 }
 
 TEST(BoardManagerLegality, KnightLegalityCorrect){
@@ -335,6 +351,7 @@ TEST(BoardManagerLegality, KnightLegalityCorrect){
         Move northEastMove{.piece = BN, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = i + 1};
         EXPECT_FALSE(manager.checkMove(northEastMove));
         EXPECT_EQ(northEastMove.result, MoveResult::ILLEGAL_MOVE);
+        EXPECT_TRUE(northEastMove.resultBits & MoveResultBits::bILLEGAL_MOVE);
     }
 
     // can't move vertically
@@ -343,6 +360,7 @@ TEST(BoardManagerLegality, KnightLegalityCorrect){
 
         EXPECT_FALSE(manager.checkMove(verticalMove));
         EXPECT_EQ(verticalMove.result, MoveResult::ILLEGAL_MOVE);
+        EXPECT_TRUE(verticalMove.resultBits & MoveResultBits::bILLEGAL_MOVE);
     }
 
     // can't move horizontally
@@ -350,6 +368,7 @@ TEST(BoardManagerLegality, KnightLegalityCorrect){
         Move horizMove{.piece = BN, .rankFrom = 1, .fileFrom = 1, .rankTo = 1, .fileTo = i + 1};
         EXPECT_FALSE(manager.checkMove(horizMove));
         EXPECT_EQ(horizMove.result, MoveResult::ILLEGAL_MOVE);
+        EXPECT_TRUE(horizMove.resultBits & MoveResultBits::bILLEGAL_MOVE);
     }
 
     manager.getBitboards()->loadFEN("8/8/8/8/3N4/8/8/8");
@@ -358,34 +377,35 @@ TEST(BoardManagerLegality, KnightLegalityCorrect){
     Move move = createMove(BN, "d4b3");
     EXPECT_TRUE(manager.checkMove(move));
     EXPECT_EQ(move.result, MoveResult::PUSH);
-
+    EXPECT_TRUE(move.resultBits & MoveResultBits::bPUSH);
     move = createMove(BN, "d4c2");
     EXPECT_TRUE(manager.checkMove(move));
     EXPECT_EQ(move.result, MoveResult::PUSH);
-
+    EXPECT_TRUE(move.resultBits & MoveResultBits::bPUSH);
     move = createMove(BN, "d4e2");
     EXPECT_TRUE(manager.checkMove(move));
     EXPECT_EQ(move.result, MoveResult::PUSH);
-
+    EXPECT_TRUE(move.resultBits & MoveResultBits::bPUSH);
     move = createMove(BN, "d4f3");
     EXPECT_TRUE(manager.checkMove(move));
     EXPECT_EQ(move.result, MoveResult::PUSH);
-
+    EXPECT_TRUE(move.resultBits & MoveResultBits::bPUSH);
     move = createMove(BN, "d4f5");
     EXPECT_TRUE(manager.checkMove(move));
     EXPECT_EQ(move.result, MoveResult::PUSH);
-
+    EXPECT_TRUE(move.resultBits & MoveResultBits::bPUSH);
     move = createMove(BN, "d4e6");
     EXPECT_TRUE(manager.checkMove(move));
     EXPECT_EQ(move.result, MoveResult::PUSH);
-
+    EXPECT_TRUE(move.resultBits & MoveResultBits::bPUSH);
     move = createMove(BN, "d4c6");
     EXPECT_TRUE(manager.checkMove(move));
     EXPECT_EQ(move.result, MoveResult::PUSH);
-
+    EXPECT_TRUE(move.resultBits & MoveResultBits::bPUSH);
     move = createMove(BN, "d4b5");
     EXPECT_TRUE(manager.checkMove(move));
     EXPECT_EQ(move.result, MoveResult::PUSH);
+    EXPECT_TRUE(move.resultBits & MoveResultBits::bPUSH);
 }
 
 TEST(BoardManagerLegality, CantMoveToOccupiedSquareWithSameColour){
@@ -397,6 +417,7 @@ TEST(BoardManagerLegality, CantMoveToOccupiedSquareWithSameColour){
     Move whiteQueenMove{.piece = WQ, .rankFrom = 1, .fileFrom = 4, .rankTo = 2, .fileTo = 4};
     EXPECT_FALSE(manager.checkMove(whiteQueenMove));
     EXPECT_EQ(whiteQueenMove.result, MoveResult::ILLEGAL_MOVE);
+    EXPECT_TRUE(whiteQueenMove.resultBits & MoveResultBits::bILLEGAL_MOVE);
 }
 
 TEST(BoardManagerLegality, CanMoveToOccupiedSquareWithOtherColour){
@@ -408,11 +429,13 @@ TEST(BoardManagerLegality, CanMoveToOccupiedSquareWithOtherColour){
     Move whiteRookMove{.piece = WR, .rankFrom = 1, .fileFrom = 1, .rankTo = 8, .fileTo = 1};
     EXPECT_TRUE(manager.checkMove(whiteRookMove));
     EXPECT_EQ(whiteRookMove.result, MoveResult::CAPTURE);
+    EXPECT_TRUE(whiteRookMove.resultBits & MoveResultBits::bCAPTURE);
 
     // so can the black
     Move blackRookMove{.piece = WR, .rankFrom = 1, .fileFrom = 1, .rankTo = 8, .fileTo = 1};
     EXPECT_TRUE(manager.checkMove(blackRookMove));
     EXPECT_EQ(blackRookMove.result, MoveResult::CAPTURE);
+    EXPECT_TRUE(blackRookMove.resultBits & MoveResultBits::bCAPTURE);
 }
 
 TEST(BoardManagerLegality, MostPiecesCantJumpOthers){
@@ -424,10 +447,12 @@ TEST(BoardManagerLegality, MostPiecesCantJumpOthers){
     Move moveA3{.piece = WR, .rankFrom = 1, .fileFrom = 1, .rankTo = 3, .fileTo = 1};
     EXPECT_FALSE(manager.checkMove(moveA3));
     EXPECT_EQ(moveA3.result, MoveResult::ILLEGAL_MOVE);
+    EXPECT_TRUE(moveA3.resultBits & MoveResultBits::bILLEGAL_MOVE);
 
     Move moveA5{.piece = WR, .rankFrom = 1, .fileFrom = 1, .rankTo = 5, .fileTo = 1};
     EXPECT_FALSE(manager.checkMove(moveA5));
     EXPECT_EQ(moveA5.result, MoveResult::ILLEGAL_MOVE);
+    EXPECT_TRUE(moveA5.resultBits & MoveResultBits::bILLEGAL_MOVE);
 }
 
 TEST(BoardManagerLegality, KnightsCanJumpOthers){
@@ -438,10 +463,12 @@ TEST(BoardManagerLegality, KnightsCanJumpOthers){
     Move moveA3{.piece = BN, .rankFrom = 1, .fileFrom = 1, .rankTo = 3, .fileTo = 2};
     EXPECT_TRUE(manager.checkMove(moveA3));
     EXPECT_EQ(moveA3.result, MoveResult::PUSH);
+    EXPECT_TRUE(moveA3.resultBits & MoveResultBits::bPUSH);
 
     Move moveA5{.piece = BN, .rankFrom = 1, .fileFrom = 1, .rankTo = 2, .fileTo = 3};
     EXPECT_TRUE(manager.checkMove(moveA5));
     EXPECT_EQ(moveA5.result, MoveResult::PUSH);
+    EXPECT_TRUE(moveA5.resultBits & MoveResultBits::bPUSH);
 }
 
 TEST(BoardManagerLegality, CheckWeirdQueenBehaviour){
@@ -550,6 +577,7 @@ TEST(BoardManagerMoveExecution, CastlingCanBeUndone){
     const auto initialWhiteRookBoard = manager.getBitboards()->getBitboard(WR);
     ASSERT_TRUE(manager.checkMove(whiteMove));
     ASSERT_EQ(whiteMove.result, MoveResult::CASTLING);
+    ASSERT_TRUE(whiteMove.resultBits & MoveResultBits::bCASTLING);
     EXPECT_EQ(manager.getBitboards()->getBitboard(WK), initialWhiteKingBoard);
     EXPECT_EQ(manager.getBitboards()->getBitboard(WR), initialWhiteRookBoard);
 
@@ -558,6 +586,7 @@ TEST(BoardManagerMoveExecution, CastlingCanBeUndone){
     const auto qsInitialWhiteKing = manager.getBitboards()->getBitboard(WK);
     ASSERT_TRUE(manager.checkMove(whiteMove));
     ASSERT_EQ(whiteMove.result, MoveResult::CASTLING);
+    ASSERT_TRUE(whiteMove.resultBits & MoveResultBits::bCASTLING);
     EXPECT_EQ(manager.getBitboards()->getBitboard(WR), qsInitialWhiteRook);
     EXPECT_EQ(manager.getBitboards()->getBitboard(WK), qsInitialWhiteKing);
 
@@ -567,6 +596,7 @@ TEST(BoardManagerMoveExecution, CastlingCanBeUndone){
     const auto initialBlackRookBoard = manager.getBitboards()->getBitboard(BR);
     ASSERT_TRUE(manager.checkMove(blackMove));
     ASSERT_EQ(blackMove.result, MoveResult::CASTLING);
+    ASSERT_TRUE(blackMove.resultBits & MoveResultBits::bCASTLING);
     EXPECT_EQ(manager.getBitboards()->getBitboard(BK), initialBlackKingBoard);
     EXPECT_EQ(manager.getBitboards()->getBitboard(BR), initialBlackRookBoard);
 
@@ -576,6 +606,7 @@ TEST(BoardManagerMoveExecution, CastlingCanBeUndone){
     const auto ksinitialBlackRookBoard = manager.getBitboards()->getBitboard(BR);
     ASSERT_TRUE(manager.checkMove(ksblackMove));
     ASSERT_EQ(ksblackMove.result, MoveResult::CASTLING);
+    ASSERT_TRUE(ksblackMove.resultBits & MoveResultBits::bCASTLING);
     EXPECT_EQ(manager.getBitboards()->getBitboard(BK), ksinitialBlackKingBoard);
     EXPECT_EQ(manager.getBitboards()->getBitboard(BR), ksinitialBlackRookBoard);
 }
@@ -602,6 +633,7 @@ TEST(BoardManagerLegality, PawnsOnlyCaptureDiagonally){
     auto tryCaptureNorthWest = Move{.piece = WP, .rankFrom = 1, .fileFrom = 2, .rankTo = 2, .fileTo = 1};
     EXPECT_TRUE(manager.tryMove(tryCaptureNorthWest));
     EXPECT_EQ(tryCaptureNorthWest.result, MoveResult::CAPTURE);
+    EXPECT_TRUE(tryCaptureNorthWest.resultBits & MoveResultBits::bCAPTURE);
 }
 
 TEST(BoardManagerAdvancedRules, KingCantMoveInCheck){
@@ -611,6 +643,7 @@ TEST(BoardManagerAdvancedRules, KingCantMoveInCheck){
     auto move = createMove(BK, "a1a2");
     EXPECT_FALSE(manager.checkMove(move));
     EXPECT_EQ(move.result, MoveResult::KING_IN_CHECK);
+    EXPECT_TRUE(move.resultBits & MoveResultBits::bKING_IN_CHECK);
 }
 
 TEST(BoardManagerAdvancedRules, KingCantBeInCheckThroughOtherPieces){
@@ -620,6 +653,7 @@ TEST(BoardManagerAdvancedRules, KingCantBeInCheckThroughOtherPieces){
     auto move = createMove(BK, "h8g8");
     EXPECT_TRUE(manager.checkMove(move));
     EXPECT_EQ(move.result, MoveResult::PUSH);
+    EXPECT_TRUE(move.resultBits & MoveResultBits::bPUSH);
 }
 
 TEST(BoardManagerAdvancedRules, PiecesCanSaveKingFromCheck){
@@ -630,6 +664,7 @@ TEST(BoardManagerAdvancedRules, PiecesCanSaveKingFromCheck){
 
     EXPECT_TRUE(manager.checkMove(move));
     EXPECT_EQ(move.result, MoveResult::CAPTURE);
+    EXPECT_TRUE(move.resultBits & MoveResultBits::bCAPTURE);
 }
 
 TEST(BoardManagerAdvancedRules, CheckCantBeExposed){
@@ -639,11 +674,13 @@ TEST(BoardManagerAdvancedRules, CheckCantBeExposed){
     auto rookMoveOutOfWay = createMove(WR, "a2b2");
     EXPECT_FALSE(manager.checkMove(rookMoveOutOfWay));
     EXPECT_EQ(rookMoveOutOfWay.result, MoveResult::KING_IN_CHECK);
+    EXPECT_TRUE(rookMoveOutOfWay.resultBits & MoveResultBits::bKING_IN_CHECK);
 
     manager.getBitboards()->loadFEN("8/2p5/K2p4/1P5r/1R3p1k/8/4P1P1/8");
     auto BPMovesOutOfWay = createMove(BP, "f4f3");
     EXPECT_FALSE(manager.checkMove(BPMovesOutOfWay));
     EXPECT_EQ(BPMovesOutOfWay.result, MoveResult::KING_IN_CHECK);
+    EXPECT_TRUE(BPMovesOutOfWay.resultBits & MoveResultBits::bKING_IN_CHECK);
 }
 
 TEST(BoardManagerAdvancedRules, SimpleEnPassant){
@@ -661,6 +698,7 @@ TEST(BoardManagerAdvancedRules, SimpleEnPassant){
     auto testEnPassant = createMove(WP, "e5f6");
     EXPECT_TRUE(manager.tryMove(testEnPassant));
     EXPECT_EQ(testEnPassant.result, MoveResult::EN_PASSANT);
+    EXPECT_TRUE(testEnPassant.resultBits & MoveResultBits::bEN_PASSANT);
 }
 
 TEST(BoardManagerAdvancedRules, EnPassantCanBeUndone){
@@ -707,11 +745,13 @@ TEST(BoardManagerAdvancedRules, CastlingKingSideWorks){
     auto whiteMove = createMove(WK, "e1g1");
     EXPECT_TRUE(manager.checkMove(whiteMove));
     EXPECT_EQ(whiteMove.result, MoveResult::CASTLING);
+    EXPECT_TRUE(whiteMove.resultBits & MoveResultBits::bCASTLING);
 
     manager.getBitboards()->loadFEN("rnbqk2r/p2p1ppp/1ppbpn2/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
     auto blackMove = createMove(BK, "e8g8");
     EXPECT_TRUE(manager.checkMove(blackMove));
     EXPECT_EQ(blackMove.result, MoveResult::CASTLING);
+    EXPECT_TRUE(blackMove.resultBits & MoveResultBits::bCASTLING);
 }
 
 TEST(BoardManagerAdvancedRules, KingSideCastlingUpdatesBoardState){
@@ -739,6 +779,7 @@ TEST(BoardManagerAdvancedRules, QueenSideCastlingUpdatesBoardState){
     auto blackMove = createMove(BK, "e8c8");
     ASSERT_TRUE(manager.tryMove(blackMove));
     ASSERT_TRUE(blackMove.result == MoveResult::CASTLING);
+    ASSERT_TRUE(blackMove.resultBits & MoveResultBits::bCASTLING);
     EXPECT_EQ(manager.getBitboards()->toFEN(), "2kr1bnr/p1pqpppp/bp1p4/2n5/8/1PPP4/P3PPPP/RNBQKBNR");
 }
 
@@ -1056,6 +1097,7 @@ TEST(BoardManagerMoveExecution, FixPosition3CapturesNotFound){
     auto secondMove = createMove(BR, "h5b5");
     ASSERT_TRUE(manager.tryMove(secondMove));
     EXPECT_EQ(secondMove.result, CAPTURE);
+    EXPECT_TRUE(secondMove.resultBits & bCAPTURE);
 }
 
 TEST(BoardManagerMoveExecution, Position3TurnChangesIncorrectly){
@@ -1085,6 +1127,7 @@ TEST(BoardManagerLegality, kiwpeteA2A4EnPassant){
     auto blackb4b3 = createMove(BP, "b4a3");
     EXPECT_TRUE(manager.checkMove(blackb4b3));
     EXPECT_EQ(blackb4b3.result, EN_PASSANT);
+    EXPECT_TRUE(blackb4b3.resultBits & bEN_PASSANT);
 }
 
 TEST(BoardManagerLegality, KingCanEscapeCheck){
@@ -1093,4 +1136,13 @@ TEST(BoardManagerLegality, KingCanEscapeCheck){
 
     auto escapeMove = createMove(WK, "e1d1");
     EXPECT_TRUE(manager.checkMove(escapeMove));
+}
+
+TEST(BoardManagerLegality, ChecksAreRegistered){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN("7k/4R3/8/8/8/8/8/K5R1");
+    auto whiteMove = createMove(WR, "e7e8");
+    ASSERT_TRUE(manager.tryMove(whiteMove));
+
+    EXPECT_TRUE(whiteMove.checkedOpponent);
 }

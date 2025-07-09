@@ -4,19 +4,21 @@ import chess
 
 
 def get_move_result(board, move):
-    capture = board.is_capture(move)
-    castling = board.is_castling(move)
-    en_passant = board.is_en_passant(move)
+    results = set()  # Using a set to avoid duplicates
 
-    if capture:
-        result = "capture"
-    elif castling:
-        result = "castling"
-    elif en_passant:
-        result = "en_passant"
+    if board.is_capture(move):
+        results.add("capture")
+    elif board.is_castling(move):
+        results.add("castling")
+    elif board.is_en_passant(move):
+        results.add("en_passant")
     else:
-        result = "push"
-    return result
+        results.add("push")
+
+    if board.gives_check(move):
+        results.add("check")
+
+    return "+".join(sorted(results))  # Sort for consistent output
 
 
 def get_moves(fen):

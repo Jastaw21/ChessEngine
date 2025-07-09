@@ -2,8 +2,8 @@
 // Created by jacks on 06/07/2025.
 //
 
-#include "BoardManager/Rules.h"
 #include  <gtest/gtest.h>
+#include "BoardManager/Rules.h"
 
 TEST(rulesHeader, rules){
     auto rules = Rules();

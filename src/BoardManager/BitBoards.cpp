@@ -108,7 +108,7 @@ bool BitBoards::testBoard(const uint64_t inBoard) const{
 
 bool BitBoards::testSquare(const int square) const{
     for (const auto& board: bitboards) {
-        if ((board & (1ULL << square)) != 0)
+        if ((board & 1ULL << square) != 0)
             return true;
     }
     return false;
