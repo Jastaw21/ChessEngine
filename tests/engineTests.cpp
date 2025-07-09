@@ -1,4 +1,3 @@
-
 //
 // Created by jacks on 26/06/2025.
 //
@@ -31,9 +30,10 @@ std::vector<PerftResults> getPerftDivideResults(const std::string& filename){
         int enPassant;
         int castling;
         int checks;
+        int checkMate;
         std::istringstream iss(line);
-        iss >> rootMoveUCI >> nodes >> captures >> enPassant >> castling >> checks;
-        results.push_back(PerftResults{nodes, captures, enPassant, castling, checks, rootMoveUCI});
+        iss >> rootMoveUCI >> nodes >> captures >> enPassant >> castling >> checks >> checkMate;
+        results.push_back(PerftResults{nodes, captures, enPassant, castling, checks, checkMate, rootMoveUCI});
     }
 
     return results;
@@ -108,6 +108,65 @@ inline bool runGetMoveResults(const std::string& fen, const std::string& outputF
     return result == 0;
 }
 
+bool divideTestExtraDebugging(const std::string& desiredFen, const std::string& outputFile, const int depth,
+                const Colours& colourToMove = WHITE){
+    bool passing = true;
+    const std::string fenAppendage = colourToMove == WHITE ? " w KQkq -" : " b KQkq -";
+    const std::string fen = desiredFen + fenAppendage;
+
+    generateExternalEngineMoves(fen, outputFile, depth);
+    const auto pyMoves = getPerftDivideResults(outputFile); // get our own starting moves
+    auto manager = BoardManager();
+    manager.setCurrentTurn(colourToMove);
+    manager.getBitboards()->loadFEN(desiredFen);
+    TestEngine whiteEngine(WHITE);
+
+    std::vector<PerftResults> engineResults = whiteEngine.runDivideTest(manager, depth);
+
+    PerftResults totalPy;
+    for (const auto& move: pyMoves) { totalPy += move; }
+    PerftResults totalEngine;
+    for (const auto& move: engineResults) { totalEngine += move; }
+
+    // Print headers
+    std::cout << "Type\tNodes\tCaptures\tCastles\tEP\tChecks" << std::endl;
+
+    // Print Python results
+    std::cout << "Python\t" << totalPy.nodes << "\t" << totalPy.captures << "\t"
+            << totalPy.castling << "\t" << totalPy.enPassant << "\t" << totalPy.checks << std::endl;
+
+    // Print Engine results
+    std::cout << "Engine\t" << totalEngine.nodes << "\t" << totalEngine.captures << "\t"
+            << totalEngine.castling << "\t" << totalEngine.enPassant << "\t" << totalEngine.checks << std::endl;
+
+    std::vector<PerftResults> inPyNotInEngine;
+    for (const auto& pyMove: pyMoves) {
+        const auto matching = std::ranges::find_if(engineResults, [&](const auto& move) {
+            return move.fen == pyMove.fen;
+        });
+        if (matching == engineResults.end())
+            passing = false;
+        if (*matching != pyMove)
+            passing = false;
+        if (pyMove != *matching)
+            inPyNotInEngine.push_back(pyMove);
+    }
+
+    std::cout << "External Engine Believes: " << std::endl;
+    for (const auto& move: inPyNotInEngine) {
+        const auto engineResult = std::ranges::find_if(engineResults, [&](const auto& engineMove) {
+            return engineMove.fen == move.fen;
+        });
+
+        std::cout << move.fen << std::endl << "Py: " << move.toString() << std::endl << "En: " <<
+                engineResult->toString() <<
+                std::endl;
+    }
+
+    return passing;
+}
+
+
 bool divideTest(const std::string& desiredFen, const std::string& outputFile, const int depth,
                 const Colours& colourToMove = WHITE){
     bool passing = true;
@@ -115,22 +174,29 @@ bool divideTest(const std::string& desiredFen, const std::string& outputFile, co
     const std::string fen = desiredFen + fenAppendage;
 
     generateExternalEngineMoves(fen, outputFile, depth);
-    const auto pyMoves = getPerftDivideResults(outputFile);
-    PerftResults totalPy;
-    for (const auto& move: pyMoves) { totalPy += move; }
-
-    std::cout << "Total Py Nodes: " << totalPy.nodes << std::endl;
-    std::cout << "Total Py Captures: " << totalPy.captures << std::endl;
-    std::cout << "Total Py Castles: " << totalPy.castling << std::endl;
-    std::cout << "Total Py EP: " << totalPy.enPassant << std::endl;
-
-    // get our own starting moves
+    const auto pyMoves = getPerftDivideResults(outputFile); // get our own starting moves
     auto manager = BoardManager();
     manager.setCurrentTurn(colourToMove);
     manager.getBitboards()->loadFEN(desiredFen);
     TestEngine whiteEngine(WHITE);
 
     std::vector<PerftResults> engineResults = whiteEngine.runDivideTest(manager, depth);
+
+    PerftResults totalPy;
+    for (const auto& move: pyMoves) { totalPy += move; }
+    PerftResults totalEngine;
+    for (const auto& move: engineResults) { totalEngine += move; }
+
+    // Print headers
+    std::cout << "Type\tNodes\tCaptures\tCastles\tEP\tChecks" << std::endl;
+
+    // Print Python results
+    std::cout << "Python\t" << totalPy.nodes << "\t" << totalPy.captures << "\t"
+            << totalPy.castling << "\t" << totalPy.enPassant << "\t" << totalPy.checks << std::endl;
+
+    // Print Engine results
+    std::cout << "Engine\t" << totalEngine.nodes << "\t" << totalEngine.captures << "\t"
+            << totalEngine.castling << "\t" << totalEngine.enPassant << "\t" << totalEngine.checks << std::endl;
 
     std::vector<PerftResults> inPyNotInEngine;
     for (const auto& pyMove: pyMoves) {
@@ -173,6 +239,14 @@ TEST(PerftDivide, kiwiPeteDivide2){
     const std::string outputFile = "startPos.txt";
     EXPECT_TRUE(divideTest(Fen::KIWI_PETE_FEN, outputFile, depth));
 }
+
+TEST(PerftDivide, kiwiPeteDivide3){
+    constexpr int depth = 3;
+    // get the moves the actual engine think are possible
+    const std::string outputFile = "startPos.txt";
+    EXPECT_TRUE(divideTest(Fen::KIWI_PETE_FEN, outputFile, depth));
+}
+
 
 TEST(PerftDivide, perft1Divide){
     int depth = 1;
@@ -261,6 +335,7 @@ TEST(Perft, perft4){
     EXPECT_EQ(blackResultDepth1.enPassant, 0);
     EXPECT_EQ(blackResultDepth1.castling, 0);
     EXPECT_EQ(blackResultDepth1.checks, 469);
+    EXPECT_EQ(blackResultDepth1.checkMate, 8);
 
     TestEngine whiteEngine(WHITE);
     const auto whiteResultDepth1 = whiteEngine.runPerftTest(Fen::STARTING_FEN, 4);
@@ -288,6 +363,18 @@ TEST(Perft, kiwiPete2){
     EXPECT_EQ(perftResults.enPassant, 1);
     EXPECT_EQ(perftResults.checks, 3);
 }
+
+TEST(Perft, kiwiPete3){
+    TestEngine whiteEngine(WHITE);
+    const auto perftResults = whiteEngine.runPerftTest(Fen::KIWI_PETE_FEN, 3);
+    EXPECT_EQ(perftResults.nodes, 97862);
+    EXPECT_EQ(perftResults.captures, 17102);
+    EXPECT_EQ(perftResults.castling, 3162);
+    EXPECT_EQ(perftResults.enPassant, 45);
+    EXPECT_EQ(perftResults.checks, 933);
+    EXPECT_EQ(perftResults.checkMate, 1);
+}
+
 
 TEST(Perft, position3Depth1){
     TestEngine engine(WHITE);
@@ -363,7 +450,7 @@ TEST(PerftCorrections, KPErrorsFixed){
     auto e1gi = createMove(WN, "e5f7");
     ASSERT_TRUE(manager.tryMove(e1gi));
 
-    generateExternalEngineMoves(manager.getBitboards()->toFEN() + " b KQkq -", "kiwipete.txt", 1);
+    generateExternalEngineMoves(manager.getBitboards()->toFEN() + " b KQkq -", "kiwipete.txt", 2);
     const auto pyMoves = readMoves("kiwipete.txt");
     ASSERT_EQ(pyMoves.size(), 44);
 
@@ -435,7 +522,6 @@ TEST(PerftCorrections, pos3ErrorsFixed){
     for (const auto& move: inOursNotInEngine) { std::cout << move << std::endl; }
 }
 
-
 TEST(Engine, MoveGenerationDoesNotChangeState){
     auto manager = BoardManager();
     manager.getBitboards()->loadFEN(Fen::KIWI_PETE_FEN);
@@ -486,23 +572,18 @@ TEST(depr, pos3CapturesCorrect){
             manager.checkMove(childMove);
             std::string moveResult;
 
-            switch (childMove.result) {
-                case PUSH:
-                    moveResult = "push";
-                    break;
-                case CAPTURE:
-                    moveResult = "capture";
-                    totalCaptures++;
-                    break;
-                case CASTLING:
-                    moveResult = "castling";
-                    break;
-                case EN_PASSANT:
-                    moveResult = "en_passant";
-                    break;
-                default:
-                    moveResult = "unknown";
+            if (childMove.resultBits & bPUSH)
+                moveResult = "push";
+            if (childMove.resultBits & bCAPTURE) {
+                moveResult = "capture";
+                totalCaptures++;
             }
+            if (childMove.resultBits & bCASTLING)
+                moveResult = "castling";
+            if (childMove.resultBits & bEN_PASSANT)
+                moveResult = "en_passant";
+            if (childMove.resultBits & bCHECK)
+                moveResult += "+check";
 
             moveResults.push_back({childMove.toUCI(), moveResult});
         }
@@ -540,8 +621,7 @@ TEST(depr, pos3CapturesCorrect){
     EXPECT_EQ(totalCaptures, 14);
 }
 
-
-TEST(depr, kiwi2CapturesCorrect){
+TEST(depr, kiwi3CapturesCorrect){
     // get the moves the actual engine thinks are possible
     const std::string outputFile = "kiwipetedivide.txt";
     const std::string fen = Fen::KIWI_PETE_FEN + " w KQkq -";
@@ -576,22 +656,19 @@ TEST(depr, kiwi2CapturesCorrect){
             manager.checkMove(childMove);
             std::string moveResult;
 
-            switch (childMove.result) {
-                case PUSH:
-                    moveResult = "push";
-                    break;
-                case CAPTURE:
-                    moveResult = "capture";
-                    totalCaptures++;
-                    break;
-                case CASTLING:
-                    moveResult = "castling";
-                    break;
-                case EN_PASSANT:
-                    moveResult = "en_passant";
-                    break;
-                default:
-                    moveResult = "unknown";
+            if (childMove.resultBits & bPUSH)
+                moveResult = "push";
+            if (childMove.resultBits & bCAPTURE) {
+                moveResult = "capture";
+                totalCaptures++;
+            }
+            if (childMove.resultBits & bCASTLING)
+                moveResult = "castling";
+            if (childMove.resultBits & bEN_PASSANT)
+                moveResult = "en_passant";
+            if (childMove.resultBits & bCHECK) {
+                moveResult += "+check";
+                std::cout << "CHECK" << std::endl;
             }
 
             moveResults.push_back({childMove.toUCI(), moveResult});

@@ -13,7 +13,7 @@
 
 class BitBoards;
 
-enum MoveResultBits {
+enum MoveResult {
     // successes
     bPUSH = 1 << 0, // 0000 0001
     bCAPTURE = 1 << 1, // 0000 0010
@@ -32,23 +32,6 @@ enum MoveResultBits {
 };
 
 
-enum MoveResult {
-    // successes
-    PUSH, //0
-    CAPTURE, //1
-
-    // failures
-    ILLEGAL_MOVE, //2
-    SQUARE_OCCUPIED, //3
-    MOVE_NOT_LEGAL_FOR_PIECE, //4
-    MOVE_OUT_OF_BOUNDS, //5
-    BLOCKING_PIECE, //6
-    KING_IN_CHECK, //7
-    EN_PASSANT, //8
-    DISCOVERED_CHECK, //9
-    CASTLING, //10
-    CHECK, //11
-};
 
 struct Move {
     Piece piece;
@@ -59,7 +42,6 @@ struct Move {
 
     bool checkedOpponent = false;
 
-    MoveResult result;
     int resultBits;
     Piece capturedPiece = PIECE_N;
 

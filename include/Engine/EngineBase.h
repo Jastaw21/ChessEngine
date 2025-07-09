@@ -16,6 +16,8 @@ struct PerftResults {
     int enPassant = 0;
     int castling = 0;
     int checks = 0;
+    int checkMate = 0;
+
 
     std::string fen = "";
 

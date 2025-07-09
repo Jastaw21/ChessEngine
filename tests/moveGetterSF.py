@@ -15,6 +15,7 @@ class PerftResult:
     en_passant = 0
     castling = 0
     check = 0
+    checkmate = 0
 
     def __add__(self, other):
         result = PerftResult()
@@ -23,6 +24,7 @@ class PerftResult:
         result.en_passant = self.en_passant + other.en_passant
         result.castling = self.castling + other.castling
         result.check = self.check + other.check
+        result.checkmate = self.checkmate + other.checkmate
         return result
 
 
@@ -53,11 +55,14 @@ def perft_complex(board, depth):
         is_castle = board.is_castling(move)
         is_check = board.gives_check(move)
         board.push(move)
+        is_checkmate = board.is_checkmate()
 
         if depth == 1:
             perft_result.nodes += 1
             if is_check:
                 perft_result.check += 1
+            if is_checkmate:
+                perft_result.checkmate += 1
             if is_ep:
                 perft_result.en_passant += 1
                 perft_result.captures += 1
@@ -117,11 +122,6 @@ def run_divide_perft(fen, depth):
 def main(argv):
     # usable arguments
     args = argv[1:]
-
-    # arg 1 == fen
-    print(args[0])
-    # arg 2 = output file
-    print(args[1])
     dest_file = args[1]
     # arg 3 = depth
     depth = int(args[2])
@@ -131,7 +131,8 @@ def main(argv):
     with open(dest_file, "w+") as f:
         for move in moves:
             f.write(move + ' ' + str(moves[move].nodes) + ' ' + str(moves[move].captures) + ' ' + str(
-                moves[move].en_passant) + ' ' + str(moves[move].castling) + ' ' + str(moves[move].check) + "\n")
+                moves[move].en_passant) + ' ' + str(moves[move].castling) + ' ' + str(moves[move].check) + ' ' + str(
+                moves[move].checkmate) + "\n")
 
 
 if __name__ == "__main__":

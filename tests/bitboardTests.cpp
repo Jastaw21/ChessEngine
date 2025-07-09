@@ -139,10 +139,7 @@ TEST(BitBoards, TestSquareFunction){
     board.loadFEN(Fen::STARTING_FEN);
 
     for (int i = 0; i < 64; i++) {
-        if (i <= 15 || i >= 48) {
-            bool test = board.testSquare(i);
-            EXPECT_TRUE(board.testSquare(i));
-        } else
+        if (i <= 15 || i >= 48) { EXPECT_TRUE(board.testSquare(i)); } else
             EXPECT_FALSE(board.testSquare(i));
     }
 }
