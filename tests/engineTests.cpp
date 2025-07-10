@@ -109,7 +109,7 @@ inline bool runGetMoveResults(const std::string& fen, const std::string& outputF
 }
 
 bool divideTestExtraDebugging(const std::string& desiredFen, const std::string& outputFile, const int depth,
-                const Colours& colourToMove = WHITE){
+                              const Colours& colourToMove = WHITE){
     bool passing = true;
     const std::string fenAppendage = colourToMove == WHITE ? " w KQkq -" : " b KQkq -";
     const std::string fen = desiredFen + fenAppendage;

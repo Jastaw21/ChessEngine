@@ -13,6 +13,7 @@
 
 #include "Engine/Piece.h"
 
+typedef uint64_t Bitboard;
 
 struct Move;
 
@@ -22,15 +23,15 @@ int squareToFile(int square);
 int squareToRank(int square);
 
 namespace Comparisons {
-    constexpr uint64_t buildFileBoard(const char file){
+    constexpr Bitboard buildFileBoard(const char file){
         const int index = (file) - 'a';
-        uint64_t result = 0ULL;
+        Bitboard result = 0ULL;
         for (int i = 0; i < 8; ++i) { result |= 1ULL << (index + 8 * i); }
         return result;
     }
 
-    constexpr uint64_t buildRankBoard(const int rank){
-        uint64_t result = 0ULL;
+    constexpr Bitboard buildRankBoard(const int rank){
+        Bitboard result = 0ULL;
         const int base = (rank - 1) * 8;
 
         for (int i = 0; i < 8; ++i) { result |= 1ULL << (base + i); }
@@ -59,14 +60,14 @@ namespace Comparisons {
                 buildRankBoard(8)
             };
 
-    inline uint64_t north(const uint64_t& inBitBoard){ return inBitBoard << 8; }
-    inline uint64_t south(const uint64_t& inBitBoard){ return inBitBoard >> 8; }
-    inline uint64_t east(const uint64_t& inBitBoard){ return inBitBoard >> 1; }
-    inline uint64_t west(const uint64_t& inBitBoard){ return inBitBoard << 1; }
-    inline uint64_t northEast(const uint64_t& inBitBoard){ return inBitBoard >> 9; }
-    inline uint64_t northWest(const uint64_t& inBitBoard){ return inBitBoard >> 7; }
-    inline uint64_t southEast(const uint64_t& inBitBoard){ return inBitBoard << 7; }
-    inline uint64_t southWest(const uint64_t& inBitBoard){ return inBitBoard << 9; }
+    inline Bitboard north(const Bitboard& inBitBoard){ return inBitBoard << 8; }
+    inline Bitboard south(const Bitboard& inBitBoard){ return inBitBoard >> 8; }
+    inline Bitboard east(const Bitboard& inBitBoard){ return inBitBoard >> 1; }
+    inline Bitboard west(const Bitboard& inBitBoard){ return inBitBoard << 1; }
+    inline Bitboard northEast(const Bitboard& inBitBoard){ return inBitBoard >> 9; }
+    inline Bitboard northWest(const Bitboard& inBitBoard){ return inBitBoard >> 7; }
+    inline Bitboard southEast(const Bitboard& inBitBoard){ return inBitBoard << 7; }
+    inline Bitboard southWest(const Bitboard& inBitBoard){ return inBitBoard << 9; }
 }
 
 
@@ -78,29 +79,29 @@ public:
     void loadFEN(const std::string& fen);
     std::string &toFEN();
 
-    [[nodiscard]] uint64_t getBitboard(const Piece& piece) const;
-    uint64_t &operator[](const Piece piece){ return bitboards[piece]; }
+    [[nodiscard]] Bitboard getBitboard(const Piece& piece) const;
+    Bitboard &operator[](const Piece piece){ return bitboards[piece]; }
 
     std::optional<Piece> getPiece(int rank, int file) const;
     std::optional<Piece> getPiece(int square) const;
     void setZero(int rank, int file);
     void setOne(const Piece& piece, int rank, int file);
 
-    bool testBoard(uint64_t inBoard) const;
+    bool testBoard(Bitboard inBoard) const;
     bool testSquare(int square) const;
 
     int countPiece(const Piece& pieceToSearch) const;
 
     std::vector<Piece> getAttackingPieces(const Piece& piece);
 
-    uint64_t getOccupancy() const;
-    uint64_t getOccupancy(const Piece& piece) const;
-    uint64_t getOccupancy(const Colours& colour) const;
+    Bitboard getOccupancy() const;
+    Bitboard getOccupancy(const Piece& piece) const;
+    Bitboard getOccupancy(const Colours& colour) const;
 
 private:
 
     // array of PIECE_N length bitboards
-    std::array<uint64_t, PIECE_N> bitboards;
+    std::array<Bitboard, PIECE_N> bitboards;
     std::string fen_{};
 };
 

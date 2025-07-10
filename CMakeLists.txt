@@ -42,6 +42,8 @@ add_library(
         include/Engine/SearchTree.h
         include/BoardManager/Rules.h
         src/BoardManager/Rules.cpp
+        include/MagicBitboards/MagicBitBoards.h
+        src/MagicBitboards/MagicBitBoards.cpp
 )
 
 target_include_directories(chess_lib PUBLIC include)
@@ -51,6 +53,27 @@ target_link_libraries(chess_lib PUBLIC SDL3::SDL3 SDL3_image::SDL3_image)
 add_executable(Chess src/main.cpp
 )
 target_link_libraries(Chess PRIVATE chess_lib)
+target_include_directories(Chess PRIVATE include)
+
 
 # === Add Tests ===
 add_subdirectory(tests)
+add_subdirectory(src/MagicBitBoardGen/tests)
+
+# === Add MagicBitBoardGenerator ===
+# First, create the library
+add_library(MagicBitBoardGen STATIC
+        src/MagicBitBoardGen/MagicBitboardGenerator.cpp
+        include/MagicBitBoardGen/MagicBitboardGenerator.h
+)
+target_include_directories(MagicBitBoardGen PUBLIC include)
+target_link_libraries(MagicBitBoardGen PRIVATE chess_lib)
+
+# Then, create the standalone executable
+add_executable(GenerateMagicNumbers
+        src/MagicBitBoardGen/mbbMain.cpp
+)
+target_link_libraries(GenerateMagicNumbers PRIVATE MagicBitBoardGen)
+target_include_directories(GenerateMagicNumbers PRIVATE include)
+
+

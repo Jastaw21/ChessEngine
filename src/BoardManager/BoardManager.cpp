@@ -84,8 +84,8 @@ bool BoardManager::prelimCheckMove(Move& move){
     const int fromSquare = rankAndFileToSquare(move.rankFrom, move.fileFrom);
     const int toSquare = rankAndFileToSquare(move.rankTo, move.fileTo);
 
-    uint64_t pushes;
-    uint64_t rawAttacks;
+    Bitboard pushes;
+    Bitboard rawAttacks;
 
     if (move.piece == WP || move.piece == BP) {
         const auto opponentColour = pieceColours[move.piece] == WHITE ? BLACK : WHITE;
@@ -302,14 +302,14 @@ void BoardManager::undoMove(){
 bool BoardManager::moveIsEnPassant(Move& move){
     if (abs(moveHistory.top().rankTo - moveHistory.top().rankFrom) != 2)
         return false;
-    const uint64_t attackedSquare = 1ULL << rankAndFileToSquare(move.rankTo, move.fileTo);
+    const Bitboard attackedSquare = 1ULL << rankAndFileToSquare(move.rankTo, move.fileTo);
     const auto& otherPawnPiece = pieceColours[move.piece] == WHITE ? BP : WP;
     const auto& locationsOfOtherPawns = bitboards[otherPawnPiece];
     const std::bitset<64> locationsOfOtherPawnsBits(locationsOfOtherPawns);
     int offset = pieceColours[move.piece] == WHITE ? 8 : -8;
 
     // track the locations of the opponent's pawns, shifted correctly
-    uint64_t otherPawnLocations = 0ULL;
+    Bitboard otherPawnLocations = 0ULL;
     for (int bit = 0; bit < locationsOfOtherPawnsBits.size(); ++bit) {
         if (locationsOfOtherPawnsBits.test(bit) && bit >= 8 && bit <= 55) {
             otherPawnLocations |= 1ULL << (bit + offset);
@@ -330,7 +330,7 @@ bool BoardManager::moveIsEnPassant(Move& move){
 bool BoardManager::friendlyKingInCheck(const Move& move){
     const Colours friendlyColor = pieceColours[move.piece];
     const Piece friendlyKing = friendlyColor == BLACK ? BK : WK;
-    const uint64_t kingLocation = bitboards[friendlyKing];
+    const Bitboard kingLocation = bitboards[friendlyKing];
 
     if (kingLocation == 0) {
         return false; // No king on board
@@ -345,10 +345,10 @@ bool BoardManager::friendlyKingInCheck(const Move& move){
         const auto pieceLocations = getStartingSquaresOfPiece(pieceName);
         for (const int startSquare: pieceLocations) {
             // prelim check if anything could feasibly attack this square
-            const uint64_t prelimAttacks = rules.getPseudoAttacks(pieceName, startSquare);
+            const Bitboard prelimAttacks = rules.getPseudoAttacks(pieceName, startSquare);
             if (!(kingLocation & prelimAttacks))
                 continue;
-            const uint64_t attackedSquares = RulesCheck::getAttackMoves(startSquare, pieceName, &bitboards);
+            const Bitboard attackedSquares = RulesCheck::getAttackMoves(startSquare, pieceName, &bitboards);
             if ((attackedSquares & kingLocation) != 0) { return true; }
         }
     }

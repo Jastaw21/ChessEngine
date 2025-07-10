@@ -62,7 +62,7 @@ void BitBoards::loadFEN(const std::string& fen){
     }
 }
 
-uint64_t BitBoards::getBitboard(const Piece& piece) const{ return bitboards[piece]; }
+Bitboard BitBoards::getBitboard(const Piece& piece) const{ return bitboards[piece]; }
 
 
 std::optional<Piece> BitBoards::getPiece(const int rank, const int file) const{
@@ -98,7 +98,7 @@ void BitBoards::setOne(const Piece& piece, const int rank, const int file){
 }
 
 
-bool BitBoards::testBoard(const uint64_t inBoard) const{
+bool BitBoards::testBoard(const Bitboard inBoard) const{
     for (const auto& board: bitboards) {
         if ((board & inBoard) != 0)
             return true;
@@ -130,8 +130,8 @@ std::vector<Piece> BitBoards::getAttackingPieces(const Piece& piece){
     return attackingPieces;
 }
 
-uint64_t BitBoards::getOccupancy() const{
-    uint64_t result = 0ULL;
+Bitboard BitBoards::getOccupancy() const{
+    Bitboard result = 0ULL;
     for (int i = 0; i < PIECE_N; ++i) {
         const auto pieceToSearch = static_cast<Piece>(i);
         result |= bitboards[pieceToSearch];
@@ -139,8 +139,8 @@ uint64_t BitBoards::getOccupancy() const{
     return result;
 }
 
-uint64_t BitBoards::getOccupancy(const Piece& piece) const{
-    uint64_t result = 0ULL;
+Bitboard BitBoards::getOccupancy(const Piece& piece) const{
+    Bitboard result = 0ULL;
     for (int i = 0; i < PIECE_N; ++i) {
         const auto pieceToSearch = static_cast<Piece>(i);
         if (pieceToSearch == piece) { result |= bitboards[pieceToSearch]; }
@@ -148,8 +148,8 @@ uint64_t BitBoards::getOccupancy(const Piece& piece) const{
     return result;
 }
 
-uint64_t BitBoards::getOccupancy(const Colours& colour) const{
-    uint64_t result = 0ULL;
+Bitboard BitBoards::getOccupancy(const Colours& colour) const{
+    Bitboard result = 0ULL;
     for (int i = 0; i < PIECE_N; ++i) {
         const auto pieceToSearch = static_cast<Piece>(i);
         if (pieceColours[pieceToSearch] == colour) { result |= bitboards[pieceToSearch]; }

@@ -489,7 +489,7 @@ TEST(BoardManagerMoveExecution, SimpleUndoRestoresState){
     auto manager = BoardManager();
     manager.getBitboards()->loadFEN("8/8/8/8/8/8/8/1R6");
 
-    const uint64_t initialBitboard = manager.getBitboards()->getBitboard(WR);
+    const Bitboard initialBitboard = manager.getBitboards()->getBitboard(WR);
 
     // move rook at A1 to capture
     Move move{.piece = WR, .rankFrom = 1, .fileFrom = 2, .rankTo = 1, .fileTo = 1};
@@ -497,7 +497,7 @@ TEST(BoardManagerMoveExecution, SimpleUndoRestoresState){
 
     manager.undoMove(move);
 
-    const uint64_t finalBitboard = manager.getBitboards()->getBitboard(WR);
+    const Bitboard finalBitboard = manager.getBitboards()->getBitboard(WR);
 
     EXPECT_EQ(initialBitboard, finalBitboard);
 }
@@ -812,25 +812,25 @@ TEST(RulesHeaderTests, Diags){
 }
 
 TEST(RulesHeaderTests, OnePieceMoves){
-    constexpr uint64_t H1 = 7;
+    constexpr Bitboard H1 = 7;
     EXPECT_EQ(SingleMoves::north(H1), 32768);
     EXPECT_EQ(SingleMoves::south(H1), 0);
     EXPECT_EQ(SingleMoves::east(H1), 0);
     EXPECT_EQ(SingleMoves::west(H1), 64);
 
-    constexpr uint64_t H8 = 63;
+    constexpr Bitboard H8 = 63;
     EXPECT_EQ(SingleMoves::north(H8), 0);
     EXPECT_EQ(SingleMoves::south(H8), 0x80000000000000);
     EXPECT_EQ(SingleMoves::east(H8), 0);
     EXPECT_EQ(SingleMoves::west(H8), 0x4000000000000000);
 
-    constexpr uint64_t A8 = 56;
+    constexpr Bitboard A8 = 56;
     EXPECT_EQ(SingleMoves::north(A8), 0);
     EXPECT_EQ(SingleMoves::south(A8), 0x1000000000000);
     EXPECT_EQ(SingleMoves::east(A8), 0x200000000000000);
     EXPECT_EQ(SingleMoves::west(A8), 0);
 
-    constexpr uint64_t A1 = 0;
+    constexpr Bitboard A1 = 0;
     EXPECT_EQ(SingleMoves::north(A1), 0x100);
     EXPECT_EQ(SingleMoves::south(A1), 0);
     EXPECT_EQ(SingleMoves::east(A1), 0x2);

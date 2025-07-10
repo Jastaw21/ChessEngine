@@ -127,8 +127,8 @@ TEST(BitBoards, TestBoardFunction){
     auto board = BitBoards();
     board.loadFEN(Fen::STARTING_FEN);
 
-    constexpr uint64_t a1 = 1;
-    constexpr uint64_t a4 = 0x1000000;
+    constexpr Bitboard a1 = 1;
+    constexpr Bitboard a4 = 0x1000000;
 
     EXPECT_TRUE(board.testBoard(a1));
     EXPECT_FALSE(board.testBoard(a4));

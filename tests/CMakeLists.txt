@@ -20,5 +20,5 @@ target_link_libraries(chess_tests
 )
 
 # Enable test discovery
-include(GoogleTest)
+include(googletest)
 gtest_discover_tests(chess_tests)
