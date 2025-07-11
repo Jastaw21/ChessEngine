@@ -7,43 +7,57 @@
 void MagicBitBoards::initRookMagics(){
     for (int square = 0; square < 64; square++) {
         Magic& magic = rookMagics[square];
-        magic.mask = rookMagicNumbers[square]; // Use precomputed magic
-        magic.shift = 64 - __builtin_popcountll(magic.mask);
-    }
-}
+        magic.mask = mbbHelpers.generateRookMask(square); // Use precomputed magic
+        magic.magic = rookMagicNumbers[square];
+        magic.shift = 64 - __builtin_popcountll(magic.mask); // keep relevant bits
 
-void MagicBitBoards::initBishopMagics(){}
+        const int attacksSize = 1 << __builtin_popcountll(magic.mask); // how many attacks are there? shifting is powers
+        magic.attacks.resize(attacksSize); // the max size of the table is the number of attacks
 
-Bitboard MagicBitBoards::generateBishopMask(int square){
-    Bitboard mask = 0ULL;
-    const int rank = square / 8 + 1;
-    const int file = square % 8 + 1;
-    // Diagonal directions
-    const int directions[4][2] = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
+        for (int i = 0; i < attacksSize; i++) {
+            Bitboard occupancy = mbbHelpers.getOccupancyFromIndex(i, magic.mask);
+            const Bitboard attacks = mbbHelpers.getRookAttacks(square, occupancy);
 
-    for (int dir = 0; dir < 4; dir++) {
-        int r = rank + directions[dir][0];
-        int f = file + directions[dir][1];
-
-        while (r >= 1 && r <= 6 && f >= 1 && f <= 6) {
-            mask |= (1ULL << (r * 8 + f));
-            r += directions[dir][0];
-            f += directions[dir][1];
+            occupancy *= magic.magic; // apply the magic number
+            occupancy >>= magic.shift; // shift it down
+            magic.attacks[occupancy] = attacks;
         }
     }
-
-    return mask;
 }
 
-Bitboard MagicBitBoards::generateRookMask(const int square){
-    Bitboard mask = 0ULL;
-    const int rank = square / 8 + 1;
-    const int file = square % 8 + 1;
-    //Horizontal (excluding edge files)
-    for (int f = 2; f < 8; f++) { if (f != file) { mask |= 1ULL << (rank * 8 + f); } }
+void MagicBitBoards::initBishopMagics(){
+    for (int square = 0; square < 64; square++) {
+        Magic& magic = bishopMagics[square];
+        magic.mask = mbbHelpers.generateBishopMask(square);
+        magic.magic = bishopMagicNumbers[square]; // Use precomputed magic
+        magic.shift = 64 - __builtin_popcountll(magic.mask); // keep relevant bits
 
-    // Vertical (excluding edge ranks)
-    for (int r = 2; r < 8; r++) { if (r != rank) { mask |= 1ULL << (r * 8 + file); } }
+        const int attacksSize = 1 << __builtin_popcountll(magic.mask); // how many attacks are there? shifting is powers
+        magic.attacks.resize(attacksSize); // the max size of the table is the number of attacks
 
-    return mask;
+        for (int i = 0; i < attacksSize; i++) {
+            Bitboard occupancy = mbbHelpers.getOccupancyFromIndex(i, magic.mask);
+            const Bitboard attacks = mbbHelpers.getBishopAttacks(square, occupancy);
+
+            occupancy *= magic.magic; // apply the magic number
+            occupancy >>= magic.shift; // shift it down
+            magic.attacks[occupancy] = attacks; // [ occupancy ] = [ attacks
+        }
+    }
+}
+
+Bitboard MagicBitBoards::getRookAttacks(const int square, Bitboard occupancy){
+    Magic& magic = rookMagics[square];
+    occupancy &= magic.mask;
+    occupancy *= magic.magic;
+    occupancy >>= magic.shift;
+    return magic.attacks[occupancy];
+}
+
+Bitboard MagicBitBoards::getBishopAttacks(const int square, Bitboard occupancy){
+    Magic& magic = bishopMagics[square];
+    occupancy &= magic.mask;
+    occupancy *= magic.magic;
+    occupancy >>= magic.shift;
+    return magic.attacks[occupancy];
 }

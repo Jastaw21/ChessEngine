@@ -207,3 +207,11 @@ TEST(BitBoards, Occupancy){
     EXPECT_EQ(boards.getOccupancy(BR), 0x8100000000000000);
     EXPECT_EQ(boards.getOccupancy(WR), 0x81);
 }
+
+TEST(BitBoards, PrintBoard){
+    auto boards = BitBoards();
+    boards.loadFEN(Fen::STARTING_FEN);
+
+    const auto all = boards.getOccupancy();
+    printBitboard(all);
+}

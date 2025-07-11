@@ -4,13 +4,13 @@
 
 
 #include <iostream>
-#include "MagicBitBoardGen/MagicBitboardGenerator.h"
+#include "MagicBitBoardGen/MagicNumberGenerator.h"
 
 
 int main(){
     std::cout << "Hello World";
 
-    MagicBitboardGenerator mbb;
+    MagicNumberGenerator mbb;
 
     mbb.generateMagicNumbers();
 }

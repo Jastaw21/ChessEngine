@@ -44,6 +44,8 @@ add_library(
         src/BoardManager/Rules.cpp
         include/MagicBitboards/MagicBitBoards.h
         src/MagicBitboards/MagicBitBoards.cpp
+        include/MagicBitboards/MagicBitBoardShared.h
+        src/MagicBitboards/MagicBitBoardShared.cpp
 )
 
 target_include_directories(chess_lib PUBLIC include)
@@ -58,18 +60,22 @@ target_include_directories(Chess PRIVATE include)
 
 # === Add Tests ===
 add_subdirectory(tests)
+
+# === Add MBB tests ===
 add_subdirectory(src/MagicBitBoardGen/tests)
 
-# === Add MagicBitBoardGenerator ===
-# First, create the library
+
+# === Add MagicBitBoardGenerator Lib ===
 add_library(MagicBitBoardGen STATIC
-        src/MagicBitBoardGen/MagicBitboardGenerator.cpp
-        include/MagicBitBoardGen/MagicBitboardGenerator.h
+        src/MagicBitBoardGen/MagicNumberGenerator.cpp
+        include/MagicBitBoardGen/MagicNumberGenerator.h
+        include/MagicBitboards/MagicBitBoardShared.h
+        src/MagicBitboards/MagicBitBoardShared.cpp
 )
 target_include_directories(MagicBitBoardGen PUBLIC include)
 target_link_libraries(MagicBitBoardGen PRIVATE chess_lib)
 
-# Then, create the standalone executable
+# === Add MagicBitBoardGenerator ece ===
 add_executable(GenerateMagicNumbers
         src/MagicBitBoardGen/mbbMain.cpp
 )

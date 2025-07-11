@@ -7,6 +7,7 @@
 
 #include <array>
 #include <cstdint>
+#include <iostream>
 #include <optional>
 #include <string>
 #include <vector>
@@ -18,9 +19,32 @@ typedef uint64_t Bitboard;
 struct Move;
 
 int rankAndFileToSquare(int rank, int file);
+
 void squareToRankAndFile(int square, int& rank, int& file);
+
 int squareToFile(int square);
+
 int squareToRank(int square);
+
+inline void printBitboard(Bitboard inBoard){
+    for (int rank = 8; rank >= 1; --rank) {
+        std::cout << rank << " "; // print the rank label
+
+        for (int file = 1; file <= 8; ++file) {
+            auto targetSquare = rankAndFileToSquare(rank, file);
+            if ((inBoard & (1ULL << targetSquare)) != 0) { std::cout << "x "; } else { std::cout << ". "; }
+        }
+
+        std::cout << std::endl;
+    }
+
+    std::cout << "r ";
+    for (int file = 1; file <= 8; ++file) {
+        const char fileText = 'a' + file - 1;
+        std::cout << fileText << " ";
+    }
+    std::cout << std::endl;
+}
 
 namespace Comparisons {
     constexpr Bitboard buildFileBoard(const char file){

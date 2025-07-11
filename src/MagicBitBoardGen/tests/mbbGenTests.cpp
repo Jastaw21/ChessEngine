@@ -4,10 +4,10 @@
 
 #include  <gtest/gtest.h>
 
-#include "MagicBitBoardGen/MagicBitboardGenerator.h"
+#include "MagicBitBoards/MagicBitBoardShared.h"
 
 TEST(MaskGen, rookMaskGen){
-    MagicBitboardGenerator mbbg;
+    MBBHelpers mbbg;
     int square = 1;
     EXPECT_EQ(mbbg.generateRookMask(square), 0x202020202027c);
 
@@ -19,7 +19,7 @@ TEST(MaskGen, rookMaskGen){
 }
 
 TEST(MaskGen, bishopMaskGen){
-    MagicBitboardGenerator mbbg;
+    MBBHelpers mbbg;
     int square = 1;
     EXPECT_EQ(mbbg.generateBishopMask(square), 0x402010080400);
 
@@ -31,7 +31,7 @@ TEST(MaskGen, bishopMaskGen){
 }
 
 TEST(AttackGen, rookAttackGen){
-    MagicBitboardGenerator mbbg;
+    MBBHelpers mbbg;
 
     Bitboard occupancy = 0x1010200044101000;
 
@@ -42,7 +42,7 @@ TEST(AttackGen, rookAttackGen){
 }
 
 TEST(AttackGen, bishopAttackGen){
-    MagicBitboardGenerator mbbg;
+    MBBHelpers mbbg;
 
     const Bitboard occupancy = 0x1000000140;
     EXPECT_EQ(mbbg.getBishopAttacks(27, occupancy), 0x1021400142241);
