@@ -10,27 +10,29 @@
 #include "BitBoards.h"
 #include "Rules.h"
 #include "Engine/Piece.h"
+#include "MagicBitboards/MagicBitBoards.h"
+
 
 class BitBoards;
+class MagicBitBoards;
 
 enum MoveResult {
     // successes
-    bPUSH = 1 << 0, // 0000 0001
-    bCAPTURE = 1 << 1, // 0000 0010
-    bEN_PASSANT = 1 << 2, // 0000 0100
-    bCASTLING = 1 << 3, // 0000 1000
-    bCHECK = 1 << 4, // 0001 0000
+    PUSH = 1 << 0, // 0000 0001
+    CAPTURE = 1 << 1, // 0000 0010
+    EN_PASSANT = 1 << 2, // 0000 0100
+    CASTLING = 1 << 3, // 0000 1000
+    CHECK = 1 << 4, // 0001 0000
 
     // failures
-    bILLEGAL_MOVE = 1 << 5,
-    bSQUARE_OCCUPIED = 1 << 6,
-    bMOVE_NOT_LEGAL_FOR_PIECE = 1 << 7,
-    bMOVE_OUT_OF_BOUNDS = 1 << 8,
-    bBLOCKING_PIECE = 1 << 9,
-    bKING_IN_CHECK = 1 << 10,
-    bDISCOVERED_CHECK = 1 << 11
+    ILLEGAL_MOVE = 1 << 5,
+    SQUARE_OCCUPIED = 1 << 6,
+    MOVE_NOT_LEGAL_FOR_PIECE = 1 << 7,
+    MOVE_OUT_OF_BOUNDS = 1 << 8,
+    BLOCKING_PIECE = 1 << 9,
+    KING_IN_CHECK = 1 << 10,
+    DISCOVERED_CHECK = 1 << 11
 };
-
 
 
 struct Move {
@@ -54,7 +56,7 @@ class BoardManager {
 public:
 
     explicit BoardManager();
-    explicit BoardManager(Colours colour) : currentTurn(colour){};
+    explicit BoardManager(Colours colour) : currentTurn(colour){}
 
     BitBoards *getBitboards(){ return &bitboards; }
     std::stack<Move> &getMoveHistory(){ return moveHistory; }
@@ -70,6 +72,9 @@ public:
 
 private:
 
+    Bitboard getSliderMoves(const Piece& movePiece, int fromSquare, const Bitboard& board);
+    bool handleCapture(Move& move);
+    void handleEP(Move& move);
     bool prelimCheckMove(Move& move);
 
     bool moveIsEnPassant(Move& move);
@@ -85,6 +90,8 @@ private:
     Colours currentTurn = WHITE;
 
     Rules rules;
+
+    MagicBitBoards magicBitBoards;
 };
 
 

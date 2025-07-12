@@ -164,6 +164,8 @@ private:
 
 public:
 
+    MagicBitBoards(){ init(); }
+
     void init(){
         initRookMagics();
         initBishopMagics();

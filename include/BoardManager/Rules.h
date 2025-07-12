@@ -792,6 +792,43 @@ namespace RulesCheck {
         return result;
     }
 
+    inline Bitboard getEnPassantVulnerableSquares(const BitBoards* boards, const Colours& moveColour){
+        Bitboard result = 0ULL;
+        for (int piece = 0; piece < PIECE_N; ++piece) {
+            const auto pieceName = static_cast<Piece>(piece);
+
+            // don't care about own colour
+            if (pieceColours[pieceName] == moveColour)
+                continue;
+            // only care about pawns
+            if (pieceName != WP && BP != pieceName)
+                continue;
+
+            const bool isWhite = pieceName == WP;
+            const int squareOffset = isWhite ? -8 : 8;
+
+            const auto& otherPawnLocations = std::bitset<64>(boards->getBitboard(pieceName));
+
+            for (int square = 0; square < otherPawnLocations.size(); ++square) {
+                // no opponent pawns here
+                if (!otherPawnLocations.test(square))
+                    continue;
+                // is the square occupied?
+                if (boards->testSquare(square + squareOffset))
+                    continue;
+
+                // en passant can only happen on 4 or 5
+                if (squareToRank(square) != 5 && squareToRank(square) != 4)
+                    continue;
+
+                if (otherPawnLocations.test(square) && !boards->testSquare(square + squareOffset))
+                    result |= 1ULL << (square + squareOffset);
+            }
+        }
+
+        return result;
+    }
+
     inline Bitboard getAttackMoves(const int square, const Piece& piece, const BitBoards* boards){
         Bitboard result = 0ULL;
         switch (piece) {
@@ -849,7 +886,8 @@ namespace RulesCheck {
                 break;
         }
 
-        return result;
+        const auto otherPiece = pieceColours[piece] == WHITE ? BLACK : WHITE;
+        return result & (boards->getOccupancy(otherPiece) | getEnPassantVulnerableSquares(boards, pieceColours[piece]));
     }
 
     inline Bitboard getCastlingMoves(const int square, const Piece& piece, const BitBoards* boards){
@@ -928,43 +966,6 @@ namespace RulesCheck {
         result |= getAttackMoves(square, piece, bitBoards);
         if (piece == WK || piece == BK)
             result |= getCastlingMoves(square, piece, bitBoards);
-        return result;
-    }
-
-    inline Bitboard getEnPassantVulnerableSquares(const BitBoards* boards, const Colours& moveColour){
-        Bitboard result = 0ULL;
-        for (int piece = 0; piece < PIECE_N; ++piece) {
-            const auto pieceName = static_cast<Piece>(piece);
-
-            // don't care about own colour
-            if (pieceColours[pieceName] == moveColour)
-                continue;
-            // only care about pawns
-            if (pieceName != WP && BP != pieceName)
-                continue;
-
-            const bool isWhite = pieceName == WP;
-            const int squareOffset = isWhite ? -8 : 8;
-
-            const auto& otherPawnLocations = std::bitset<64>(boards->getBitboard(pieceName));
-
-            for (int square = 0; square < otherPawnLocations.size(); ++square) {
-                // no opponent pawns here
-                if (!otherPawnLocations.test(square))
-                    continue;
-                // is the square occupied?
-                if (boards->testSquare(square + squareOffset))
-                    continue;
-
-                // en passant can only happen on 4 or 5
-                if (squareToRank(square) != 5 && squareToRank(square) != 4)
-                    continue;
-
-                if (otherPawnLocations.test(square) && !boards->testSquare(square + squareOffset))
-                    result |= 1ULL << (square + squareOffset);
-            }
-        }
-
         return result;
     }
 }

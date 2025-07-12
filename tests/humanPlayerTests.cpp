@@ -15,14 +15,12 @@ protected:
         whitePlayer = HumanPlayer(WHITE);
         blackPlayer = HumanPlayer(BLACK);
 
-        gui = ChessGui(&whitePlayer, &blackPlayer);
-
         gui.getBoardManager()->getBitboards()->loadFEN(Fen::STARTING_FEN);
     }
 
     HumanPlayer whitePlayer{WHITE};
     HumanPlayer blackPlayer{BLACK};
-    ChessGui gui{nullptr, nullptr}; // Or default ctor if supported
+    ChessGui gui{&whitePlayer, &blackPlayer};
 };
 
 

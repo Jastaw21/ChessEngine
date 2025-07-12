@@ -195,13 +195,13 @@ PerftResults TestEngine::perft(const int depth, BoardManager& boardManager){
         if (depth == 1) {
             result.nodes++;
             // Only increment move result types at leaf depth
-            if (move.resultBits & bCHECK)
+            if (move.resultBits & CHECK)
                 result.checks++;
-            if (move.resultBits & bEN_PASSANT) {
+            if (move.resultBits & EN_PASSANT) {
                 result.enPassant++;
                 result.captures++;
-            } else if (move.resultBits & bCAPTURE) { result.captures++; } else if (
-                move.resultBits & bCASTLING) { result.castling++; }
+            } else if (move.resultBits & CAPTURE) { result.captures++; } else if (
+                move.resultBits & CASTLING) { result.castling++; }
         } else { result += child; }
 
         boardManager.undoMove();

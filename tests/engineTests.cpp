@@ -572,17 +572,17 @@ TEST(depr, pos3CapturesCorrect){
             manager.checkMove(childMove);
             std::string moveResult;
 
-            if (childMove.resultBits & bPUSH)
+            if (childMove.resultBits & PUSH)
                 moveResult = "push";
-            if (childMove.resultBits & bCAPTURE) {
+            if (childMove.resultBits & CAPTURE) {
                 moveResult = "capture";
                 totalCaptures++;
             }
-            if (childMove.resultBits & bCASTLING)
+            if (childMove.resultBits & CASTLING)
                 moveResult = "castling";
-            if (childMove.resultBits & bEN_PASSANT)
+            if (childMove.resultBits & EN_PASSANT)
                 moveResult = "en_passant";
-            if (childMove.resultBits & bCHECK)
+            if (childMove.resultBits & CHECK)
                 moveResult += "+check";
 
             moveResults.push_back({childMove.toUCI(), moveResult});
@@ -656,17 +656,17 @@ TEST(depr, kiwi3CapturesCorrect){
             manager.checkMove(childMove);
             std::string moveResult;
 
-            if (childMove.resultBits & bPUSH)
+            if (childMove.resultBits & PUSH)
                 moveResult = "push";
-            if (childMove.resultBits & bCAPTURE) {
+            if (childMove.resultBits & CAPTURE) {
                 moveResult = "capture";
                 totalCaptures++;
             }
-            if (childMove.resultBits & bCASTLING)
+            if (childMove.resultBits & CASTLING)
                 moveResult = "castling";
-            if (childMove.resultBits & bEN_PASSANT)
+            if (childMove.resultBits & EN_PASSANT)
                 moveResult = "en_passant";
-            if (childMove.resultBits & bCHECK) {
+            if (childMove.resultBits & CHECK) {
                 moveResult += "+check";
                 std::cout << "CHECK" << std::endl;
             }
