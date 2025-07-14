@@ -10,7 +10,6 @@
 #include <iostream>
 #include <optional>
 #include <string>
-#include <vector>
 
 #include "Engine/Piece.h"
 
@@ -151,8 +150,6 @@ public:
     bool testSquare(int square) const;
 
     int countPiece(const Piece& pieceToSearch) const;
-
-    std::vector<Piece> getAttackingPieces(const Piece& piece);
 
     Bitboard getOccupancy() const;
     Bitboard getOccupancy(const Piece& piece) const;

@@ -9,6 +9,8 @@ add_executable(chess_tests
         engineTests.cpp
         rulesTests.cpp
         mbbTests.cpp
+        perftTestUtility.h
+        Perft.cpp
         # Add more test files here
 )
 
@@ -21,4 +23,5 @@ target_link_libraries(chess_tests
 
 # Enable test discovery
 include(googletest)
+
 gtest_discover_tests(chess_tests)
