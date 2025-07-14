@@ -7,7 +7,9 @@
 HumanPlayer::HumanPlayer(const Colours colour): ChessPlayer(colour, HUMAN),
                                                 clickedSquare_(-1){}
 
-Move HumanPlayer::makeMove(){}
+Move HumanPlayer::makeMove(){
+    return Move();
+}
 
 void HumanPlayer::selectDestination(const int destSquare, BoardManager* manager){
     if (clickedSquare_ == -1)

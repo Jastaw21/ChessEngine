@@ -1173,3 +1173,23 @@ TEST(BoardManagerAdvancedRules, EnPassantMustBeAttackingLastMovedPiece){
     auto attemptedEnPassant = createMove(WP, "a4b5");
     EXPECT_FALSE(manager.checkMove(attemptedEnPassant));
 }
+
+
+TEST(BoardManager, StartingSquares)
+{
+    auto manager = BoardManager();
+
+    manager.getBitboards()->loadFEN(Fen::STARTING_FEN);
+
+    const auto startingWhitePawns = manager.getStartingSquaresOfPiece(WP);
+    EXPECT_EQ(startingWhitePawns.size(), 8);
+
+    std::vector<int> expectedStarts;
+    for (int i = 8; i <= 15; i++) {
+        expectedStarts.push_back(i);
+    }
+
+    for (const auto& start : startingWhitePawns) {
+       EXPECT_TRUE( std::ranges::any_of(expectedStarts, [&](const auto actualStart) { return actualStart == start; }));
+    }
+}

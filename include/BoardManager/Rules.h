@@ -805,6 +805,26 @@ namespace RulesCheck {
             const bool isWhite = pieceName == WP;
             const int squareOffset = isWhite ? -8 : 8;
 
+            auto startingPawnLocations = boards->getBitboard(pieceName);
+
+            while (startingPawnLocations) {
+                // count trailing zeros to find the index of the first set bit
+                const int square = std::countr_zero(startingPawnLocations);
+                startingPawnLocations &= ~(1ULL << square); // pop this bit off
+
+                // is the square occupied?
+                if (boards->testSquare(square + squareOffset))
+                    continue;
+
+                // en passant can only happen on 4 or 5
+                if (squareToRank(square) != 5 && squareToRank(square) != 4)
+                    continue;
+
+                if (!boards->testSquare(square + squareOffset))
+                    result |= 1ULL << (square + squareOffset);
+               
+            }
+
             const auto& otherPawnLocations = std::bitset<64>(boards->getBitboard(pieceName));
 
             for (int square = 0; square < otherPawnLocations.size(); ++square) {

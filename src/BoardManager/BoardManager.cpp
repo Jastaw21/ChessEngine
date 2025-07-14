@@ -426,12 +426,17 @@ bool BoardManager::friendlyKingInCheck(const Move& move){
 std::vector<int> BoardManager::getStartingSquaresOfPiece(const Piece& piece){
     std::vector<int> startingSquares;
 
-    const auto& pieceLocation = std::bitset<64>(bitboards[piece]);
-    if (!pieceLocation.any())
+    auto startingBoard = bitboards[piece];
+    if (startingBoard == 0ULL) {
         return startingSquares;
-
-    for (int index = 0; index < pieceLocation.size(); ++index) {
-        if (pieceLocation.test(index)) { startingSquares.push_back(index); }
     }
+    while (startingBoard) {
+        // count trailing zeros to find the index of the first set bit
+        const int index = std::countr_zero(startingBoard);
+        startingSquares.push_back(index);
+        // clear the bit at that index
+        startingBoard &= ~(1ULL << index);
+    }   
+    
     return startingSquares;
 }

@@ -77,6 +77,7 @@ public:
     void setCurrentTurn(const Colours current_turn){ currentTurn = current_turn; }
 
     bool isNowCheckMate();
+    std::vector<int> getStartingSquaresOfPiece(const Piece& piece);
 
 private:
 
@@ -87,7 +88,7 @@ private:
 
     bool moveIsEnPassant(Move& move);
     bool friendlyKingInCheck(const Move& move);
-    std::vector<int> getStartingSquaresOfPiece(const Piece& piece);
+
 
     // do the move
     void makeMove(Move& move);
