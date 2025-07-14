@@ -7,8 +7,10 @@
 #include <algorithm>
 #include <bitset>
 #include <iostream>
+#include <numeric>
 
 #include "Engine/Piece.h"
+#include <functional>
 
 
 int rankAndFileToSquare(const int rank, const int file){
@@ -100,70 +102,39 @@ void BitBoards::setZero(const int rank, const int file){
     }
 }
 
-void BitBoards::setOne(const Piece& piece, const int rank, const int file){
-    const int toSquare = rankAndFileToSquare(rank, file);
-    bitboards[piece] |= 1ULL << toSquare;
+void BitBoards::setOne(const Piece& piece, const int rank, const int file){    
+    bitboards[piece] |= 1ULL << rankAndFileToSquare(rank, file);
 }
 
 
 bool BitBoards::testBoard(const Bitboard inBoard) const{
-    for (const auto& board: bitboards) {
-        if ((board & inBoard) != 0)
-            return true;
-    }
-    return false;
+    const bool anyBoardMatches = std::ranges::any_of(bitboards, [&](const Bitboard& board) { return (board & inBoard) != 0; });
+    return anyBoardMatches;
 }
 
 bool BitBoards::testSquare(const int square) const{
-    for (const auto& board: bitboards) {
-        if ((board & 1ULL << square) != 0)
-            return true;
-    }
-    return false;
+
+    const bool anyBoardMatches = std::ranges::any_of(bitboards, [&](const Bitboard& board) { return (board & (1ULL << square)) != 0; });    
+    return anyBoardMatches;
 }
 
 int BitBoards::countPiece(const Piece& pieceToSearch) const{
-    if (bitboards[pieceToSearch] != 0) { return std::bitset<64>(bitboards[pieceToSearch]).count(); }
-    return 0;
-}
-
-std::vector<Piece> BitBoards::getAttackingPieces(const Piece& piece){
-    std::vector<Piece> attackingPieces;
-
-    for (int i = 0; i < PIECE_N; ++i) {
-        const auto pieceToSearch = static_cast<Piece>(i);
-        if (pieceColours[pieceToSearch] == pieceColours[piece]) { attackingPieces.push_back(pieceToSearch); }
-    }
-
-    return attackingPieces;
+    return std::popcount(bitboards[pieceToSearch]);
 }
 
 Bitboard BitBoards::getOccupancy() const{
-    Bitboard result = 0ULL;
-    for (int i = 0; i < PIECE_N; ++i) {
-        const auto pieceToSearch = static_cast<Piece>(i);
-        result |= bitboards[pieceToSearch];
-    }
-    return result;
+    const auto accumulated = std::accumulate(bitboards.begin(),bitboards.end(),0ULL,std::bit_or<>());   
+    return accumulated;
 }
 
-Bitboard BitBoards::getOccupancy(const Piece& piece) const{
-    Bitboard result = 0ULL;
-    for (int i = 0; i < PIECE_N; ++i) {
-        const auto pieceToSearch = static_cast<Piece>(i);
-        if (pieceToSearch == piece) { result |= bitboards[pieceToSearch]; }
-    }
-    return result;
+Bitboard BitBoards::getOccupancy(const Piece& piece) const{    
+    return bitboards[piece];    
 }
 
 Bitboard BitBoards::getOccupancy(const Colours& colour) const{
     Bitboard result = 0ULL;
-    for (int i = 0; i < PIECE_N; ++i) {
-        const auto pieceToSearch = static_cast<Piece>(i);
-        if (pieceColours[pieceToSearch] == colour) {
-            // only check us
-            result |= bitboards[pieceToSearch];
-        }
+    for (const auto& piece : filteredPieces[colour]) {
+        result |= bitboards[piece];
     }
     return result;
 }
