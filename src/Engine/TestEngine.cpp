@@ -85,7 +85,7 @@ Move TestEngine::search(const int depth){
 
     for (Move& move: moves) {
         startingManager.tryMove(move);
-        const float eval = minMax(startingManager, depth, thisTurn == colour);
+        const float eval = minMax(startingManager, 2, thisTurn == colour);
         startingManager.undoMove();
 
         if (thisTurn == colour) {

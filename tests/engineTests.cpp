@@ -71,4 +71,10 @@ TEST(Engine, MoveGenerationDoesNotChangeState){
     ASSERT_EQ(board, newBoard);
 }
 
+TEST(Engine, SearchPerformance){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN(Fen::KIWI_PETE_FEN);
+    auto engine = TestEngine(WHITE, &manager);
 
+    EXPECT_TRUE(engine.makeMove().fileFrom >= 1);
+}
