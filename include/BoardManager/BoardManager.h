@@ -72,6 +72,7 @@ public:
     bool opponentKingInCheck(Move& move);
     bool checkMove(Move& move);
     bool tryMove(Move& move);
+    bool forceMove(Move& move);
     void undoMove(const Move& move);
     void undoMove();
 

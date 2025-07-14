@@ -62,7 +62,7 @@ float TestEngine::minMax(BoardManager& mgr, const int depth, const bool isMaximi
     int bestEval = isMaximising ? -100000 : 100000;
 
     for (Move& move: moves) {
-        mgr.tryMove(move);
+        mgr.forceMove(move);
         int eval = minMax(mgr, depth - 1, !isMaximising);
         mgr.undoMove();
 
@@ -84,7 +84,7 @@ Move TestEngine::search(const int depth){
     const Colours thisTurn = startingManager.getCurrentTurn();
 
     for (Move& move: moves) {
-        startingManager.tryMove(move);
+        startingManager.forceMove(move);
         const float eval = minMax(startingManager, 2, thisTurn == colour);
         startingManager.undoMove();
 
@@ -158,7 +158,7 @@ auto TestEngine::simplePerft(const int depth, BoardManager& boardManager){
     int nodes = 0;
     auto moves = generateMoveList(boardManager);
     for (Move& move: moves) {
-        boardManager.tryMove(move);
+        boardManager.forceMove(move);
         nodes += simplePerft(depth - 1, boardManager);
         boardManager.undoMove();
     }
@@ -173,7 +173,7 @@ PerftResults TestEngine::perft(const int depth, BoardManager& boardManager){
     auto moves = generateMoveList(boardManager);
 
     for (auto& move: moves) {
-        boardManager.tryMove(move);
+        boardManager.forceMove(move); // moves should be checked for legality already at this point so don't even worry
         PerftResults child = perft(depth - 1, boardManager);
 
         if (depth == 1) {
@@ -200,7 +200,7 @@ auto TestEngine::perftDivide(const int depth, BoardManager& boardManager){
         auto result = PerftResults();
         result.nodes = 0;
         result.fen = move.toUCI();
-        boardManager.tryMove(move);
+        boardManager.forceMove(move);
         result += perft(depth - 1, boardManager);
         boardManager.undoMove();
 

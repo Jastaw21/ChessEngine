@@ -8,13 +8,13 @@
 #include "BoardManager/BitBoards.h"
 #include "BoardManager/Rules.h"
 
-std::string Move::toUCI() const
-{
-    return std::string { static_cast<char>('a' + fileFrom - 1) } + std::to_string(rankFrom) + static_cast<char>('a' + fileTo - 1) + std::to_string(rankTo);
+std::string Move::toUCI() const{
+    return std::string{static_cast<char>('a' + fileFrom - 1)} + std::to_string(rankFrom) + static_cast<char>(
+               'a' + fileTo - 1) + std::to_string(rankTo);
 }
 
 
-Move createMove(const Piece& piece, const std::string& moveUCI) {
+Move createMove(const Piece& piece, const std::string& moveUCI){
     const int fileFrom = moveUCI[0] - 'a' + 1;
     const int rankFrom = moveUCI[1] - '1' + 1;
     const int fileTo = moveUCI[2] - 'a' + 1;
@@ -103,11 +103,11 @@ bool BoardManager::checkMove(Move& move){
 
 bool BoardManager::tryMove(Move& move){
     if (!checkMove(move)) { return false; }
+    makeMove(move);
+    return true;
+}
 
-    if (move.piece == PIECE_N) {
-        std::cout << "Error: No piece selected" << std::endl;
-        return false;
-    }
+bool BoardManager::forceMove(Move& move){
     makeMove(move);
     return true;
 }
@@ -250,11 +250,7 @@ bool BoardManager::opponentKingInCheck(Move& move){
 bool BoardManager::isNowCheckMate(){ return !hasLegalMoveToEscapeCheck(); }
 
 bool BoardManager::hasLegalMoveToEscapeCheck(){
-    for (const auto& pieceName : filteredPieces[currentTurn]) {
-        if (canPieceEscapeCheck(pieceName)) {
-            return true;
-        }
-    }    
+    for (const auto& pieceName: filteredPieces[currentTurn]) { if (canPieceEscapeCheck(pieceName)) { return true; } }
     return false;
 }
 
@@ -336,19 +332,17 @@ bool BoardManager::friendlyKingInCheck(const Move& move){
 
     // Iterate through enemy pieces
     const auto colourToSearch = pieceColours[move.piece] == WHITE ? BLACK : WHITE;
-    for (const auto& pieceName : filteredPieces[colourToSearch]) {
+    for (const auto& pieceName: filteredPieces[colourToSearch]) {
         const auto pieceLocations = getStartingSquaresOfPiece(pieceName);
-        for (const int startSquare : pieceLocations) {
+        for (const int startSquare: pieceLocations) {
             // prelim check if anything could feasibly attack this square
             const Bitboard prelimAttacks = rules.getPseudoAttacks(pieceName, startSquare);
             if (!(kingLocation & prelimAttacks))
                 continue;
             const Bitboard attackedSquares = RulesCheck::getAttackMoves(startSquare, pieceName, &bitboards);
-            if ((attackedSquares & kingLocation) != 0) {
-                return true;
-            }
+            if ((attackedSquares & kingLocation) != 0) { return true; }
         }
-    }   
+    }
 
     return false;
 }
@@ -358,16 +352,14 @@ std::vector<int> BoardManager::getStartingSquaresOfPiece(const Piece& piece){
     startingSquares.reserve(8); // max of 8 pieces per board
 
     auto startingBoard = bitboards[piece];
-    if (startingBoard == 0ULL) {
-        return startingSquares;
-    }
+    if (startingBoard == 0ULL) { return startingSquares; }
     while (startingBoard) {
         // count trailing zeros to find the index of the first set bit
         const int index = std::countr_zero(startingBoard);
         startingSquares.push_back(index);
         // clear the bit at that index
         startingBoard &= ~(1ULL << index);
-    }   
-    
+    }
+
     return startingSquares;
 }
