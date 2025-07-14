@@ -38,8 +38,6 @@ add_library(
         src/Utility/Fen.cpp
         src/ChessPlayer.cpp
         src/HumanPlayer.cpp
-        src/Engine/SearchTree.cpp
-        include/Engine/SearchTree.h
         include/BoardManager/Rules.h
         src/BoardManager/Rules.cpp
         include/MagicBitboards/MagicBitBoards.h

@@ -10,9 +10,9 @@ void MagicBitBoards::initRookMagics(){
         Magic& magic = rookMagics[square];
         magic.mask = mbbHelpers.generateRookMask(square); // Use precomputed magic
         magic.magic = rookMagicNumbers[square];
-        magic.shift = 64 - __builtin_popcountll(magic.mask); // keep relevant bits
+        magic.shift = 64 - std::popcount(magic.mask); // keep relevant bits
 
-        const int attacksSize = 1 << __builtin_popcountll(magic.mask); // how many attacks are there? shifting is powers
+        const int attacksSize = 1 << std::popcount(magic.mask); // how many attacks are there? shifting is powers
         magic.attacks.resize(attacksSize); // the max size of the table is the number of attacks
 
         for (int i = 0; i < attacksSize; i++) {
@@ -31,9 +31,9 @@ void MagicBitBoards::initBishopMagics(){
         Magic& magic = bishopMagics[square];
         magic.mask = mbbHelpers.generateBishopMask(square);
         magic.magic = bishopMagicNumbers[square]; // Use precomputed magic
-        magic.shift = 64 - __builtin_popcountll(magic.mask); // keep relevant bits
+        magic.shift = 64 - std::popcount(magic.mask); // keep relevant bits
 
-        const int attacksSize = 1 << __builtin_popcountll(magic.mask); // how many attacks are there? shifting is powers
+        const int attacksSize = 1 << std::popcount(magic.mask); // how many attacks are there? shifting is powers
         magic.attacks.resize(attacksSize); // the max size of the table is the number of attacks
 
         for (int i = 0; i < attacksSize; i++) {

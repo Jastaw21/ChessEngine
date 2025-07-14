@@ -101,10 +101,10 @@ Bitboard MBBHelpers::getBishopAttacks(int square, const Bitboard& occupancy){
 
 Bitboard MBBHelpers::getOccupancyFromIndex(const int index, Bitboard mask){
     Bitboard occupancy = 0ULL;
-    const int numBits = __builtin_popcountll(mask);
+    const int numBits = std::popcount(mask);
 
     for (int i = 0; i < numBits; i++) {
-        const int lowestBit = __builtin_ctzll(mask);
+        const int lowestBit = std::countr_zero(mask);
         mask &= mask - 1; // get rid of the lowest set bit in the mask
 
         if (index & 1 << i) {
