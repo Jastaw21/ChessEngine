@@ -348,6 +348,11 @@ bool BoardManager::checkAndHandleEP(Move& move){
     const auto lastMove = moveHistory.top();
     if (lastMove.piece != WP && lastMove.piece != BP) { return false; } // must be a pawn that's moved
     if (abs(lastMove.rankTo - lastMove.rankFrom) != 2) { return false; } // must be a pawn that has moved two squares
+    if (move.fileTo != lastMove.fileFrom) { return false; }
+
+    const int targetRankOffset = pieceColours[move.piece] == WHITE ? 1 : -1;
+    // The offset is relative to the last pawn's to location. So white has to go north of the last move
+    if (move.rankTo != lastMove.rankTo + targetRankOffset) { return false; }
     move.resultBits |= EN_PASSANT;
     move.resultBits |= CAPTURE;
     const auto relevantFile = move.fileTo;

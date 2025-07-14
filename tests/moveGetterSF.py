@@ -72,7 +72,7 @@ def perft_complex(board, depth):
                 perft_result.captures += 1
             elif is_castle:
                 perft_result.castling += 1
-           
+
 
         else:
             perft_result += perft_complex(board, depth - 1)

@@ -117,7 +117,7 @@ namespace Constants {
     constexpr Bitboard FILE_H = 0x8080808080808080;
 
     constexpr Bitboard KING_SIDE_CASTLING = 0x6000000000000060;
-    constexpr Bitboard QUEEN_SIDE_CASTLING = 0xc0000000000000c;
+    constexpr Bitboard QUEEN_SIDE_CASTLING = 0xe0000000000000e;
 
     constexpr Bitboard WHITE_KS_CASTLING = KING_SIDE_CASTLING & RANK_1;
     constexpr Bitboard WHITE_QS_CASTLING = QUEEN_SIDE_CASTLING & RANK_1;

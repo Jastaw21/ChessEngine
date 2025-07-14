@@ -172,9 +172,11 @@ Bitboard MagicBitBoards::getCastling(const int square, const Piece& piece, const
             castlingMask &= Constants::RANK_8;
         }
 
-        if (castlingMask & boards.getOccupancy(piece))
+        if (castlingMask & boards.getOccupancy())
             continue; // can't castle through an occupied square
 
+        // now take file c out of the equation, as it doesn't matter if that's attacked
+        castlingMask &= ~Constants::FILE_B;
         const auto attacks = getAllAttacks((pieceColours[piece] == WHITE ? BLACK : WHITE), boards);
         if (attacks & castlingMask)
             continue;

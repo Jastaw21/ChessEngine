@@ -1032,6 +1032,31 @@ TEST(BoardManagerAdvancedRules, CantCastleThroughAttackedSquares){
     EXPECT_FALSE(manager.checkMove(attemptedCastling2));
 }
 
+TEST(BoardManagerAdvancedRules, CantCastleThroughOccupiedSquares){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN("r2qk2r/p1pp1Qb1/bn2p1p1/3PN3/1p2P3/2N4p/PPPBBPPP/R3K2R");
+
+    auto attemptedCastling = createMove(BK, "e8c8");
+    EXPECT_FALSE(manager.checkMove(attemptedCastling));
+}
+
+TEST(BoardManagerAdvancedRules, CantCastleToC_If_B_Occupied){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN("r3k1r1/p1ppqpb1/bn2pnp1/3PN3/1p2P3/5Q1p/PPPBBPPP/RN2K2R");
+
+    auto attemptedCastling = createMove(WK, "e1c1");
+    EXPECT_FALSE(manager.checkMove(attemptedCastling));
+}
+
+TEST(BoardManagerAdvancedRules, CanCastleToC_if_B_Attacked){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN("r3k2r/p1pNqpb1/bn2pnp1/3P4/1p2P3/2N2Q1p/PPPBBPPP/R3K2R");
+
+    auto attemptedCastling = createMove(BK, "e8c8");
+    EXPECT_TRUE(manager.checkMove(attemptedCastling));
+}
+
+
 TEST(BoardManagerMoveExecution, FixPosition3CapturesNotFound){
     auto manager = BoardManager();
     manager.getBitboards()->loadFEN(Fen::POSITION_3_FEN);
@@ -1127,4 +1152,24 @@ TEST(BoardManagerAdvancedRules, CheckMateWorks){
     EXPECT_TRUE(manager.isNowCheckMate());
     EXPECT_TRUE(checkMateMove2.resultBits & CHECK_MATE);
     EXPECT_TRUE(checkMateMove2.resultBits & CHECK);
+
+    manager.setCurrentTurn(WHITE);
+    manager.getBitboards()->loadFEN("r2qk2r/p1pp1pb1/bn2pQp1/3PN3/1p2P3/2N4p/PPPBBPPP/R3K2R");
+    auto checkMateMove3 = createMove(WQ, "f6f7");
+    ASSERT_TRUE(manager.tryMove(checkMateMove3));
+    EXPECT_TRUE(manager.isNowCheckMate());
+    EXPECT_TRUE(checkMateMove3.resultBits & CHECK_MATE);
+    EXPECT_TRUE(checkMateMove3.resultBits & CHECK);
+}
+
+TEST(BoardManagerAdvancedRules, EnPassantMustBeAttackingLastMovedPiece){
+    auto manager = BoardManager(WHITE);
+    manager.getBitboards()->loadFEN(Fen::POSITION_3_FEN);
+
+    auto move1 = createMove(WP, "a2a4");
+    ASSERT_TRUE(manager.tryMove(move1));
+    auto move2 = createMove(BP, "c7c5");
+    ASSERT_TRUE(manager.tryMove(move2));
+    auto attemptedEnPassant = createMove(WP, "a4b5");
+    EXPECT_FALSE(manager.checkMove(attemptedEnPassant));
 }

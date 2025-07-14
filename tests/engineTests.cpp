@@ -109,62 +109,6 @@ inline bool runGetMoveResults(const std::string& fen, const std::string& outputF
     return result == 0;
 }
 
-bool divideTestExtraDebugging(const std::string& desiredFen, const std::string& outputFile, const int depth,
-                              const Colours& colourToMove = WHITE){
-    bool passing = true;
-    const std::string fenAppendage = colourToMove == WHITE ? " w KQkq -" : " b KQkq -";
-    const std::string fen = desiredFen + fenAppendage;
-
-    generateExternalEngineMoves(fen, outputFile, depth);
-    auto pyMoves = getDivideResults(outputFile); // get our own starting moves
-    auto manager = BoardManager();
-    manager.setCurrentTurn(colourToMove);
-    manager.getBitboards()->loadFEN(desiredFen);
-    TestEngine whiteEngine(WHITE);
-
-    std::vector<PerftResults> engineResults = whiteEngine.runDivideTest(manager, depth);
-
-    PerftResults totalPy;
-    for (const auto& move: pyMoves) { totalPy += move; }
-    PerftResults totalEngine;
-    for (const auto& move: engineResults) { totalEngine += move; }
-
-    // Print headers
-    std::cout << "Type\tNodes\tCaptures\tCastles\tEP\tChecks" << std::endl;
-
-    // Print Python results
-    std::cout << "Python\t" << totalPy.nodes << "\t" << totalPy.captures << "\t"
-            << totalPy.castling << "\t" << totalPy.enPassant << "\t" << totalPy.checks << std::endl;
-
-    // Print Engine results
-    std::cout << "Engine\t" << totalEngine.nodes << "\t" << totalEngine.captures << "\t"
-            << totalEngine.castling << "\t" << totalEngine.enPassant << "\t" << totalEngine.checks << std::endl;
-
-    std::vector<PerftResults> inPyNotInEngine;
-    for (const auto& pyMove: pyMoves) {
-        auto matching = std::ranges::find_if(engineResults, [&](const auto& move) { return move.fen == pyMove.fen; });
-        if (matching == engineResults.end())
-            passing = false;
-        if (*matching != pyMove)
-            passing = false;
-        if (pyMove != *matching)
-            inPyNotInEngine.push_back(pyMove);
-    }
-
-    std::cout << "External Engine Believes: " << std::endl;
-    for (const auto& move: inPyNotInEngine) {
-        auto engineResult = std::ranges::find_if(engineResults, [&](const auto& engineMove) {
-            return engineMove.fen == move.fen;
-        });
-
-        std::cout << move.fen << std::endl << "Py: " << move.toString() << std::endl << "En: " <<
-                engineResult->toString() <<
-                std::endl;
-    }
-
-    return passing;
-}
-
 
 bool divideTest(const std::string& desiredFen, const std::string& outputFile, const int depth,
                 const Colours& colourToMove = WHITE){
@@ -203,6 +147,16 @@ bool divideTest(const std::string& desiredFen, const std::string& outputFile, co
             << totalEngine.castling << "\t" << totalEngine.enPassant << "\t" << totalEngine.checks << "\t" <<
             totalEngine.checkMate << std::endl;
 
+    // gather errors in both directions for printing
+    std::vector<PerftResults> inEngineNotInPy;
+    for (const auto& ourMove: engineResults) {
+        auto matching = std::ranges::find_if(pyMoves, [&](const auto& move) { return move.fen == ourMove.fen; });
+        if (matching == pyMoves.end())
+            passing = false;
+        if (*matching != ourMove)
+            passing = false;
+        if (ourMove != *matching) { inEngineNotInPy.push_back(ourMove); }
+    }
     std::vector<PerftResults> inPyNotInEngine;
     for (const auto& pyMove: pyMoves) {
         auto matching = std::ranges::find_if(engineResults, [&](const auto& move) { return move.fen == pyMove.fen; });
@@ -210,11 +164,31 @@ bool divideTest(const std::string& desiredFen, const std::string& outputFile, co
             passing = false;
         if (*matching != pyMove)
             passing = false;
-        if (pyMove != *matching)
-            inPyNotInEngine.push_back(pyMove);
+        if (pyMove != *matching) { inPyNotInEngine.push_back(pyMove); }
     }
 
-    std::cout << printInset << "External Engine Believes: " << std::endl;
+    if (!inEngineNotInPy.empty()) { std::cout << printInset << "Our Engine Believes: " << std::endl; }
+    for (const auto& move: inEngineNotInPy) {
+        auto pyResult = std::ranges::find_if(pyMoves, [&](const auto& pymove) { return pymove.fen == move.fen; });
+
+        std::cout << printInset << move.fen << std::endl << printInset << "Py: " << pyResult->toString() << std::endl <<
+                printInset << "En: " <<
+                move.toString() <<
+                std::endl;
+
+        // divide further
+        std::cout << printInset << "============Dividing further=========== " << move.fen << " " << std::endl;
+        int iRank, iFile;
+        Fen::FenToRankAndFile(move.fen, iRank, iFile);
+        auto inferredPiece = manager.getBitboards()->getPiece(iRank, iFile);
+        if (inferredPiece.has_value()) {
+            auto subMove = createMove(inferredPiece.value(), move.fen);
+            manager.tryMove(subMove);
+            divideTest(manager.getBitboards()->toFEN(), outputFile, depth - 1, colourToMove == WHITE ? BLACK : WHITE);
+        } else { std::cout << printInset << "No inferred piece found for " << move.fen << std::endl; }
+    }
+
+    if (!inPyNotInEngine.empty()) { std::cout << printInset << "External Engine Believes: " << std::endl; }
     for (const auto& move: inPyNotInEngine) {
         auto engineResult = std::ranges::find_if(engineResults, [&](const auto& engineMove) {
             return engineMove.fen == move.fen;
@@ -422,7 +396,7 @@ TEST(Perft, kiwiPete3){
     EXPECT_EQ(perftResults.captures, 17102);
     EXPECT_EQ(perftResults.castling, 3162);
     EXPECT_EQ(perftResults.enPassant, 45);
-    EXPECT_EQ(perftResults.checks, 933);
+    EXPECT_EQ(perftResults.checks, 993);
     EXPECT_EQ(perftResults.checkMate, 1);
 }
 
@@ -803,6 +777,5 @@ TEST(Divide, kiwipiete3Afterf3f6){
         }
         depth--;
     }
-
-    //EXPECT_TRUE(divideTest(manager.getBitboards()->toFEN(),"kiwi4.txt",2,BLACK));
 }
+
