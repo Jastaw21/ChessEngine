@@ -5,7 +5,6 @@
 #include "Engine/TestEngine.h"
 
 #include <bitset>
-#include <iostream>
 #include "BoardManager/Rules.h"
 
 
@@ -105,7 +104,7 @@ Move TestEngine::search(const int depth){
 }
 
 Move TestEngine::makeMove(){
-    auto move = search();
+    auto move = search(3);
     boardManager_->tryMove(move);
     return move;
 }

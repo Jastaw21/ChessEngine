@@ -33,7 +33,7 @@ int squareToFile(const int square){ return square % 8 + 1; }
 int squareToRank(const int square){ return square / 8 + 1; }
 
 
-int getLowestSetBit(const Bitboard& inBoard){ return __builtin_ctzll(inBoard); }
+int getLowestSetBit(const Bitboard& inBoard){ return std::countr_zero(inBoard); }
 
 int popLowestSetBit(Bitboard& inBoard){
     const int lsb = getLowestSetBit(inBoard);
@@ -209,4 +209,3 @@ std::string &BitBoards::toFEN(){
 
     return fen_;
 }
-

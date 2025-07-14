@@ -15,7 +15,7 @@ MagicNumberGenerator::MagicNumberGenerator() : rng(std::chrono::steady_clock::no
 Bitboard MagicNumberGenerator::findMagicNumber(int square, bool is_rook){
     const Bitboard mask = is_rook ? mbbHelpers.generateRookMask(square) : mbbHelpers.generateBishopMask(square);
 
-    const int maskBits = __builtin_popcountll(mask);
+    const int maskBits = std::popcount(mask);
     // left shifting is increasing powers of 2, so the number of combinations there are of the number of possible bits set from this rank
     const int attacksSize = 1 << maskBits;
 
@@ -25,13 +25,15 @@ Bitboard MagicNumberGenerator::findMagicNumber(int square, bool is_rook){
     // now try each of these possible occupancies, and which attacks correspond
     for (int i = 0; i < attacksSize; i++) {
         occupancies[i] = mbbHelpers.getOccupancyFromIndex(i, mask);
-        attacks[i] = is_rook ? mbbHelpers.getRookAttacks(square, occupancies[i]) : mbbHelpers.getBishopAttacks(square, occupancies[i]);
+        attacks[i] = is_rook
+                         ? mbbHelpers.getRookAttacks(square, occupancies[i])
+                         : mbbHelpers.getBishopAttacks(square, occupancies[i]);
     }
 
     for (int attempt = 0; attempt < NUM_ATTEMPTS; attempt++) {
         const Bitboard magic = randomBitboard();
 
-        if (__builtin_popcountll(mask * magic & 0xFF00000000000000ULL) < 6) {
+        if (std::popcount(mask * magic & 0xFF00000000000000ULL) < 6) {
             continue; // Skip if magic doesn't have enough bits in upper part
         }
 
@@ -53,6 +55,7 @@ Bitboard MagicNumberGenerator::findMagicNumber(int square, bool is_rook){
             << " square " << square << std::endl;
     return 0ULL;
 }
+
 void MagicNumberGenerator::generateRookMagics(){
     std::cout << "Generating rook magic numbers..." << std::endl;
     std::cout << "const Bitboard rookMagicNumbers[64] = {" << std::endl;
@@ -66,6 +69,7 @@ void MagicNumberGenerator::generateRookMagics(){
 
     std::cout << "};" << std::endl;
 }
+
 void MagicNumberGenerator::generateBishopMagics(){
     std::cout << "Generating bishop magic numbers..." << std::endl;
     std::cout << "const Bitboard bishopMagicNumbers[64] = {" << std::endl;

@@ -12,10 +12,10 @@
 
 inline const std::string fileRoot = R"(C:\Users\jacks\source\repos\Chess\tests\output\)";
 inline const std::string divideCmd =
-        R"(C:\Users\jacks\source\repos\Chess\.venv\Scripts\python.exe C:\Users\jacks\source\repos\Chess\tests\moveGetterSF.py)";
+        R"(C:\Users\jacks\source\repos\Chess\.venv\Scripts\python.exe C:\Users\jacks\source\repos\Chess\tests\Python\moveGetterSF.py)";
 
 inline const std::string moveCmd =
-        R"(C:\Users\jacks\source\repos\Chess\.venv\Scripts\python.exe C:\Users\jacks\source\repos\Chess\tests\getMovesFromPosition.py)";
+        R"(C:\Users\jacks\source\repos\Chess\.venv\Scripts\python.exe C:\Users\jacks\source\repos\Chess\tests\Python\getMovesFromPosition.py)";
 
 inline std::unordered_map<int, std::string> insets = {{1, "1----"}, {2, "2---"}, {3, "3--"}, {4, "4-"}, {5, "5"}};
 

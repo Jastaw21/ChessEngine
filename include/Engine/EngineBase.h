@@ -4,10 +4,10 @@
 
 #ifndef ENGINEBASE_H
 #define ENGINEBASE_H
+
 #include <filesystem>
 
 #include "ChessPlayer.h"
-#include "SearchTree.h"
 
 
 struct PerftResults {
@@ -65,10 +65,6 @@ public:
     explicit EngineBase(Colours colour = WHITE);
 
     virtual Move makeMove() override;
-
-private:
-
-    SearchTree searchTree = SearchTree();
 };
 
 
