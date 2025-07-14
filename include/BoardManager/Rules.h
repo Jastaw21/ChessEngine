@@ -823,25 +823,7 @@ namespace RulesCheck {
                 if (!boards->testSquare(square + squareOffset))
                     result |= 1ULL << (square + squareOffset);
                
-            }
-
-            const auto& otherPawnLocations = std::bitset<64>(boards->getBitboard(pieceName));
-
-            for (int square = 0; square < otherPawnLocations.size(); ++square) {
-                // no opponent pawns here
-                if (!otherPawnLocations.test(square))
-                    continue;
-                // is the square occupied?
-                if (boards->testSquare(square + squareOffset))
-                    continue;
-
-                // en passant can only happen on 4 or 5
-                if (squareToRank(square) != 5 && squareToRank(square) != 4)
-                    continue;
-
-                if (otherPawnLocations.test(square) && !boards->testSquare(square + squareOffset))
-                    result |= 1ULL << (square + squareOffset);
-            }
+            }           
         }
 
         return result;

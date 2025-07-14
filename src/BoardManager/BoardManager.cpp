@@ -8,36 +8,20 @@
 #include "BoardManager/BitBoards.h"
 #include "BoardManager/Rules.h"
 
-std::string Move::toUCI() const{
-    std::string uci;
-    const char fileFromChar = 'a' + fileFrom - 1;
-    uci += fileFromChar;
-    uci += std::to_string(rankFrom);
-    const char fileToChar = 'a' + fileTo - 1;
-    uci += fileToChar;
-    uci += std::to_string(rankTo);
-
-    return uci;
+std::string Move::toUCI() const
+{
+    return std::string { static_cast<char>('a' + fileFrom - 1) } + std::to_string(rankFrom) + static_cast<char>('a' + fileTo - 1) + std::to_string(rankTo);
 }
 
-Move createMove(const Piece& piece, const std::string& moveUCI){
-    const char fromFile = moveUCI[0];
-    const int fileFrom = fromFile - 'a' + 1;
 
-    const char fromRank = moveUCI[1];
-    const int rankFrom = fromRank - '1' + 1;
+Move createMove(const Piece& piece, const std::string& moveUCI) {
+    const int fileFrom = moveUCI[0] - 'a' + 1;
+    const int rankFrom = moveUCI[1] - '1' + 1;
+    const int fileTo = moveUCI[2] - 'a' + 1;
+    const int rankTo = moveUCI[3] - '1' + 1;
 
-    const char toFile = moveUCI[2];
-    const int fileTo = toFile - 'a' + 1;
-
-    const char toRank = moveUCI[3];
-    const int rankTo = toRank - '1' + 1;
-
-    const Move newMove = Move(piece, rankAndFileToSquare(rankFrom, fileFrom), rankAndFileToSquare(rankTo, fileTo));
-
-    return newMove;
+    return Move(piece, rankAndFileToSquare(rankFrom, fileFrom), rankAndFileToSquare(rankTo, fileTo));
 }
-
 
 BoardManager::BoardManager() = default;
 
@@ -135,8 +119,8 @@ void BoardManager::makeMove(Move& move){
     if (move.resultBits & CASTLING) {
         const auto relevantRook = move.piece == WK ? WR : BR; // what is the rook we also need to move?
 
-        int movedRookFileTo;
-        int movedRookFileFrom;
+        int movedRookFileTo = 0;
+        int movedRookFileFrom = 0;
         // queen side
         if (move.fileTo == 3) {
             movedRookFileTo = move.fileTo + 1; // needs to move one inside the king
@@ -266,12 +250,11 @@ bool BoardManager::opponentKingInCheck(Move& move){
 bool BoardManager::isNowCheckMate(){ return !hasLegalMoveToEscapeCheck(); }
 
 bool BoardManager::hasLegalMoveToEscapeCheck(){
-    for (int piece = 0; piece < PIECE_N; ++piece) {
-        const auto pieceName = static_cast<Piece>(piece);
-        if (pieceColours[pieceName] != currentTurn) { continue; }
-
-        if (canPieceEscapeCheck(pieceName)) { return true; }
-    }
+    for (const auto& pieceName : filteredPieces[currentTurn]) {
+        if (canPieceEscapeCheck(pieceName)) {
+            return true;
+        }
+    }    
     return false;
 }
 
@@ -404,27 +387,27 @@ bool BoardManager::friendlyKingInCheck(const Move& move){
     }
 
     // Iterate through enemy pieces
-    for (int pieceIndex = 0; pieceIndex < PIECE_N; pieceIndex++) {
-        const auto pieceName = static_cast<Piece>(pieceIndex);
-        if (pieceColours[move.piece] == pieceColours[pieceName])
-            continue;
-
+    const auto colourToSearch = pieceColours[move.piece] == WHITE ? BLACK : WHITE;
+    for (const auto& pieceName : filteredPieces[colourToSearch]) {
         const auto pieceLocations = getStartingSquaresOfPiece(pieceName);
-        for (const int startSquare: pieceLocations) {
+        for (const int startSquare : pieceLocations) {
             // prelim check if anything could feasibly attack this square
             const Bitboard prelimAttacks = rules.getPseudoAttacks(pieceName, startSquare);
             if (!(kingLocation & prelimAttacks))
                 continue;
             const Bitboard attackedSquares = RulesCheck::getAttackMoves(startSquare, pieceName, &bitboards);
-            if ((attackedSquares & kingLocation) != 0) { return true; }
+            if ((attackedSquares & kingLocation) != 0) {
+                return true;
+            }
         }
-    }
+    }   
 
     return false;
 }
 
 std::vector<int> BoardManager::getStartingSquaresOfPiece(const Piece& piece){
     std::vector<int> startingSquares;
+    startingSquares.reserve(8); // max of 8 pieces per board
 
     auto startingBoard = bitboards[piece];
     if (startingBoard == 0ULL) {
