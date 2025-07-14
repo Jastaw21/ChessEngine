@@ -161,16 +161,12 @@ class Rules {
 public:
 
     Rules();
-    Bitboard getAttackMoves(int square, const Piece& piece);
-    Bitboard getPushMoves(int square, const Piece& piece);
-    Bitboard getPseudoLegalMoves(int square, const Piece& piece);
-    Bitboard getCastlingMoves(int square, const Piece& piece);
 
     Bitboard getPseudoPawnEP(const Piece& piece, const int fromSquare, const Bitboard& opponentPawnOccupancy){
         Bitboard opponentPawnStarts = piece == WP ? 0xff00000000 : 0xff000000;
 
         // need to check if the opponent pawns are even in the right starting places
-        if (opponentPawnOccupancy & opponentPawnStarts == 0)
+        if ((opponentPawnOccupancy & opponentPawnStarts) == 0)
             return 0ULL;
 
         // must end up north or south (if black) of the other pawns
@@ -217,6 +213,8 @@ public:
                 return 0ULL;
         }
     }
+
+    Bitboard getPseudoCastlingMoves(const Piece& piece, const int fromSquare, const BitBoards& boards);
 
     std::unordered_map<int, Bitboard> rankAttacks;
     std::unordered_map<int, Bitboard> fileAttacks;

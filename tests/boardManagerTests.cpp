@@ -9,15 +9,15 @@
 #include "Utility/Fen.h"
 
 TEST(MoveStruct, ToUCICorrect){
-    constexpr Move move{.piece = WP, .rankFrom = 1, .fileFrom = 1, .rankTo = 2, .fileTo = 1};
+    auto move = Move(WP, 1, 1, 2, 1);
     EXPECT_EQ(move.toUCI(), "a1a2");
 
-    constexpr Move move2{.piece = WP, .rankFrom = 1, .fileFrom = 1, .rankTo = 8, .fileTo = 8};
+    auto move2 = Move(WP, 1, 1, 8, 8);
     EXPECT_EQ(move2.toUCI(), "a1h8");
 }
 
 TEST(MoveStruct, MakeFromUCICorrect){
-    const auto move = createMove(WN, "a1a2");
+    auto move = createMove(WN, "a1a2");
     EXPECT_EQ(move.piece, Piece::WN);
     EXPECT_EQ(move.rankFrom, 1);
     EXPECT_EQ(move.fileFrom, 1);
@@ -32,13 +32,13 @@ TEST(BoardManagerHistory, AllMovesResultInHistory){
     EXPECT_EQ(manager.getMoveHistory().size(), 0);
 
     // make a move
-    Move move{.piece = BP, .rankFrom = 8, .fileFrom = 1, .rankTo = 7, .fileTo = 1};
+    Move move = createMove(BP, "a8a7");
 
-    // succesful moves should increase the size
+    // successful moves should increase the size
     EXPECT_TRUE(manager.tryMove(move));
     EXPECT_EQ(manager.getMoveHistory().size(), 1);
 
-    // unsuccsesful moves shouldn't increase the size
+    // unsuccessful moves shouldn't increase the size
     Move failedMove = createMove(WP, "a7f2");
     EXPECT_FALSE(manager.tryMove(failedMove));
     EXPECT_EQ(manager.getMoveHistory().size(), 1);
@@ -51,7 +51,7 @@ TEST(BoardManagerHistory, UndoMovesRestoreHistory){
     EXPECT_EQ(manager.getMoveHistory().size(), 0);
 
     // make a move
-    Move move{.piece = BP, .rankFrom = 8, .fileFrom = 1, .rankTo = 7, .fileTo = 1};
+    Move move = createMove(BP, "a8a7");
     manager.tryMove(move);
     EXPECT_EQ(manager.getMoveHistory().size(), 1);
 
@@ -70,7 +70,7 @@ TEST(BoardManagerLegality, WhitePawnLegalityCorrect){
     Move westMove = createMove(WP, "d4c4");
     Move northEastMove = createMove(WP, "d4e5");
 
-    Move northMove{.piece = WP, .rankFrom = 4, .fileFrom = 4, .rankTo = 5, .fileTo = 4};
+    Move northMove = createMove(WP, "d4d5");
 
     EXPECT_FALSE(manager.checkMove(southMove));
     EXPECT_FALSE(manager.checkMove(eastMove));
@@ -86,17 +86,15 @@ TEST(BoardManagerLegality, WhitePawnLegalityCorrect){
     EXPECT_TRUE(northMove.resultBits & MoveResult::PUSH);
 
     // if not on the first rank, move only 1 rank.
-    Move northMoveTwoSquares{.piece = WP, .rankFrom = 4, .fileFrom = 4, .rankTo = 6, .fileTo = 4};
+    Move northMoveTwoSquares = createMove(WP, "d4d6");
     EXPECT_FALSE(manager.checkMove(northMoveTwoSquares));
 
     manager.getBitboards()->loadFEN("8/8/8/8/8/8/3P4/8");
 
     // if on the starting pawn rank, move 1 or 2 ranks.
-    Move northMoveFromSecondRankOneSquare{.piece = WP, .rankFrom = 2, .fileFrom = 4, .rankTo = 3, .fileTo = 4};
-    Move northMoveFromSecondRankTwoSquares{.piece = WP, .rankFrom = 2, .fileFrom = 4, .rankTo = 4, .fileTo = 4};
-    Move northMoveFromSecondRankThreeSquares{
-                .piece = WP, .rankFrom = 2, .fileFrom = 4, .rankTo = 5, .fileTo = 4
-            };
+    auto northMoveFromSecondRankOneSquare = Move(WP, 2, 4, 3, 4);
+    auto northMoveFromSecondRankTwoSquares = Move(WP, 2, 4, 4, 4);
+    auto northMoveFromSecondRankThreeSquares = Move(WP, 2, 4, 5, 4);
     EXPECT_TRUE(manager.checkMove(northMoveFromSecondRankOneSquare));
     EXPECT_TRUE(manager.checkMove(northMoveFromSecondRankTwoSquares));
     EXPECT_FALSE(manager.checkMove(northMoveFromSecondRankThreeSquares));
@@ -108,11 +106,11 @@ TEST(BoardManagerLegality, BlackPawnLegalityCorrect){
     manager.getBitboards()->loadFEN("8/8/8/8/3p4/8/8/8");
 
     // black pawn can only move south, move should fail in all other cases
-    Move southMove{.piece = BP, .rankFrom = 4, .fileFrom = 4, .rankTo = 3, .fileTo = 4};
-    Move eastMove{.piece = BP, .rankFrom = 4, .fileFrom = 4, .rankTo = 4, .fileTo = 5};
-    Move westMove{.piece = BP, .rankFrom = 4, .fileFrom = 4, .rankTo = 4, .fileTo = 3};
-    Move southEastMove{.piece = BP, .rankFrom = 4, .fileFrom = 4, .rankTo = 3, .fileTo = 5};
-    Move northMove{.piece = BP, .rankFrom = 4, .fileFrom = 4, .rankTo = 5, .fileTo = 4};
+    auto southMove = Move(BP, 4, 4, 3, 4);
+    auto eastMove = Move(BP, 4, 4, 4, 5);
+    auto westMove = Move(BP, 4, 4, 4, 3);
+    auto southEastMove = Move(BP, 4, 4, 3, 5);
+    auto northMove = Move(BP, 4, 4, 5, 4);
 
     EXPECT_FALSE(manager.checkMove(northMove));
     EXPECT_FALSE(manager.checkMove(eastMove));
@@ -122,17 +120,15 @@ TEST(BoardManagerLegality, BlackPawnLegalityCorrect){
     EXPECT_TRUE(manager.checkMove(southMove));
 
     // if not on the first rank, move only 1 rank.
-    Move southTwoSquares{.piece = BP, .rankFrom = 4, .fileFrom = 4, .rankTo = 2, .fileTo = 4};
+    auto southTwoSquares = Move(BP, 4, 4, 2, 4);
     EXPECT_FALSE(manager.checkMove(southTwoSquares));
 
     manager.getBitboards()->loadFEN("8/3p4/8/8/8/8/8/8");
 
     // if on the starting pawn rank, move 1 or 2 ranks.
-    Move moveOneSouth{.piece = BP, .rankFrom = 7, .fileFrom = 4, .rankTo = 6, .fileTo = 4};
-    Move moveTwoSouth{.piece = BP, .rankFrom = 7, .fileFrom = 4, .rankTo = 5, .fileTo = 4};
-    Move moveThreeSouth{
-                .piece = BP, .rankFrom = 7, .fileFrom = 4, .rankTo = 4, .fileTo = 4
-            };
+    auto moveOneSouth = Move(BP, 7, 4, 6, 4);
+    auto moveTwoSouth = Move(BP, 7, 4, 5, 4);
+    auto moveThreeSouth = Move(BP, 7, 4, 4, 4);
     EXPECT_TRUE(manager.checkMove(moveOneSouth));
     EXPECT_TRUE(manager.checkMove(moveTwoSouth));
     EXPECT_FALSE(manager.checkMove(moveThreeSouth));
@@ -145,21 +141,21 @@ TEST(BoardManagerLegality, RookLegalityCorrect){
 
     // cant move diagonally
     for (int i = 1; i < 8; i++) {
-        Move northEastMove{.piece = WR, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = i + 1};
+        auto northEastMove = Move(WR, 1, 1, i + 1, i + 1);
         EXPECT_FALSE(manager.checkMove(northEastMove));
         EXPECT_TRUE(northEastMove.resultBits & MoveResult::ILLEGAL_MOVE);
     }
 
     // can move vertically
     for (int i = 1; i < 8; i++) {
-        Move verticalMove{.piece = WR, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = 1};
+        auto verticalMove = Move(WR, 1, 1, i + 1, 1);
         EXPECT_TRUE(manager.checkMove(verticalMove));
         EXPECT_TRUE(verticalMove.resultBits & MoveResult::PUSH);
     }
 
     // can move horizontally
     for (int i = 1; i < 8; i++) {
-        Move horizMove{.piece = WR, .rankFrom = 1, .fileFrom = 1, .rankTo = 1, .fileTo = i + 1};
+        auto horizMove = Move(WR, 1, 1, 1, i + 1);
         EXPECT_TRUE(manager.checkMove(horizMove));
         EXPECT_TRUE(horizMove.resultBits & MoveResult::PUSH);
     }
@@ -172,19 +168,19 @@ TEST(BoardManagerLegality, QueenLegalityCorrect){
 
     // can move diagonally
     for (int i = 1; i < 8; i++) {
-        Move northEastMove{.piece = WQ, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = i + 1};
+        auto northEastMove = Move(WQ, 1, 1, i + 1, i + 1);
         EXPECT_TRUE(manager.checkMove(northEastMove));
     }
 
     // can move vertically
     for (int i = 1; i < 8; i++) {
-        Move verticalMove{.piece = WQ, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = 1};
+        auto verticalMove = Move(WQ, 1, 1, i + 1, 1);
         EXPECT_TRUE(manager.checkMove(verticalMove));
     }
 
     // can move horizontally
     for (int i = 1; i < 8; i++) {
-        Move horizMove{.piece = WQ, .rankFrom = 1, .fileFrom = 1, .rankTo = 1, .fileTo = i + 1};
+        auto horizMove = Move(WQ, 1, 1, 1, i + 1);
         EXPECT_TRUE(manager.checkMove(horizMove));
     }
 
@@ -199,7 +195,7 @@ TEST(BoardManagerLegality, QueenLegalityCorrect){
             continue;
         if (rank - 1 == file - 1)
             continue;
-        auto move = Move{.piece = WQ, .rankFrom = 1, .fileFrom = 1, .rankTo = rank, .fileTo = file};
+        auto move = Move(WQ, 1, 1, rank, file);
         EXPECT_FALSE(manager.checkMove(move));
     }
 
@@ -216,7 +212,7 @@ TEST(BoardManagerLegality, KingLegalityCorrect){
 
     // can diagonally move one square only
     for (int i = 1; i < 8; i++) {
-        Move northEastMove{.piece = BK, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = i + 1};
+        auto northEastMove = Move(BK, 1, 1, i + 1, i + 1);
         if (i == 1) { EXPECT_TRUE(manager.checkMove(northEastMove)); } else {
             EXPECT_FALSE(manager.checkMove(northEastMove));
         }
@@ -224,7 +220,7 @@ TEST(BoardManagerLegality, KingLegalityCorrect){
 
     // can vertically move one square only
     for (int i = 1; i < 8; i++) {
-        Move verticalMove{.piece = BK, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = 1};
+        auto verticalMove = Move(BK, 1, 1, i + 1, 1);
         if (i == 1) { EXPECT_TRUE(manager.checkMove(verticalMove)); } else {
             EXPECT_FALSE(manager.checkMove(verticalMove));
         }
@@ -232,7 +228,7 @@ TEST(BoardManagerLegality, KingLegalityCorrect){
 
     // can horizontally move one square only
     for (int i = 1; i < 8; i++) {
-        Move horizMove{.piece = BK, .rankFrom = 1, .fileFrom = 1, .rankTo = 1, .fileTo = i + 1};
+        auto horizMove = Move(BK, 1, 1, 1, i + 1);
         if (i == 1) { EXPECT_TRUE(manager.checkMove(horizMove)); } else { EXPECT_FALSE(manager.checkMove(horizMove)); }
     }
 
@@ -240,7 +236,7 @@ TEST(BoardManagerLegality, KingLegalityCorrect){
     for (int square = 0; square < 64; square++) {
         int rank, file;
         squareToRankAndFile(square, rank, file);
-        auto move = Move{.piece = BK, .rankFrom = 1, .fileFrom = 1, .rankTo = rank, .fileTo = file};
+        auto move = Move(BK, 1, 1, rank, file);
 
         if (rank > 2 || file > 2) { EXPECT_FALSE(manager.checkMove(move));; }
     }
@@ -263,7 +259,7 @@ TEST(BoardManagerLegality, BishopLegalityCorrect){
 
     // can move diagonally
     for (int i = 1; i < 8; i++) {
-        Move northEastMove{.piece = BB, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = i + 1};
+        auto northEastMove = Move(BB, 1, 1, i + 1, i + 1);
         EXPECT_TRUE(manager.checkMove(northEastMove));
 
         EXPECT_TRUE(northEastMove.resultBits & MoveResult::PUSH);
@@ -271,7 +267,7 @@ TEST(BoardManagerLegality, BishopLegalityCorrect){
 
     // can't move vertically
     for (int i = 1; i < 8; i++) {
-        Move verticalMove{.piece = BB, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = 1};
+        auto verticalMove = Move(BB, 1, 1, i + 1, 1);
 
         EXPECT_FALSE(manager.checkMove(verticalMove));
 
@@ -280,7 +276,7 @@ TEST(BoardManagerLegality, BishopLegalityCorrect){
 
     // can't move horizontally
     for (int i = 1; i < 8; i++) {
-        Move horizMove{.piece = BB, .rankFrom = 1, .fileFrom = 1, .rankTo = 1, .fileTo = i + 1};
+        auto horizMove = Move(BB, 1, 1, 1, i + 1);
         EXPECT_FALSE(manager.checkMove(horizMove));
 
         EXPECT_TRUE(horizMove.resultBits & MoveResult::ILLEGAL_MOVE);
@@ -315,7 +311,7 @@ TEST(BoardManagerLegality, KnightLegalityCorrect){
 
     // can't move diagonally
     for (int i = 1; i < 8; i++) {
-        Move northEastMove{.piece = BN, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = i + 1};
+        auto northEastMove = Move(BN, 1, 1, i + 1, i + 1);
         EXPECT_FALSE(manager.checkMove(northEastMove));
 
         EXPECT_TRUE(northEastMove.resultBits & MoveResult::ILLEGAL_MOVE);
@@ -323,7 +319,7 @@ TEST(BoardManagerLegality, KnightLegalityCorrect){
 
     // can't move vertically
     for (int i = 1; i < 8; i++) {
-        Move verticalMove{.piece = BN, .rankFrom = 1, .fileFrom = 1, .rankTo = i + 1, .fileTo = 1};
+        auto verticalMove = Move(BN, 1, 1, i + 1, 1);
 
         EXPECT_FALSE(manager.checkMove(verticalMove));
 
@@ -332,7 +328,7 @@ TEST(BoardManagerLegality, KnightLegalityCorrect){
 
     // can't move horizontally
     for (int i = 1; i < 8; i++) {
-        Move horizMove{.piece = BN, .rankFrom = 1, .fileFrom = 1, .rankTo = 1, .fileTo = i + 1};
+        auto horizMove = Move(BN, 1, 1, 1, i + 1);
         EXPECT_FALSE(manager.checkMove(horizMove));
 
         EXPECT_TRUE(horizMove.resultBits & MoveResult::ILLEGAL_MOVE);
@@ -381,7 +377,7 @@ TEST(BoardManagerLegality, CantMoveToOccupiedSquareWithSameColour){
     manager.getBitboards()->loadFEN(Fen::STARTING_FEN);
 
     // the white queen can't move to where a white pawn is
-    Move whiteQueenMove{.piece = WQ, .rankFrom = 1, .fileFrom = 4, .rankTo = 2, .fileTo = 4};
+    auto whiteQueenMove = Move(WQ, 1, 4, 2, 4);
     EXPECT_FALSE(manager.checkMove(whiteQueenMove));
 
     EXPECT_TRUE(whiteQueenMove.resultBits & MoveResult::ILLEGAL_MOVE);
@@ -393,13 +389,13 @@ TEST(BoardManagerLegality, CanMoveToOccupiedSquareWithOtherColour){
     manager.getBitboards()->loadFEN("r7/8/8/8/8/8/8/R7");
 
     // the white rook can capture the black rook
-    Move whiteRookMove{.piece = WR, .rankFrom = 1, .fileFrom = 1, .rankTo = 8, .fileTo = 1};
+    auto whiteRookMove = Move(WR, 1, 1, 8, 1);
     EXPECT_TRUE(manager.checkMove(whiteRookMove));
 
     EXPECT_TRUE(whiteRookMove.resultBits & MoveResult::CAPTURE);
 
     // so can the black
-    Move blackRookMove{.piece = WR, .rankFrom = 1, .fileFrom = 1, .rankTo = 8, .fileTo = 1};
+    auto blackRookMove = Move(BR, 8, 1, 1, 1);
     EXPECT_TRUE(manager.checkMove(blackRookMove));
 
     EXPECT_TRUE(blackRookMove.resultBits & MoveResult::CAPTURE);
@@ -411,11 +407,11 @@ TEST(BoardManagerLegality, MostPiecesCantJumpOthers){
     // We'll move the white rook to each of 3,5. All should fail
     manager.getBitboards()->loadFEN("8/8/8/8/p7/8/P7/R7");
 
-    Move moveA3{.piece = WR, .rankFrom = 1, .fileFrom = 1, .rankTo = 3, .fileTo = 1};
+    auto moveA3 = Move(WR, 1, 1, 3, 1);
     EXPECT_FALSE(manager.checkMove(moveA3));
     EXPECT_TRUE(moveA3.resultBits & MoveResult::ILLEGAL_MOVE);
 
-    Move moveA5{.piece = WR, .rankFrom = 1, .fileFrom = 1, .rankTo = 5, .fileTo = 1};
+    auto moveA5 = Move(WR, 1, 1, 5, 1);
     EXPECT_FALSE(manager.checkMove(moveA5));
     EXPECT_TRUE(moveA5.resultBits & MoveResult::ILLEGAL_MOVE);
 }
@@ -425,12 +421,12 @@ TEST(BoardManagerLegality, KnightsCanJumpOthers){
     // knight in a1 with a variety of blockers
     manager.getBitboards()->loadFEN("8/8/8/8/8/8/rb6/nR6");
 
-    Move moveA3{.piece = BN, .rankFrom = 1, .fileFrom = 1, .rankTo = 3, .fileTo = 2};
+    auto moveA3 = Move(BN, 1, 1, 3, 2);
     EXPECT_TRUE(manager.checkMove(moveA3));
 
     EXPECT_TRUE(moveA3.resultBits & MoveResult::PUSH);
 
-    Move moveA5{.piece = BN, .rankFrom = 1, .fileFrom = 1, .rankTo = 2, .fileTo = 3};
+    auto moveA5 = Move(BN, 1, 1, 2, 3);
     EXPECT_TRUE(manager.checkMove(moveA5));
 
     EXPECT_TRUE(moveA5.resultBits & MoveResult::PUSH);
@@ -451,7 +447,7 @@ TEST(BoardManagerMoveExecution, EmptySquareMoveUpdates){
     manager.getBitboards()->loadFEN(Fen::STARTING_FEN);
 
     // move white pawn to e5
-    Move move{.piece = WP, .rankFrom = 2, .fileFrom = 1, .rankTo = 3, .fileTo = 1};
+    auto move = Move(WP, 2, 1, 3, 1);
     manager.tryMove(move);
 
     // move to square is correct
@@ -465,7 +461,7 @@ TEST(BoardManagerMoveExecution, CaptureUpdatesState){
     manager.getBitboards()->loadFEN("8/8/8/8/8/8/8/nR6");
 
     // move rook at A1 to capture
-    Move move{.piece = WR, .rankFrom = 1, .fileFrom = 2, .rankTo = 1, .fileTo = 1};
+    auto move = Move(WR, 1, 2, 1, 1);
     manager.tryMove(move);
 
     // a1 is now the white rook
@@ -492,7 +488,7 @@ TEST(BoardManagerMoveExecution, SimpleUndoRestoresState){
     const Bitboard initialBitboard = manager.getBitboards()->getBitboard(WR);
 
     // move rook at A1 to capture
-    Move move{.piece = WR, .rankFrom = 1, .fileFrom = 2, .rankTo = 1, .fileTo = 1};
+    auto move = Move(WR, 1, 2, 1, 1);
     manager.tryMove(move);
 
     manager.undoMove(move);
@@ -506,11 +502,11 @@ TEST(BoardManagerMoveExecution, UndoCaptureRestoresFullState){
     auto manager = BoardManager();
     manager.getBitboards()->loadFEN("8/8/8/8/8/8/8/nR6");
 
-    const auto whiteRookBoardInitial = manager.getBitboards()->getBitboard(WR);
-    const auto blackKnightBoardInitial = manager.getBitboards()->getBitboard(BN);
+    auto whiteRookBoardInitial = manager.getBitboards()->getBitboard(WR);
+    auto blackKnightBoardInitial = manager.getBitboards()->getBitboard(BN);
 
     // move rook at A1 to capture
-    Move move{.piece = WR, .rankFrom = 1, .fileFrom = 2, .rankTo = 1, .fileTo = 1};
+    auto move = Move(WR, 1, 2, 1, 1);
     manager.tryMove(move);
 
     // a1 is now the white rook
@@ -524,8 +520,8 @@ TEST(BoardManagerMoveExecution, UndoCaptureRestoresFullState){
     // the white rook is back where it was
     EXPECT_EQ(manager.getBitboards()->getPiece(1,2), Piece::WR);
 
-    const auto whiteRookBoardFinal = manager.getBitboards()->getBitboard(WR);
-    const auto blackKnightBoardFinal = manager.getBitboards()->getBitboard(BN);
+    auto whiteRookBoardFinal = manager.getBitboards()->getBitboard(WR);
+    auto blackKnightBoardFinal = manager.getBitboards()->getBitboard(BN);
 
     EXPECT_EQ(whiteRookBoardInitial, whiteRookBoardFinal);
     EXPECT_EQ(blackKnightBoardInitial, blackKnightBoardFinal);
@@ -538,8 +534,8 @@ TEST(BoardManagerMoveExecution, CastlingCanBeUndone){
 
     // this would be the castling move
     auto whiteMove = createMove(WK, "e1g1");
-    const auto initialWhiteKingBoard = manager.getBitboards()->getBitboard(WK);
-    const auto initialWhiteRookBoard = manager.getBitboards()->getBitboard(WR);
+    auto initialWhiteKingBoard = manager.getBitboards()->getBitboard(WK);
+    auto initialWhiteRookBoard = manager.getBitboards()->getBitboard(WR);
     ASSERT_TRUE(manager.checkMove(whiteMove));
 
     ASSERT_TRUE(whiteMove.resultBits & MoveResult::CASTLING);
@@ -547,8 +543,8 @@ TEST(BoardManagerMoveExecution, CastlingCanBeUndone){
     EXPECT_EQ(manager.getBitboards()->getBitboard(WR), initialWhiteRookBoard);
 
     manager.getBitboards()->loadFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R");
-    const auto qsInitialWhiteRook = manager.getBitboards()->getBitboard(WR);
-    const auto qsInitialWhiteKing = manager.getBitboards()->getBitboard(WK);
+    auto qsInitialWhiteRook = manager.getBitboards()->getBitboard(WR);
+    auto qsInitialWhiteKing = manager.getBitboards()->getBitboard(WK);
     ASSERT_TRUE(manager.checkMove(whiteMove));
 
     ASSERT_TRUE(whiteMove.resultBits & MoveResult::CASTLING);
@@ -557,8 +553,8 @@ TEST(BoardManagerMoveExecution, CastlingCanBeUndone){
 
     manager.getBitboards()->loadFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R");
     auto blackMove = createMove(BK, "e8g8");
-    const auto initialBlackKingBoard = manager.getBitboards()->getBitboard(BK);
-    const auto initialBlackRookBoard = manager.getBitboards()->getBitboard(BR);
+    auto initialBlackKingBoard = manager.getBitboards()->getBitboard(BK);
+    auto initialBlackRookBoard = manager.getBitboards()->getBitboard(BR);
     ASSERT_TRUE(manager.checkMove(blackMove));
 
     ASSERT_TRUE(blackMove.resultBits & MoveResult::CASTLING);
@@ -567,8 +563,8 @@ TEST(BoardManagerMoveExecution, CastlingCanBeUndone){
 
     manager.getBitboards()->loadFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R");
     auto ksblackMove = createMove(BK, "e8c8");
-    const auto ksinitialBlackKingBoard = manager.getBitboards()->getBitboard(BK);
-    const auto ksinitialBlackRookBoard = manager.getBitboards()->getBitboard(BR);
+    auto ksinitialBlackKingBoard = manager.getBitboards()->getBitboard(BK);
+    auto ksinitialBlackRookBoard = manager.getBitboards()->getBitboard(BR);
     ASSERT_TRUE(manager.checkMove(ksblackMove));
 
     ASSERT_TRUE(ksblackMove.resultBits & MoveResult::CASTLING);
@@ -580,11 +576,11 @@ TEST(BoardManagerMoveExecution, KingCantBeCaptured){
     auto manager = BoardManager();
     manager.getBitboards()->loadFEN("8/8/8/8/8/8/8/kP6");
 
-    auto tryCapture = Move{.piece = BP, .rankFrom = 1, .fileFrom = 2, .rankTo = 1, .fileTo = 1};
+    auto tryCapture = Move(BP, 1, 2, 1, 1);
     EXPECT_FALSE(manager.tryMove(tryCapture));
 
     manager.getBitboards()->loadFEN("3K4/8/2n5/8/8/8/8/8");
-    auto tryCapture2 = Move{.piece = BN, .rankFrom = 6, .fileFrom = 3, .rankTo = 8, .fileTo = 4};
+    auto tryCapture2 = Move(BN, 6, 3, 8, 4);
     EXPECT_FALSE(manager.tryMove(tryCapture2));
 }
 
@@ -592,13 +588,19 @@ TEST(BoardManagerLegality, PawnsOnlyCaptureDiagonally){
     auto manager = BoardManager();
     manager.getBitboards()->loadFEN("8/8/8/8/8/8/p7/kP6");
 
-    auto tryCaptureWest = Move{.piece = WP, .rankFrom = 1, .fileFrom = 2, .rankTo = 1, .fileTo = 1};
+    auto tryCaptureWest = Move(WP, 1, 2, 1, 1);
     EXPECT_FALSE(manager.tryMove(tryCaptureWest));
 
-    auto tryCaptureNorthWest = Move{.piece = WP, .rankFrom = 1, .fileFrom = 2, .rankTo = 2, .fileTo = 1};
+    auto tryCaptureNorthWest = Move(WP, 1, 2, 2, 1);
     EXPECT_TRUE(manager.tryMove(tryCaptureNorthWest));
 
     EXPECT_TRUE(tryCaptureNorthWest.resultBits & MoveResult::CAPTURE);
+
+    manager.setCurrentTurn(WHITE);
+    manager.getBitboards()->loadFEN("rnb1kbnr/pppp1ppp/4p3/8/6Pq/5P2/PPPPP2P/RNBQKBNR");
+    auto attemptedStraightCapture = Move(WP, 2, 8, 4, 8);
+
+    EXPECT_FALSE(manager.tryMove(attemptedStraightCapture));
 }
 
 TEST(BoardManagerAdvancedRules, KingCantMoveInCheck){
@@ -675,15 +677,15 @@ TEST(BoardManagerAdvancedRules, EnPassantCanBeUndone){
     auto blackMove1 = createMove(BP, "f7f5");
     manager.tryMove(blackMove1);
 
-    const auto initialWhiteBitboard = manager.getBitboards()->getBitboard(BP);
-    const auto initialBlackBitboard = manager.getBitboards()->getBitboard(WP);
+    auto initialWhiteBitboard = manager.getBitboards()->getBitboard(BP);
+    auto initialBlackBitboard = manager.getBitboards()->getBitboard(WP);
 
-    const auto testEnPassant = createMove(WP, "e5f6");
+    auto testEnPassant = createMove(WP, "e5f6");
 
     manager.undoMove(testEnPassant);
 
-    const auto finalWhiteBitboard = manager.getBitboards()->getBitboard(BP);
-    const auto finalBlackBitboard = manager.getBitboards()->getBitboard(WP);
+    auto finalWhiteBitboard = manager.getBitboards()->getBitboard(BP);
+    auto finalBlackBitboard = manager.getBitboards()->getBitboard(WP);
 
     EXPECT_EQ(initialWhiteBitboard, finalWhiteBitboard);
     EXPECT_EQ(initialBlackBitboard, finalBlackBitboard);
@@ -847,29 +849,6 @@ TEST(RulesHeaderTests, KnightMoves){
 
     boards.loadFEN("8/8/8/8/8/8/8/1n6");
     EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(1,2), WN, &boards), 0x50800);
-}
-
-TEST(RulesHeaderTests, PawnMoves){
-    // all allow diags for simplicity
-
-    auto boards = BitBoards();
-
-    // from starting rank - n, ne, 2xn
-    boards.loadFEN("8/8/8/8/8/8/8/P7");
-    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(8,WP, &boards), 0x1030000);
-
-    // from next rank - n, ne
-    boards.loadFEN("8/8/8/8/8/8/P7/8");
-    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(16,WP, &boards), 0x3000000);
-
-    // from centre - NW, N, NE
-    boards.loadFEN("8/8/8/8/3P4/8/8/8");
-    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(4,4),WP, &boards), 0x1c00000000);
-    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(5,8),WP, &boards), 0xc00000000000);
-
-    // can't wrap n/s
-    boards.loadFEN("7Q/8/8/8/8/8/8/8");
-    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(8,8),WP, &boards), 0);
 }
 
 TEST(RulesHeaderTests, BishopMoves){
@@ -1047,6 +1026,10 @@ TEST(BoardManagerAdvancedRules, CantCastleThroughAttackedSquares){
 
     auto attemptedCastling = createMove(BK, "e8c8");
     EXPECT_FALSE(manager.checkMove(attemptedCastling));
+
+    manager.getBitboards()->loadFEN("r3k2r/p1ppqNb1/bn2pnp1/3P4/1p2P3/2N2Q2/PPPBBPpP/R3K2R");
+    auto attemptedCastling2 = createMove(WK, "e1g1");
+    EXPECT_FALSE(manager.checkMove(attemptedCastling2));
 }
 
 TEST(BoardManagerMoveExecution, FixPosition3CapturesNotFound){
@@ -1105,4 +1088,43 @@ TEST(BoardManagerLegality, ChecksAreRegistered){
     ASSERT_TRUE(manager.tryMove(whiteMove));
 
     EXPECT_TRUE(whiteMove.resultBits & CHECK);
+}
+
+TEST(BoardManagerLegality, KiwiPeteCanMoveBlackPawns){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN(Fen::KIWI_PETE_FEN);
+    auto whiteMove = createMove(WN, "e5f7");
+    ASSERT_TRUE(manager.tryMove(whiteMove));
+
+    auto blackMove = createMove(BP, "g6g5");
+    ASSERT_TRUE(manager.tryMove(blackMove));
+}
+
+TEST(BoardManagerLegality, EnPassantRequiresLastMoveToBePawnMovingTwoSquares){
+    auto manager = BoardManager();
+    manager.getBitboards()->loadFEN("r3k2r/p1ppqNb1/bn2pnp1/3P4/1p2P3/2N2Q1p/PPPBBPPP/R3K2R");
+    auto blackPawnMoveOneSouth = createMove(BP, "e6e5");
+    ASSERT_TRUE(manager.tryMove(blackPawnMoveOneSouth));
+
+    auto attemptedEnPassant = createMove(WP, "d5e6");
+    ASSERT_FALSE(manager.checkMove(attemptedEnPassant));
+}
+
+TEST(BoardManagerAdvancedRules, CheckMateWorks){
+    auto manager = BoardManager(WHITE);
+    manager.getBitboards()->loadFEN("8/4N1pk/8/8/8/4R3/8/6K1"); // pre-check state
+
+    auto checkMateMove = createMove(WR, "e3h3");
+    ASSERT_TRUE(manager.tryMove(checkMateMove));
+
+    EXPECT_TRUE(manager.isNowCheckMate());
+
+    manager.setCurrentTurn(BLACK);
+    manager.getBitboards()->loadFEN("rnbqkbnr/pppp1ppp/4p3/8/6P1/5P2/PPPPP2P/RNBQKBNR");
+    auto checkMateMove2 = createMove(BQ, "d8h4");
+
+    ASSERT_TRUE(manager.tryMove(checkMateMove2));
+    EXPECT_TRUE(manager.isNowCheckMate());
+    EXPECT_TRUE(checkMateMove2.resultBits & CHECK_MATE);
+    EXPECT_TRUE(checkMateMove2.resultBits & CHECK);
 }

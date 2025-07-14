@@ -8,6 +8,7 @@
 
 #include "MagicBitBoardShared.h"
 #include "BoardManager/BitBoards.h"
+#include "BoardManager/Rules.h"
 
 
 struct Magic {
@@ -171,8 +172,18 @@ public:
         initBishopMagics();
     }
 
-    Bitboard getRookAttacks(const int square, Bitboard occupancy);
-    Bitboard getBishopAttacks(const int square, Bitboard occupancy);
+    Bitboard getRookAttacks(const int square, Bitboard occupancy) const;
+    Bitboard getBishopAttacks(const int square, Bitboard occupancy) const;
+
+    Bitboard getMoves(const int square, const Piece& piece, const BitBoards& boards);
+
+    Rules rules;
+
+private:
+
+    Bitboard getSimpleAttacks(const int square, const Piece& piece, const BitBoards& boards);
+    Bitboard getAllAttacks(const Colours& colourToGetAttacksFor, const BitBoards& boards);
+    Bitboard getCastling(const int square, const Piece& piece, const BitBoards& boards);
 };
 
 

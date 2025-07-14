@@ -6,7 +6,7 @@
 #include "BoardManager/Rules.h"
 
 TEST(rulesHeader, rules){
-    auto rules = Rules();
+    const auto rules = Rules();
     auto result = rules.rankAttacks;
 
     std::cout << 1 << std::endl;

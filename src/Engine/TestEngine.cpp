@@ -123,7 +123,7 @@ std::vector<Move> TestEngine::generateValidMovesFromPosition(BoardManager& mgr, 
         int endRank, endFile;
         squareToRankAndFile(startSquare, startRank, startFile);
         squareToRankAndFile(endSquare, endRank, endFile);
-        Move candidateMove{piece, startRank, startFile, endRank, endFile};
+        Move candidateMove(piece, startSquare, endSquare);
 
         if (mgr.checkMove(candidateMove))
             validMoves.push_back(candidateMove);
@@ -183,9 +183,9 @@ auto TestEngine::simplePerft(const int depth, BoardManager& boardManager){
 }
 
 PerftResults TestEngine::perft(const int depth, BoardManager& boardManager){
-    if (depth == 0) return PerftResults{1, 0, 0, 0};
+    if (depth == 0) return PerftResults{1, 0, 0, 0, 0, 0};
 
-    PerftResults result{0, 0, 0, 0};
+    PerftResults result{0, 0, 0, 0, 0, 0};
     auto moves = generateMoveList(boardManager);
 
     for (auto& move: moves) {
@@ -195,13 +195,11 @@ PerftResults TestEngine::perft(const int depth, BoardManager& boardManager){
         if (depth == 1) {
             result.nodes++;
             // Only increment move result types at leaf depth
-            if (move.resultBits & CHECK)
-                result.checks++;
-            if (move.resultBits & EN_PASSANT) {
-                result.enPassant++;
-                result.captures++;
-            } else if (move.resultBits & CAPTURE) { result.captures++; } else if (
-                move.resultBits & CASTLING) { result.castling++; }
+            if (move.resultBits & CHECK) { result.checks++; }
+            if (move.resultBits & EN_PASSANT) { result.enPassant++; }
+            if (move.resultBits & CAPTURE) { result.captures++; }
+            if (move.resultBits & CASTLING) { result.castling++; }
+            if (move.resultBits & CHECK_MATE) { result.checkMate++; }
         } else { result += child; }
 
         boardManager.undoMove();

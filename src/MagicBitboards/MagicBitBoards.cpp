@@ -1,3 +1,4 @@
+
 //
 // Created by jacks on 10/07/2025.
 //
@@ -46,18 +47,142 @@ void MagicBitBoards::initBishopMagics(){
     }
 }
 
-Bitboard MagicBitBoards::getRookAttacks(const int square, Bitboard occupancy){
-    Magic& magic = rookMagics[square];
+Bitboard MagicBitBoards::getRookAttacks(const int square, Bitboard occupancy) const{
+    const Magic& magic = rookMagics[square];
     occupancy &= magic.mask;
     occupancy *= magic.magic;
     occupancy >>= magic.shift;
     return magic.attacks[occupancy];
 }
 
-Bitboard MagicBitBoards::getBishopAttacks(const int square, Bitboard occupancy){
-    Magic& magic = bishopMagics[square];
+Bitboard MagicBitBoards::getBishopAttacks(const int square, Bitboard occupancy) const{
+    const Magic& magic = bishopMagics[square];
     occupancy &= magic.mask;
     occupancy *= magic.magic;
     occupancy >>= magic.shift;
     return magic.attacks[occupancy];
+}
+
+Bitboard MagicBitBoards::getMoves(const int square, const Piece& piece, const BitBoards& boards){
+    switch (piece) {
+        case WR:
+        case BR:
+            return getRookAttacks(square, boards.getOccupancy());
+        case WB:
+        case BB:
+            return getBishopAttacks(square, boards.getOccupancy());
+        case WQ:
+        case BQ:
+            return getRookAttacks(square, boards.getOccupancy()) | getBishopAttacks(square, boards.getOccupancy());
+        case WN:
+        case BN:
+            return rules.knightAttacks[square] & ~boards.getOccupancy(pieceColours[piece]); // cant go to own square
+        case WK:
+        case BK: {
+            const Bitboard castling = getCastling(square, piece, boards);
+            return (castling | rules.kingMoves[square]) & ~boards.getOccupancy(pieceColours[piece]);
+            break;
+        }
+        // cant go to own square
+        case BP:
+        case WP: {
+            Bitboard pushes = rules.getPseudoPawnPushes(piece, square); // just get the dumb pushes
+
+            // need to check the immediate next rank, this blocks us if we move 1 or 2 ranks
+            const int blockingRankOffset = pieceColours[piece] == WHITE ? 1 : -1;
+            int blockingRank = squareToRank(square) + blockingRankOffset;
+            if (blockingRank > 0 && blockingRank < 9) {
+                const int blockingSquare = rankAndFileToSquare(blockingRank, squareToFile(square));
+                if (boards.testSquare(blockingSquare))
+                    pushes = 0ULL;
+            }
+            // now check the second rank
+            blockingRank += blockingRankOffset;
+            if (blockingRank > 0 && blockingRank < 9) {
+                const int blockingSquare = rankAndFileToSquare(blockingRank, squareToFile(square));
+                if (boards.testSquare(blockingSquare))
+                    pushes &= ~(1ULL << blockingSquare); // just blank that square off
+            }
+
+            const Bitboard rawMoves = rules.getPseudoPawnAttacks(piece, square) | pushes;
+            const Piece opponentPawn = piece == BP ? WP : BP;
+            const Bitboard epSquare = rules.getPseudoPawnEP(piece, square, boards.getOccupancy(opponentPawn));
+            return (rawMoves | epSquare) & ~boards.getOccupancy(pieceColours[piece]);
+        }
+        default:
+            return 0ULL;
+    }
+}
+
+Bitboard MagicBitBoards::getSimpleAttacks(const int square, const Piece& piece, const BitBoards& boards){
+    switch (piece) {
+        case WR:
+        case BR:
+            return getRookAttacks(square, boards.getOccupancy());
+        case WB:
+        case BB:
+            return getBishopAttacks(square, boards.getOccupancy());
+        case WQ:
+        case BQ:
+            return getRookAttacks(square, boards.getOccupancy()) | getBishopAttacks(square, boards.getOccupancy());
+        case WN:
+        case BN:
+            return rules.knightAttacks[square] & ~boards.getOccupancy(pieceColours[piece]); // cant go to own square
+        case WK:
+        case BK:
+            return rules.kingMoves[square] & ~boards.getOccupancy(pieceColours[piece]); // cant go to own square
+        case BP:
+        case WP:
+            return rules.getPseudoPawnAttacks(piece, square) & ~boards.getOccupancy(pieceColours[piece]);
+        default: ;
+    }
+
+    return 0ULL;
+}
+
+Bitboard MagicBitBoards::getAllAttacks(const Colours& colourToGetAttacksFor, const BitBoards& boards){
+    Bitboard attacks = 0ULL;
+    for (int piece = 0; piece < PIECE_N; ++piece) {
+        const auto pieceToSearch = static_cast<Piece>(piece);
+        if (pieceColours[pieceToSearch] == colourToGetAttacksFor) {
+            Bitboard occupancy = boards.getOccupancy(pieceToSearch);
+
+            while (occupancy) {
+                const int square = popLowestSetBit(occupancy);
+                attacks |= getSimpleAttacks(square, pieceToSearch, boards);
+            }
+        }
+    }
+    return attacks;
+}
+
+Bitboard MagicBitBoards::getCastling(const int square, const Piece& piece, const BitBoards& boards){
+    if (piece != WK && piece != BK)
+        return 0ULL;
+
+    if (square != 4 && square != 60)
+        return 0ULL;
+
+    Bitboard result = 0ULL;
+
+    const auto isQueenSide = {false, true};
+    for (const auto& queenSide: isQueenSide) {
+        auto castlingMask = queenSide ? Constants::QUEEN_SIDE_CASTLING : Constants::KING_SIDE_CASTLING;
+        if (pieceColours[piece] == WHITE) { castlingMask &= Constants::RANK_1; } else {
+            castlingMask &= Constants::RANK_8;
+        }
+
+        if (castlingMask & boards.getOccupancy(piece))
+            continue; // can't castle through an occupied square
+
+        const auto attacks = getAllAttacks((pieceColours[piece] == WHITE ? BLACK : WHITE), boards);
+        if (attacks & castlingMask)
+            continue;
+
+        if (pieceColours[piece] == WHITE) { result |= queenSide ? Constants::C1 : Constants::G1; } else {
+            result |= queenSide ? Constants::C8 : Constants::G8;
+        }
+    }
+
+    return result;
 }

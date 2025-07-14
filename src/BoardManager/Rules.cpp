@@ -42,3 +42,43 @@ Rules::Rules(){
         kingMoves.insert({square, kingPushResult});
     }
 }
+
+Bitboard Rules::getPseudoCastlingMoves(const Piece& piece, const int fromSquare, const BitBoards& boards){
+    // only kings
+    if (piece != WK && piece != BK)
+        return 0ULL;
+
+    int fileFrom, rankFrom;
+    squareToRankAndFile(fromSquare, rankFrom, fileFrom);
+
+    // has to be from king start pos
+    if (fileFrom != 5)
+        return 0ULL;
+    // only works on rank 1 if white
+    if (piece == WK && rankFrom != 1)
+        return 0ULL;
+    // only works on rank 8 if black
+    if (piece == BK && rankFrom != 8)
+        return 0ULL;
+
+    const auto destinationFiles = {3, 7};
+    Bitboard result = 0ULL;
+    for (const auto& file: destinationFiles) {
+        if (boards.getOccupancy() & 1ULL << rankAndFileToSquare(rankFrom, file))
+            continue; // can't go to an occupied square
+
+        Bitboard passingSquares = 0ULL;
+        const int deltaFile = file - fileFrom;
+        for (int intermediateFile = fileFrom + sign(deltaFile); intermediateFile != file;
+             intermediateFile += sign(deltaFile)) {
+            passingSquares |= 1ULL << rankAndFileToSquare(rankFrom, intermediateFile);
+        }
+
+        if (passingSquares & boards.getOccupancy())
+            continue; // can't pass through an occupied square
+
+        result |= 1ULL << rankAndFileToSquare(rankFrom, file);
+    }
+
+    return result;
+}

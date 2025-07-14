@@ -26,25 +26,31 @@ enum MoveResult {
 
     // failures
     ILLEGAL_MOVE = 1 << 5,
-    SQUARE_OCCUPIED = 1 << 6,
-    MOVE_NOT_LEGAL_FOR_PIECE = 1 << 7,
-    MOVE_OUT_OF_BOUNDS = 1 << 8,
-    BLOCKING_PIECE = 1 << 9,
-    KING_IN_CHECK = 1 << 10,
-    DISCOVERED_CHECK = 1 << 11
+    KING_IN_CHECK = 1 << 6,
+    CHECK_MATE = 1 << 7,
 };
 
 
 struct Move {
-    Piece piece;
-    int rankFrom;
-    int fileFrom;
-    int rankTo;
-    int fileTo;
+    Move() = default;
+
+    Move(const Piece& piece, const int fromSquare, const int toSquare) : piece(piece),
+                                                                         rankFrom(squareToRank(fromSquare)),
+                                                                         fileFrom(squareToFile(fromSquare)),
+                                                                         rankTo(squareToRank(toSquare)),
+                                                                         fileTo(squareToFile(toSquare)){};
+
+    Move(const Piece& piece, const int rankFrom, const int fileFrom, const int rankTo, const int fileTo) : piece(piece),
+        rankFrom(rankFrom), fileFrom(fileFrom), rankTo(rankTo), fileTo(fileTo){};
+    Piece piece = PIECE_N;
+    int rankFrom = 0;
+    int fileFrom = 0;
+    int rankTo = 0;
+    int fileTo = 0;
 
     bool checkedOpponent = false;
 
-    int resultBits;
+    int resultBits = 0ULL;
     Piece capturedPiece = PIECE_N;
 
     std::string toUCI() const;
@@ -56,7 +62,7 @@ class BoardManager {
 public:
 
     explicit BoardManager();
-    explicit BoardManager(Colours colour) : currentTurn(colour){}
+    explicit BoardManager(const Colours colour) : currentTurn(colour){}
 
     BitBoards *getBitboards(){ return &bitboards; }
     std::stack<Move> &getMoveHistory(){ return moveHistory; }
@@ -70,11 +76,13 @@ public:
     Colours getCurrentTurn() const{ return currentTurn; }
     void setCurrentTurn(const Colours current_turn){ currentTurn = current_turn; }
 
+    bool isNowCheckMate();
+
 private:
 
-    Bitboard getSliderMoves(const Piece& movePiece, int fromSquare, const Bitboard& board);
-    bool handleCapture(Move& move);
-    void handleEP(Move& move);
+    Bitboard getSliderMoves(const Piece& movePiece, int fromSquare, const Bitboard& board) const;
+    bool handleCapture(Move& move) const;
+    bool checkAndHandleEP(Move& move);
     bool prelimCheckMove(Move& move);
 
     bool moveIsEnPassant(Move& move);
@@ -84,14 +92,21 @@ private:
     // do the move
     void makeMove(Move& move);
 
+    bool hasLegalMoveToEscapeCheck();
+    bool canPieceEscapeCheck(const Piece& pieceName);
+    bool isValidEscapeMove(Move& move);
+    bool hasValidMoveFromSquare(Piece pieceName, int startSquare,
+                                const std::bitset<64>& destinationSquares);
+
     // data
     BitBoards bitboards{};
     std::stack<Move> moveHistory;
     Colours currentTurn = WHITE;
 
     Rules rules;
-
     MagicBitBoards magicBitBoards;
+
+    bool isCheck = false;
 };
 
 

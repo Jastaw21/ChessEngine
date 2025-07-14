@@ -16,6 +16,7 @@ class PerftResult:
     castling = 0
     check = 0
     checkmate = 0
+    promotion = 0
 
     def __add__(self, other):
         result = PerftResult()
@@ -25,6 +26,7 @@ class PerftResult:
         result.castling = self.castling + other.castling
         result.check = self.check + other.check
         result.checkmate = self.checkmate + other.checkmate
+        result.promotion = self.promotion + other.promotion
         return result
 
 
@@ -66,12 +68,11 @@ def perft_complex(board, depth):
             if is_ep:
                 perft_result.en_passant += 1
                 perft_result.captures += 1
-
             elif is_cap:
                 perft_result.captures += 1
-
             elif is_castle:
                 perft_result.castling += 1
+           
 
         else:
             perft_result += perft_complex(board, depth - 1)
@@ -130,10 +131,13 @@ def main(argv):
 
     with open(dest_file, "w+") as f:
         for move in moves:
-            f.write(move + ' ' + str(moves[move].nodes) + ' ' + str(moves[move].captures) + ' ' + str(
-                moves[move].en_passant) + ' ' + str(moves[move].castling) + ' ' + str(moves[move].check) + ' ' + str(
-                moves[move].checkmate) + "\n")
+            f.write(move
+                    + ' ' + str(moves[move].nodes) + ' ' + str(moves[move].captures)
+                    + ' ' + str(moves[move].en_passant) + ' ' + str(moves[move].castling)
+                    + ' ' + str(moves[move].check) + ' ' + str(moves[move].checkmate) + "\n")
 
+
+# move n c ep ca ch chm
 
 if __name__ == "__main__":
     main(sys.argv)

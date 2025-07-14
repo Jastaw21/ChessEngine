@@ -33,6 +33,14 @@ int squareToFile(const int square){ return square % 8 + 1; }
 int squareToRank(const int square){ return square / 8 + 1; }
 
 
+int getLowestSetBit(const Bitboard& inBoard){ return __builtin_ctzll(inBoard); }
+
+int popLowestSetBit(Bitboard& inBoard){
+    const int lsb = getLowestSetBit(inBoard);
+    inBoard &= ~(1ULL << lsb);
+    return lsb;
+}
+
 BitBoards::BitBoards(){ bitboards.fill(0ULL); }
 
 void BitBoards::loadFEN(const std::string& fen){
@@ -152,7 +160,10 @@ Bitboard BitBoards::getOccupancy(const Colours& colour) const{
     Bitboard result = 0ULL;
     for (int i = 0; i < PIECE_N; ++i) {
         const auto pieceToSearch = static_cast<Piece>(i);
-        if (pieceColours[pieceToSearch] == colour) { result |= bitboards[pieceToSearch]; }
+        if (pieceColours[pieceToSearch] == colour) {
+            // only check us
+            result |= bitboards[pieceToSearch];
+        }
     }
     return result;
 }

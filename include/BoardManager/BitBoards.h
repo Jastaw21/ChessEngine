@@ -26,7 +26,7 @@ int squareToFile(int square);
 
 int squareToRank(int square);
 
-inline void printBitboard(Bitboard inBoard){
+inline void printBitboard(const Bitboard inBoard){
     for (int rank = 8; rank >= 1; --rank) {
         std::cout << rank << " "; // print the rank label
 
@@ -45,6 +45,9 @@ inline void printBitboard(Bitboard inBoard){
     }
     std::cout << std::endl;
 }
+
+int getLowestSetBit(const Bitboard& inBoard);
+int popLowestSetBit(Bitboard& inBoard);
 
 namespace Comparisons {
     constexpr Bitboard buildFileBoard(const char file){
@@ -94,6 +97,39 @@ namespace Comparisons {
     inline Bitboard southWest(const Bitboard& inBitBoard){ return inBitBoard << 9; }
 }
 
+namespace Constants {
+    constexpr Bitboard RANK_1 = 0xff;
+    constexpr Bitboard RANK_2 = 0xff00;
+    constexpr Bitboard RANK_3 = 0xff0000;
+    constexpr Bitboard RANK_4 = 0xff000000;
+    constexpr Bitboard RANK_5 = 0xff00000000;
+    constexpr Bitboard RANK_6 = 0xff0000000000;
+    constexpr Bitboard RANK_7 = 0xff000000000000;
+    constexpr Bitboard RANK_8 = 0xff00000000000000;
+
+    constexpr Bitboard FILE_A = 0x101010101010101;
+    constexpr Bitboard FILE_B = 0x202020202020202;
+    constexpr Bitboard FILE_C = 0x404040404040404;
+    constexpr Bitboard FILE_D = 0x808080808080808;
+    constexpr Bitboard FILE_E = 0x1010101010101010;
+    constexpr Bitboard FILE_F = 0x2020202020202020;
+    constexpr Bitboard FILE_G = 0x4040404040404040;
+    constexpr Bitboard FILE_H = 0x8080808080808080;
+
+    constexpr Bitboard KING_SIDE_CASTLING = 0x6000000000000060;
+    constexpr Bitboard QUEEN_SIDE_CASTLING = 0xc0000000000000c;
+
+    constexpr Bitboard WHITE_KS_CASTLING = KING_SIDE_CASTLING & RANK_1;
+    constexpr Bitboard WHITE_QS_CASTLING = QUEEN_SIDE_CASTLING & RANK_1;
+    constexpr Bitboard BLACK_KS_CASTLING = KING_SIDE_CASTLING & RANK_8;
+    constexpr Bitboard BLACK_QS_CASTLING = QUEEN_SIDE_CASTLING & RANK_8;
+
+    constexpr Bitboard C1 = 0x4;
+    constexpr Bitboard G1 = 0x40;
+
+    constexpr Bitboard C8 = 0x400000000000000;
+    constexpr Bitboard G8 = 0x4000000000000000;
+}
 
 class BitBoards {
 public:

@@ -25,7 +25,7 @@ struct PerftResults {
         return PerftResults{
                     .nodes = this->nodes + rhs.nodes, .captures = this->captures + rhs.captures,
                     .enPassant = this->enPassant + rhs.enPassant, .castling = this->castling + rhs.castling,
-                    .checks = this->checks + rhs.checks,
+                    .checks = this->checks + rhs.checks, .checkMate = this->checkMate + rhs.checkMate,
                 };
     }
 
@@ -35,12 +35,13 @@ struct PerftResults {
         enPassant += rhs.enPassant;
         castling += rhs.castling;
         checks += rhs.checks;
+        checkMate += rhs.checkMate;
         return *this;
     }
 
     bool operator==(const PerftResults& rhs) const{
         return nodes == rhs.nodes && captures == rhs.captures && enPassant == rhs.enPassant && castling == rhs.castling
-               && fen == rhs.fen && checks == rhs.checks;
+               && fen == rhs.fen && checks == rhs.checks && checkMate == rhs.checkMate;
     }
 
     bool operator!=(const PerftResults& rhs) const{ return !(*this == rhs); }
@@ -48,7 +49,7 @@ struct PerftResults {
     std::string toString() const{
         return "Nodes: " + std::to_string(nodes) + " Captures: " + std::to_string(captures) + " EnPassant: " +
                std::to_string(enPassant) + " Castling: " + std::to_string(castling) + " Checks: " +
-               std::to_string(checks);
+               std::to_string(checks) + " CheckMate: " + std::to_string(checkMate);
     }
 };
 

@@ -17,12 +17,7 @@ void HumanPlayer::selectDestination(const int destSquare, BoardManager* manager)
     int clickedRank, clickedFile, rank, file;
     squareToRankAndFile(clickedSquare_, clickedRank, clickedFile);
     squareToRankAndFile(destSquare, rank, file);
-    auto move = Move{
-                .piece = candidateMovePiece.value(),
-                .rankFrom = clickedRank,
-                .fileFrom = clickedFile,
-                .rankTo = rank, .fileTo = file
-            };
+    auto move = Move(candidateMovePiece.value(), clickedSquare_, destSquare);
 
     manager->tryMove(move);
 
