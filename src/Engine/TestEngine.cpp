@@ -112,22 +112,16 @@ Move TestEngine::makeMove(){
 std::vector<Move> TestEngine::generateValidMovesFromPosition(BoardManager& mgr, const Piece& piece,
                                                              const int startSquare){
     std::vector<Move> validMoves;
-    const auto possibleMoves = std::bitset<64>(
-        RulesCheck::getPseudoLegalMoves(startSquare, piece, mgr.getBitboards()));
 
-    for (int endSquare = 0; endSquare < possibleMoves.size(); endSquare++) {
-        if (!possibleMoves.test(endSquare)) { continue; }
+    auto possibleMoves2 = mgr.getMagicBitBoards()->getMoves(startSquare, piece, *mgr.getBitboards());
 
-        int startRank, startFile;
-        int endRank, endFile;
-        squareToRankAndFile(startSquare, startRank, startFile);
-        squareToRankAndFile(endSquare, endRank, endFile);
-        Move candidateMove(piece, startSquare, endSquare);
-
+    while (possibleMoves2) {
+        const auto endSquare = std::countr_zero(possibleMoves2); // bottom set bit
+        possibleMoves2 &= ~(1ULL << endSquare); // pop the bit
+        auto candidateMove = Move(piece, startSquare, endSquare);
         if (mgr.checkMove(candidateMove))
             validMoves.push_back(candidateMove);
     }
-
     return validMoves;
 }
 
@@ -135,15 +129,11 @@ std::vector<Move> TestEngine::generateValidMovesFromPosition(BoardManager& mgr, 
 std::vector<Move> TestEngine::generateMovesForPiece(BoardManager& mgr, const Piece& piece){
     std::vector<Move> pieceMoves;
 
-    const auto& piecePositions = std::bitset<64>(mgr.getBitboards()->getBitboard(piece));
+    auto piecePositions = mgr.getBitboards()->getBitboard(piece);
 
-    for (int startSquare = 0; startSquare < piecePositions.size(); startSquare++) {
-        if (!piecePositions.test(startSquare))
-            continue;
-
-        int startRank, startFile;
-        squareToRankAndFile(startSquare, startRank, startFile);
-
+    while (piecePositions) {
+        const auto startSquare = std::countr_zero(piecePositions); // bottom set bit
+        piecePositions &= ~(1ULL << startSquare); // pop the bit
         auto validMoves = generateValidMovesFromPosition(mgr, piece, startSquare);
         pieceMoves.insert(pieceMoves.end(), validMoves.begin(), validMoves.end());
     }
@@ -154,12 +144,7 @@ std::vector<Move> TestEngine::generateMovesForPiece(BoardManager& mgr, const Pie
 std::vector<Move> TestEngine::generateMoveList(BoardManager& mgr){
     std::vector<Move> moves;
     // check each piece we have
-    for (int piece = 0; piece < PIECE_N; piece++) {
-        auto pieceName = static_cast<Piece>(piece);
-        // if it's not our piece, skip it
-        if (pieceColours[pieceName] != mgr.getCurrentTurn())
-            continue;
-
+    for (const auto& pieceName: filteredPieces[mgr.getCurrentTurn()]) {
         auto pieceMoves = generateMovesForPiece(mgr, pieceName);
         moves.insert(moves.end(), pieceMoves.begin(), pieceMoves.end());
     }

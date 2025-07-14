@@ -770,7 +770,6 @@ TEST(Divide, kiwipiete3Afterf3f6){
     while (depth > 0) {
         auto moves = engine.generateMoveList(manager);
         for (auto& move: moves) {
-            std::cout << std::to_string(depth) << " " << move.toUCI() << std::endl;
             manager.tryMove(move);
             EXPECT_TRUE(compareMoveList(manager.getBitboards()->toFEN(), WHITE, "kiwipetedivide.txt"));
             manager.undoMove();

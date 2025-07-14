@@ -67,6 +67,8 @@ public:
     BitBoards *getBitboards(){ return &bitboards; }
     std::stack<Move> &getMoveHistory(){ return moveHistory; }
 
+    MagicBitBoards *getMagicBitBoards(){ return &magicBitBoards; }
+
     bool opponentKingInCheck(Move& move);
     bool checkMove(Move& move);
     bool tryMove(Move& move);
@@ -81,12 +83,10 @@ public:
 
 private:
 
-    Bitboard getSliderMoves(const Piece& movePiece, int fromSquare, const Bitboard& board) const;
     bool handleCapture(Move& move) const;
     bool checkAndHandleEP(Move& move);
     bool prelimCheckMove(Move& move);
 
-    bool moveIsEnPassant(Move& move);
     bool friendlyKingInCheck(const Move& move);
 
 

@@ -290,27 +290,6 @@ bool BoardManager::isValidEscapeMove(Move& move){
     return isValidEscape;
 }
 
-Bitboard BoardManager::getSliderMoves(const Piece& movePiece, const int fromSquare, const Bitboard& board) const{
-    switch (movePiece) {
-        case WR:
-        case BR:
-            return magicBitBoards.getRookAttacks(fromSquare, board);
-
-        case WQ:
-        case BQ:
-            return magicBitBoards.getBishopAttacks(fromSquare, board) | magicBitBoards.
-                   getRookAttacks(fromSquare, board);
-
-        case WB:
-        case BB:
-            return magicBitBoards.getBishopAttacks(fromSquare, board);
-
-        // ReSharper disable once CppDFAUnreachableCode
-        default:
-            return 0ULL;
-    }
-}
-
 bool BoardManager::handleCapture(Move& move) const{
     const auto capturedPiece = bitboards.getPiece(move.rankTo, move.fileTo);
 
@@ -345,37 +324,6 @@ bool BoardManager::checkAndHandleEP(Move& move){
     return true;
 }
 
-
-bool BoardManager::moveIsEnPassant(Move& move){
-    const auto lastMove = moveHistory.top();
-
-    if (abs(lastMove.rankTo - lastMove.rankFrom) != 2)
-        return false;
-    if (lastMove.piece != WP && lastMove.piece != BP)
-        return false;
-    const Bitboard attackedSquare = 1ULL << rankAndFileToSquare(move.rankTo, move.fileTo);
-    const auto& otherPawnPiece = pieceColours[move.piece] == WHITE ? BP : WP;
-    const auto& locationsOfOtherPawns = bitboards[otherPawnPiece];
-    const std::bitset<64> locationsOfOtherPawnsBits(locationsOfOtherPawns);
-    const int offset = pieceColours[move.piece] == WHITE ? 8 : -8;
-
-    // track the locations of the opponent's pawns, shifted correctly
-    Bitboard otherPawnLocations = 0ULL;
-    for (int bit = 0; bit < locationsOfOtherPawnsBits.size(); ++bit) {
-        if (locationsOfOtherPawnsBits.test(bit) && bit >= 8 && bit <= 55) {
-            otherPawnLocations |= 1ULL << (bit + offset);
-        }
-    }
-
-    const bool isEnPassant = (attackedSquare & otherPawnLocations) > 0;
-
-    if (!isEnPassant)
-        return false;
-
-    move.resultBits |= EN_PASSANT;
-    move.capturedPiece = otherPawnPiece;
-    return true;
-}
 
 bool BoardManager::friendlyKingInCheck(const Move& move){
     const Colours friendlyColor = pieceColours[move.piece];
