@@ -38,16 +38,14 @@ TestEngine::TestEngine(const Colours colour, BoardManager* boardManager): Engine
 float TestEngine::evaluate(BoardManager& mgr) const{
     float materialScore = 0.0f;
 
-    for (int piece = 0; piece < PIECE_N; piece++) {
+    for (int piece = 0; piece < PIECE_N; ++piece) {
         auto pieceName = static_cast<Piece>(piece);
+        const int pieceCount = mgr.getBitboards()->countPiece(pieceName);
+        const int pieceValue = pieceValues[pieceName];
 
-        int ourPieceValue = 0;
-        int opponentPieceValue = 0;
-        if (pieceColours[pieceName] == colour) {
-            ourPieceValue += pieceValues[pieceName] * mgr.getBitboards()->countPiece(pieceName);
-        } else { opponentPieceValue += pieceValues[pieceName] * mgr.getBitboards()->countPiece(pieceName); }
-
-        materialScore += ourPieceValue - opponentPieceValue;
+        if (pieceColours[pieceName] == colour) { materialScore += pieceValue * pieceCount; } else {
+            materialScore -= pieceValue * pieceCount;
+        }
     }
     return materialScore;
 }
@@ -83,7 +81,7 @@ Move TestEngine::search(const int depth){
 
     const Colours thisTurn = startingManager.getCurrentTurn();
 
-    for (Move& move: moves) {
+    for (auto& move: moves) {
         startingManager.forceMove(move);
         const float eval = minMax(startingManager, 2, thisTurn == colour);
         startingManager.undoMove();

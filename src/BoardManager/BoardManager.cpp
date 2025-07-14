@@ -324,7 +324,7 @@ bool BoardManager::checkAndHandleEP(Move& move){
 bool BoardManager::friendlyKingInCheck(const Move& move){
     const Colours friendlyColor = pieceColours[move.piece];
     const Piece friendlyKing = friendlyColor == BLACK ? BK : WK;
-    const Bitboard kingLocation = bitboards[friendlyKing];
+    const Bitboard& kingLocation = bitboards[friendlyKing];
 
     if (kingLocation == 0) {
         return false; // No king on board
@@ -333,14 +333,15 @@ bool BoardManager::friendlyKingInCheck(const Move& move){
     // Iterate through enemy pieces
     const auto colourToSearch = pieceColours[move.piece] == WHITE ? BLACK : WHITE;
     for (const auto& pieceName: filteredPieces[colourToSearch]) {
-        const auto pieceLocations = getStartingSquaresOfPiece(pieceName);
-        for (const int startSquare: pieceLocations) {
+        for (const int startSquare: getStartingSquaresOfPiece(pieceName)) {
             // prelim check if anything could feasibly attack this square
-            const Bitboard prelimAttacks = rules.getPseudoAttacks(pieceName, startSquare);
+            Bitboard prelimAttacks = 0ULL;
+            rules.getPseudoAttacks(pieceName, startSquare, prelimAttacks);
             if (!(kingLocation & prelimAttacks))
                 continue;
-            const Bitboard attackedSquares = RulesCheck::getAttackMoves(startSquare, pieceName, &bitboards);
-            if ((attackedSquares & kingLocation) != 0) { return true; }
+            Bitboard possibleMoves = 0ULL;
+            magicBitBoards.getMoves(startSquare, pieceName, bitboards, possibleMoves);
+            if (possibleMoves & kingLocation) { return true; }
         }
     }
 

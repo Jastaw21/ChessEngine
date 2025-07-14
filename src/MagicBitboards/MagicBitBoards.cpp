@@ -114,6 +114,68 @@ Bitboard MagicBitBoards::getMoves(const int square, const Piece& piece, const Bi
     }
 }
 
+void MagicBitBoards::getMoves(const int square, const Piece& piece, const BitBoards& boards, Bitboard& resultMoves){
+    switch (piece) {
+        case WR:
+        case BR: {
+            resultMoves |= getRookAttacks(square, boards.getOccupancy());
+            break;
+        }
+        case WB:
+        case BB: {
+            resultMoves |= getBishopAttacks(square, boards.getOccupancy());
+            break;
+        }
+        case WQ:
+        case BQ: {
+            resultMoves |= getRookAttacks(square, boards.getOccupancy()) | getBishopAttacks(
+                square, boards.getOccupancy());
+            break;
+        }
+        case WN:
+        case BN: {
+            resultMoves |= rules.knightAttacks[square] & ~boards.getOccupancy(pieceColours[piece]);
+            break;
+        } // cant go to own square
+        case WK:
+        case BK: {
+            const Bitboard castling = getCastling(square, piece, boards);
+            resultMoves |= (castling | rules.kingMoves[square]) & ~boards.getOccupancy(pieceColours[piece]);
+            break;
+        }
+        // cant go to own square
+        case BP:
+        case WP: {
+            const Bitboard pushes = rules.getPseudoPawnPushes(piece, square); // just get the dumb pushes
+
+            // need to check the immediate next rank, this blocks us if we move 1 or 2 ranks
+            const int blockingRankOffset = pieceColours[piece] == WHITE ? 1 : -1;
+            int blockingRank = squareToRank(square) + blockingRankOffset;
+            if (blockingRank > 0 && blockingRank < 9) {
+                const int blockingSquare = rankAndFileToSquare(blockingRank, squareToFile(square));
+                if (boards.testSquare(blockingSquare))
+                    resultMoves = 0ULL;
+            }
+            // now check the second rank
+            blockingRank += blockingRankOffset;
+            if (blockingRank > 0 && blockingRank < 9) {
+                const int blockingSquare = rankAndFileToSquare(blockingRank, squareToFile(square));
+                if (boards.testSquare(blockingSquare))
+                    resultMoves &= ~(1ULL << blockingSquare); // just blank that square off
+            }
+
+            const Bitboard rawMoves = rules.getPseudoPawnAttacks(piece, square) | pushes;
+            const Piece opponentPawn = piece == BP ? WP : BP;
+            const Bitboard epSquare = rules.getPseudoPawnEP(piece, square, boards.getOccupancy(opponentPawn));
+            resultMoves |= ((rawMoves | epSquare) & ~boards.getOccupancy(pieceColours[piece]));
+
+            break;
+        }
+        default:
+            resultMoves = 0ULL;
+    }
+}
+
 Bitboard MagicBitBoards::getSimpleAttacks(const int square, const Piece& piece, const BitBoards& boards){
     switch (piece) {
         case WR:

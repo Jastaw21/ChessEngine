@@ -214,6 +214,46 @@ public:
         }
     }
 
+    void getPseudoAttacks(const Piece& piece, const int fromSquare, Bitboard& inBoard){
+        switch (piece) {
+            case BP:
+            case WP: {
+                inBoard |= getPseudoPawnAttacks(piece, fromSquare);
+                break;
+            }
+            case WN:
+            case BN: {
+                inBoard |= knightAttacks[fromSquare];
+                break;
+            }
+            case WQ:
+            case BQ: {
+                inBoard |= (rankAttacks[fromSquare] | fileAttacks[fromSquare] | diagAttacks[fromSquare]);
+                break;
+            }
+            case WB:
+            case BB: {
+                inBoard |= diagAttacks[fromSquare];
+                break;
+            }
+            case WR:
+            case BR: {
+                inBoard |= (rankAttacks[fromSquare] | fileAttacks[fromSquare]);
+                break;
+            }
+
+            case WK:
+            case BK: {
+                inBoard |= kingMoves[fromSquare];
+                break;
+            }
+            default: {
+                inBoard = 0ULL;
+                break;
+            }
+        }
+    }
+
     Bitboard getPseudoCastlingMoves(const Piece& piece, const int fromSquare, const BitBoards& boards);
 
     std::unordered_map<int, Bitboard> rankAttacks;
@@ -822,8 +862,7 @@ namespace RulesCheck {
 
                 if (!boards->testSquare(square + squareOffset))
                     result |= 1ULL << (square + squareOffset);
-               
-            }           
+            }
         }
 
         return result;

@@ -176,6 +176,7 @@ public:
     Bitboard getBishopAttacks(const int square, Bitboard occupancy) const;
 
     Bitboard getMoves(const int square, const Piece& piece, const BitBoards& boards);
+    void getMoves(const int square, const Piece& piece, const BitBoards& boards, Bitboard& resultMoves);
 
     Rules rules;
 
