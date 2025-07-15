@@ -4,9 +4,11 @@
 
 #include "EngineShared/UCIParsing/Tokeniser.h"
 
+#include <algorithm>
 #include <iostream>
 
 Tokeniser::Tokeniser(const std::string& input){ tokenise(input); }
+
 
 void Tokeniser::tokenise(const std::string& input){
     std::string token;
@@ -24,35 +26,38 @@ void Tokeniser::tokenise(const std::string& input){
 
 void Tokeniser::handleToken(std::string& builtToken){
     // search position
-    if (builtToken == "position") { tokens.push_back(TokenType::POSITION_CMD); }
+    TokenType type;
+    if (builtToken == "position") { type = TokenType::POSITION_CMD; }
     // search move
-    else if (builtToken == "move") { tokens.push_back(TokenType::MOVE_CMD); }
+    else if (builtToken == "move") { type = TokenType::MOVE_CMD; }
     // search uci
-    else if (builtToken == "uci") { tokens.push_back(TokenType::UCI); }
+    else if (builtToken == "uci") { type = TokenType::UCI; }
     // search go
-    else if (builtToken == "go") { tokens.push_back(TokenType::GO); }
+    else if (builtToken == "go") { type = TokenType::GO; }
     // search quit
-    else if (builtToken == "quit") { tokens.push_back(TokenType::QUIT); }
+    else if (builtToken == "quit") { type = TokenType::QUIT; }
     // search debug
-    else if (builtToken == "debug") { tokens.push_back(TokenType::DEBUG); }
+    else if (builtToken == "debug") { type = TokenType::DEBUG; }
     // search isready
-    else if (builtToken == "isready") { tokens.push_back(TokenType::ISREADY); }
+    else if (builtToken == "isready") { type = TokenType::ISREADY; }
     // search register
-    else if (builtToken == "register") { tokens.push_back(TokenType::REGISTER); }
+    else if (builtToken == "register") { type = TokenType::REGISTER; }
     // search setoption
-    else if (builtToken == "setoption") { tokens.push_back(TokenType::SETOPTION); }
+    else if (builtToken == "setoption") { type = TokenType::SETOPTION; }
     // search ucinewgame
-    else if (builtToken == "ucinewgame") { tokens.push_back(TokenType::UCI_NEW_GAME); }
+    else if (builtToken == "ucinewgame") { type = TokenType::UCI_NEW_GAME; }
     // search id
-    else if (builtToken == "id") { tokens.push_back(TokenType::ID); }
+    else if (builtToken == "id") { type = TokenType::ID; }
     // search bestmove
-    else if (builtToken == "bestmove") { tokens.push_back(TokenType::BESTMOVE); }
+    else if (builtToken == "bestmove") { type = TokenType::BESTMOVE; }
     // search on
-    else if (builtToken == "on") { tokens.push_back(TokenType::ON); }
+    else if (builtToken == "on") { type = TokenType::ON; }
     // search off
-    else if (builtToken == "off") { tokens.push_back(TokenType::OFF); }
+    else if (builtToken == "off") { type = TokenType::OFF; }
     //unknown token
-    else { tokens.push_back(getUnknownTokenType(builtToken)); }
+    else { type = getUnknownTokenType(builtToken); }
+
+    tokens.emplace_back(type, builtToken);
 
     builtToken = ""; // empty the token
 }
@@ -62,6 +67,8 @@ TokenType Tokeniser::getUnknownTokenType(const std::string& token){
         return TokenType::MOVE_UCI;
     if (isPosition(token))
         return TokenType::POSITION_RESULT;
+    if (isIntLiteral(token))
+        return TokenType::INT_LITERAL;
 
     return TokenType::UNKNOWN;
 }
@@ -78,9 +85,11 @@ bool Tokeniser::isMove(const std::string& token){
 }
 
 
-
 bool Tokeniser::isPosition(const std::string& token){
+    // really weak check if it's a position
     int slashCount = 0;
     for (const auto& c: token) { if (c == '/') { slashCount++; } }
     return slashCount == 7;
 }
+
+bool Tokeniser::isIntLiteral(const std::string& token){ return std::ranges::all_of(token, ::isdigit); }

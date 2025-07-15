@@ -15,6 +15,14 @@ class UCIParser {
 public:
 
     std::vector<Token> parse(const std::string& parseTarget){}
+
+private:
+
+    std::vector<Token> tokens;
+    int currentToken;
+
+    Token peek();
+    Token consume();
 };
 
 
