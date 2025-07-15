@@ -62,6 +62,8 @@ add_subdirectory(tests)
 # === Add MBB tests ===
 add_subdirectory(src/MagicBitBoardGen/tests)
 
+# === Add EngineShared lib ===
+add_subdirectory(src/EngineShared)
 
 # === Add MagicBitBoardGenerator Lib ===
 add_library(MagicBitBoardGen STATIC

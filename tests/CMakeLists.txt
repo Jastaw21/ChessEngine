@@ -11,6 +11,7 @@ add_executable(chess_tests
         mbbTests.cpp
         perftTestUtility.h
         Perft.cpp
+        UCIParserTests.cpp
         # Add more test files here
 )
 
@@ -19,6 +20,7 @@ target_link_libraries(chess_tests
         PRIVATE
         chess_lib
         gtest_main
+        EngineSharedLib
 )
 
 # Enable test discovery

@@ -255,14 +255,28 @@ bool BoardManager::hasLegalMoveToEscapeCheck(){
 }
 
 bool BoardManager::canPieceEscapeCheck(const Piece& pieceName){
-    const auto pieceLocations = getStartingSquaresOfPiece(pieceName);
-
-    for (const int startSquare: pieceLocations) {
+    auto startingBoard = bitboards[pieceName];
+    while (startingBoard) {
+        // count trailing zeros to find the index of the first set bit
+        const int startSquare = std::countr_zero(startingBoard);
+        startingBoard &= ~(1ULL << startSquare);
         const auto possibleMoves = magicBitBoards.getMoves(startSquare, pieceName, bitboards);
-        const auto destinationSquares = std::bitset<64>(possibleMoves);
-
-        if (hasValidMoveFromSquare(pieceName, startSquare, destinationSquares)) { return true; }
+        if (hasValidMoveFromSquare(pieceName, startSquare, possibleMoves)) { return true; }
     }
+    return false;
+}
+
+bool BoardManager::hasValidMoveFromSquare(const Piece pieceName, const int startSquare,
+                                          Bitboard& destinationSquares){
+    while (destinationSquares) {
+        // count trailing zeros to find the index of the first set bit
+        const int destinationSquare = std::countr_zero(destinationSquares);
+        destinationSquares &= ~(1ULL << destinationSquare);
+        auto move = Move(pieceName, startSquare, destinationSquare);
+
+        if (isValidEscapeMove(move)) { return true; }
+    }
+
     return false;
 }
 
@@ -333,8 +347,11 @@ bool BoardManager::friendlyKingInCheck(const Move& move){
     // Iterate through enemy pieces
     const auto colourToSearch = pieceColours[move.piece] == WHITE ? BLACK : WHITE;
     for (const auto& pieceName: filteredPieces[colourToSearch]) {
-        for (const int startSquare: getStartingSquaresOfPiece(pieceName)) {
-            // prelim check if anything could feasibly attack this square
+        auto startingBoard = bitboards[pieceName];
+        while (startingBoard) {
+            // count trailing zeros to find the index of the first set bit
+            const int startSquare = std::countr_zero(startingBoard);
+            startingBoard &= ~(1ULL << startSquare);
             Bitboard prelimAttacks = 0ULL;
             rules.getPseudoAttacks(pieceName, startSquare, prelimAttacks);
             if (!(kingLocation & prelimAttacks))
