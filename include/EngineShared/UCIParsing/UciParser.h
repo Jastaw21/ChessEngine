@@ -21,8 +21,8 @@ private:
     std::vector<Token> tokens;
     int currentToken;
 
-    Token peek();
-    Token consume();
+    Token& peek();
+    Token& consume();
 };
 
 
