@@ -2,15 +2,15 @@
 
 # Define the test executable
 add_executable(chess_tests
-        bitboardTests.cpp
-        FenTests.cpp
-        boardManagerTests.cpp
-        humanPlayerTests.cpp
-        engineTests.cpp
-        rulesTests.cpp
-        mbbTests.cpp
-        perftTestUtility.h
-        Perft.cpp
+        CoreTests/bitboardTests.cpp
+        CoreTests/FenTests.cpp
+        CoreTests/boardManagerTests.cpp
+        CoreTests/humanPlayerTests.cpp
+        CoreTests/engineTests.cpp
+        CoreTests/rulesTests.cpp
+        MagicBitBoards/mbbTests.cpp
+        CoreTests/perftTestUtility.h
+        CoreTests/Perft.cpp
         UCIParserTests.cpp
         # Add more test files here
 )

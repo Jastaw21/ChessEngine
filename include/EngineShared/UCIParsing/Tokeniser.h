@@ -5,28 +5,25 @@
 #ifndef TOKENISER_H
 #define TOKENISER_H
 #include <string>
-#include <variant>
 #include <vector>
 
 enum class TokenType {
-    POSITION_CMD,
-    MOVE_CMD,
-    GO,
-    UCI,
-    QUIT,
-    UNKNOWN,
-    DEBUG,
-    ON,
-    OFF,
-    ISREADY,
-    REGISTER,
-    SETOPTION,
-    ID,
-    BESTMOVE,
-    UCI_NEW_GAME,
-    MOVE_UCI,
-    POSITION_RESULT,
-    INT_LITERAL,
+    // simple interactions
+    UCI, QUIT, ISREADY, UCI_NEW_GAME, STOP,
+    // move setting
+    POSITION_CMD, START_POS, FEN_BODY, MOVES, MOVE_VALUE, BESTMOVE,
+
+    // go and it's options
+    GO, DEPTH,
+
+    // misc engine options
+    DEBUG, ON, OFF,
+    REGISTER, SETOPTION, ID,
+
+    // literals
+    INT_LITERAL, STRING_LITERAL, DASH,
+    // parser utilities
+    EOF_TOKEN, UNKNOWN,
 };
 
 struct Token {
@@ -43,6 +40,7 @@ public:
     static bool isMove(const std::string& token);
     static bool isPosition(const std::string& token);
     static bool isIntLiteral(const std::string& token);
+    static bool isStringLiteral(const std::string& token);
 
 private:
 

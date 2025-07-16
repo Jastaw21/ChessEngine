@@ -22,6 +22,8 @@ void Tokeniser::tokenise(const std::string& input){
 
     // Handle the last token if input doesn't end with space
     if (!token.empty()) { handleToken(token); }
+
+    tokens.push_back(Token{TokenType::EOF_TOKEN, ""}); // end with EOF
 }
 
 void Tokeniser::handleToken(std::string& builtToken){
@@ -29,7 +31,7 @@ void Tokeniser::handleToken(std::string& builtToken){
     TokenType type;
     if (builtToken == "position") { type = TokenType::POSITION_CMD; }
     // search move
-    else if (builtToken == "move") { type = TokenType::MOVE_CMD; }
+    else if (builtToken == "moves") { type = TokenType::MOVES; }
     // search uci
     else if (builtToken == "uci") { type = TokenType::UCI; }
     // search go
@@ -54,6 +56,14 @@ void Tokeniser::handleToken(std::string& builtToken){
     else if (builtToken == "on") { type = TokenType::ON; }
     // search off
     else if (builtToken == "off") { type = TokenType::OFF; }
+    // search stop
+    else if (builtToken == "stop") { type = TokenType::STOP; }
+    // search startpos
+    else if (builtToken == "startpos") { type = TokenType::START_POS; }
+    // search a '-' token
+    else if (builtToken == "-") { type = TokenType::DASH; }
+    // search depth
+    else if (builtToken == "depth") { type = TokenType::DEPTH; }
     //unknown token
     else { type = getUnknownTokenType(builtToken); }
 
@@ -64,11 +74,13 @@ void Tokeniser::handleToken(std::string& builtToken){
 
 TokenType Tokeniser::getUnknownTokenType(const std::string& token){
     if (isMove(token))
-        return TokenType::MOVE_UCI;
+        return TokenType::MOVE_VALUE;
     if (isPosition(token))
-        return TokenType::POSITION_RESULT;
+        return TokenType::FEN_BODY;
     if (isIntLiteral(token))
         return TokenType::INT_LITERAL;
+    if (isStringLiteral(token))
+        return TokenType::STRING_LITERAL;
 
     return TokenType::UNKNOWN;
 }
@@ -93,3 +105,4 @@ bool Tokeniser::isPosition(const std::string& token){
 }
 
 bool Tokeniser::isIntLiteral(const std::string& token){ return std::ranges::all_of(token, ::isdigit); }
+bool Tokeniser::isStringLiteral(const std::string& token){ return std::ranges::all_of(token, ::isalpha); }

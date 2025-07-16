@@ -8,6 +8,12 @@
 #include <filesystem>
 
 #include "ChessPlayer.h"
+#include "EngineShared/UCIParsing/UciParser.h"
+
+class CommandHandlerBase {
+public:
+    virtual void operator()(const UCICommand& cmd) final;
+};
 
 
 struct PerftResults {
@@ -53,18 +59,18 @@ struct PerftResults {
     }
 };
 
-struct testPerftResult {
-    std::string fen;
-    int nodes;
-};
-
-
 class EngineBase : public ChessPlayer {
 public:
 
     explicit EngineBase(Colours colour = WHITE);
 
     virtual Move makeMove() override;
+
+    virtual void parseUCI(const std::string& uci);
+
+private:
+
+    UCIParser parser;
 };
 
 
