@@ -26,9 +26,6 @@ private:
     generateValidMovesFromPosition(BoardManager& mgr, const Piece& piece, int startSquare) override;
     virtual std::vector<Move> generateMovesForPiece(BoardManager& mgr, const Piece& piece) override;
     float minMax(BoardManager& mgr, int depth, bool isMaximising);
-    virtual PerftResults perft(int depth, BoardManager& boardManager) override;
-    virtual int simplePerft(int depth, BoardManager& boardManager) override;
-    virtual std::vector<PerftResults> perftDivide(int depth, BoardManager& boardManager) override;
 
 public:
 
