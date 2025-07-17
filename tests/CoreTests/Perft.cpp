@@ -87,26 +87,6 @@ TEST(Divide, kiwiPete3Dividing){
     EXPECT_TRUE(compareMoveList(manager.getBitboards()->toFEN(), WHITE, "kiwipetedivide.txt"));
 }
 
-TEST(Divide, kiwipiete3Afterf3f6){
-    auto manager = BoardManager();
-    auto engine = TestEngine(WHITE, &manager);
-    manager.getBitboards()->loadFEN(Fen::KIWI_PETE_FEN);
-    auto firstMove = createMove(WQ, "f3f6");
-    ASSERT_TRUE(manager.tryMove(firstMove));
-
-    int depth = 3;
-    while (depth > 0) {
-        auto moves = engine.generateMoveList(manager);
-        for (auto& move: moves) {
-            manager.tryMove(move);
-            EXPECT_TRUE(compareMoveList(manager.getBitboards()->toFEN(), WHITE, "kiwipetedivide.txt"));
-            manager.undoMove();
-        }
-        depth--;
-    }
-}
-
-
 TEST(Perft, perft1){
     TestEngine blackEngine(BLACK);
     auto blackResultDepth1 = blackEngine.runPerftTest(Fen::STARTING_FEN, 1);

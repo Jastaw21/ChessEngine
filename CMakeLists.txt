@@ -52,7 +52,7 @@ target_link_libraries(chess_lib PUBLIC SDL3::SDL3 SDL3_image::SDL3_image)
 # === Main Application ===
 add_executable(Chess src/gameMain.cpp
 )
-target_link_libraries(Chess PRIVATE chess_lib)
+target_link_libraries(Chess PRIVATE chess_lib EngineSharedLib)
 target_include_directories(Chess PRIVATE include)
 
 
