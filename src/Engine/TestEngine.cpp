@@ -4,9 +4,9 @@
 
 #include "Engine/TestEngine.h"
 
-#include <bitset>
-#include "BoardManager/Rules.h"
 
+#include "BoardManager/Rules.h"
+#include "EngineShared/PerftResults.h"
 
 std::unordered_map<Piece, int> pieceValues = {
             {WP, 1},
@@ -31,8 +31,9 @@ std::unordered_map<Piece, int> pieceValues = {
 
 TestEngine::TestEngine(const Colours colour) : EngineBase(colour){}
 
-TestEngine::TestEngine(const Colours colour, BoardManager* boardManager): EngineBase(colour),
-                                                                          boardManager_(boardManager){}
+TestEngine::TestEngine(const Colours colour, BoardManager* boardManager): EngineBase(colour){
+    setManager(boardManager);
+}
 
 
 float TestEngine::evaluate(BoardManager& mgr) const{
@@ -101,12 +102,6 @@ Move TestEngine::search(const int depth){
     return bestMove;
 }
 
-Move TestEngine::makeMove(){
-    auto move = search(3);
-    boardManager_->tryMove(move);
-    return move;
-}
-
 std::vector<Move> TestEngine::generateValidMovesFromPosition(BoardManager& mgr, const Piece& piece,
                                                              const int startSquare){
     std::vector<Move> validMoves;
@@ -149,7 +144,7 @@ std::vector<Move> TestEngine::generateMoveList(BoardManager& mgr){
     return moves;
 }
 
-auto TestEngine::simplePerft(const int depth, BoardManager& boardManager){
+int TestEngine::simplePerft(const int depth, BoardManager& boardManager){
     if (depth == 0)
         return 1;
 
@@ -190,7 +185,7 @@ PerftResults TestEngine::perft(const int depth, BoardManager& boardManager){
 }
 
 
-auto TestEngine::perftDivide(const int depth, BoardManager& boardManager){
+std::vector<PerftResults> TestEngine::perftDivide(const int depth, BoardManager& boardManager){
     auto moves = generateMoveList(boardManager);
     std::vector<PerftResults> results;
 
@@ -208,18 +203,5 @@ auto TestEngine::perftDivide(const int depth, BoardManager& boardManager){
     return results;
 }
 
-std::vector<PerftResults> TestEngine::runDivideTest(const std::string& Fen, const int depth) const{
-    auto mgr = BoardManager(colour);
-    mgr.getBitboards()->loadFEN(Fen);
-    return perftDivide(depth, mgr);
-}
+float TestEngine::evaluate(BoardManager& mgr){ return 0.0f; }
 
-std::vector<PerftResults> TestEngine::runDivideTest(BoardManager& mgr, const int depth){
-    return perftDivide(depth, mgr);
-}
-
-PerftResults TestEngine::runPerftTest(const std::string& Fen, const int depth) const{
-    auto mgr = BoardManager(colour);
-    mgr.getBitboards()->loadFEN(Fen);
-    return perft(depth, mgr);
-}

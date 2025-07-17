@@ -3,9 +3,33 @@
 //
 
 #include "Engine/EngineBase.h"
+#include "EngineShared/PerftResults.h"
 
-void CommandHandlerBase::operator()(const UCICommand& cmd){}
+
 EngineBase::EngineBase(const Colours colour): ChessPlayer(colour, ENGINE){}
-Move EngineBase::makeMove(){ return createMove(PIECE_N, "a1a1"); }
-void EngineBase::parseUCI(const std::string& uci){ auto result = parser.parse(uci); }
+
+
+void EngineBase::parseUCI(const std::string& uci){
+    auto command = parser.parse(uci);
+    // Create a visitor lambda that captures 'this' and forwards to command handler
+    auto visitor = [this](const auto& cmd) { this->commandHandler(cmd, this); };
+    std::visit(visitor, *command);
+}
+
+void EngineBase::makeReady(){}
+
+PerftResults EngineBase::runPerftTest(const std::string& Fen, int depth){
+    auto mgr = BoardManager(colour);
+    mgr.getBitboards()->loadFEN(Fen);
+    return perft(depth, mgr);
+}
+
+std::vector<PerftResults> EngineBase::runDivideTest(const std::string& Fen, int depth){
+    auto mgr = BoardManager(colour);
+    mgr.getBitboards()->loadFEN(Fen);
+    return perftDivide(depth, mgr);
+}
+
+std::vector<PerftResults> EngineBase::runDivideTest(BoardManager& mgr, int depth){ return perftDivide(depth, mgr); }
+std::vector<Move> EngineBase::generateMoveList(BoardManager& mgr){ return std::vector<Move>(); }
 

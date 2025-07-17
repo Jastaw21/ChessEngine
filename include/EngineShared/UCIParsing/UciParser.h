@@ -5,10 +5,9 @@
 #ifndef UCIPARSER_H
 #define UCIPARSER_H
 #include <optional>
-#include <optional>
 #include <string>
 #include <variant>
-#include <variant>
+
 #include <vector>
 
 #include "Tokeniser.h"

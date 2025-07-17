@@ -119,11 +119,6 @@ void ChessGui::handleKeyDown(const SDL_Keycode keycode){
             if (modifiersSet[SDLK_LCTRL])
                 boardManager_.undoMove();
             break;
-
-        case SDLK_N:
-            requestEngineMove();
-
-
         default:
             break;
     }
@@ -208,11 +203,3 @@ void ChessGui::addMouseRelease(const int x, const int y){
     }
 }
 
-void ChessGui::requestEngineMove() const{
-
-    if (const auto engine = static_cast<EngineBase *>(getCurrentPlayer())) {
-        if (!engine->playerType == ENGINE)
-            return;
-        engine->makeMove();
-    }
-}

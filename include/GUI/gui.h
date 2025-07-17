@@ -44,7 +44,6 @@ public:
 
     void addMouseClick(int x, int y);
     void addMouseRelease(int x, int y);
-    void requestEngineMove() const;
 
     [[nodiscard]] int clicked_square(){ return clickedSquare; }
 

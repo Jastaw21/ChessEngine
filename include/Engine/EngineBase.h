@@ -8,69 +8,50 @@
 #include <filesystem>
 
 #include "ChessPlayer.h"
+#include "EngineShared/CommandHandlerBase.h"
 #include "EngineShared/UCIParsing/UciParser.h"
 
-class CommandHandlerBase {
-public:
-    virtual void operator()(const UCICommand& cmd) final;
-};
-
-
-struct PerftResults {
-    int nodes = 0;
-    int captures = 0;
-    int enPassant = 0;
-    int castling = 0;
-    int checks = 0;
-    int checkMate = 0;
-
-
-    std::string fen = "";
-
-    PerftResults operator+(const PerftResults& rhs) const{
-        return PerftResults{
-                    .nodes = this->nodes + rhs.nodes, .captures = this->captures + rhs.captures,
-                    .enPassant = this->enPassant + rhs.enPassant, .castling = this->castling + rhs.castling,
-                    .checks = this->checks + rhs.checks, .checkMate = this->checkMate + rhs.checkMate,
-                };
-    }
-
-    PerftResults &operator+=(const PerftResults& rhs){
-        nodes += rhs.nodes;
-        captures += rhs.captures;
-        enPassant += rhs.enPassant;
-        castling += rhs.castling;
-        checks += rhs.checks;
-        checkMate += rhs.checkMate;
-        return *this;
-    }
-
-    bool operator==(const PerftResults& rhs) const{
-        return nodes == rhs.nodes && captures == rhs.captures && enPassant == rhs.enPassant && castling == rhs.castling
-               && fen == rhs.fen && checks == rhs.checks && checkMate == rhs.checkMate;
-    }
-
-    bool operator!=(const PerftResults& rhs) const{ return !(*this == rhs); }
-
-    std::string toString() const{
-        return "Nodes: " + std::to_string(nodes) + " Captures: " + std::to_string(captures) + " EnPassant: " +
-               std::to_string(enPassant) + " Castling: " + std::to_string(castling) + " Checks: " +
-               std::to_string(checks) + " CheckMate: " + std::to_string(checkMate);
-    }
-};
+class PerftResults;
 
 class EngineBase : public ChessPlayer {
 public:
 
     explicit EngineBase(Colours colour = WHITE);
+    void parseUCI(const std::string& uci);
 
-    virtual Move makeMove() override;
+    void stop(){ shouldStop = true; };
+    void quit(){ shouldQuit = true; };
+    void go(const int depth);
+    void makeReady();
+    virtual float evaluate(BoardManager& mgr) = 0;
+    virtual Move search(int depth = 2) = 0;
+    void setManager(BoardManager* boardManager){ boardManager_ = boardManager; }
+    virtual PerftResults runPerftTest(const std::string& Fen, int depth);
+    virtual std::vector<PerftResults> runDivideTest(const std::string& Fen, int depth);
+    virtual std::vector<PerftResults> runDivideTest(BoardManager& mgr, int depth);
 
-    virtual void parseUCI(const std::string& uci);
+    virtual std::vector<Move> generateMoveList(BoardManager& mgr);
+
+protected:
+
+    virtual std::vector<Move> generateValidMovesFromPosition(
+        BoardManager& mgr, const Piece& piece, int startSquare) = 0;
+
+    virtual std::vector<Move> generateMovesForPiece(BoardManager& mgr, const Piece& piece) = 0;
+    virtual PerftResults perft(int depth, BoardManager& boardManager) = 0;
+    virtual int simplePerft(int depth, BoardManager& boardManager) = 0;
+    virtual std::vector<PerftResults> perftDivide(int depth, BoardManager& boardManager) = 0;
+
+    Move getBestMove();
+
+    UCIParser parser;
+    CommandHandlerBase commandHandler;
+    BoardManager* boardManager_ = nullptr;
 
 private:
 
-    UCIParser parser;
+    bool shouldStop = false;
+    bool shouldQuit = false;
 };
 
 

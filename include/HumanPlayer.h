@@ -11,9 +11,7 @@
 class HumanPlayer final : public ChessPlayer {
 public:
 
-    explicit HumanPlayer(Colours colour = Colours::WHITE);
-
-    virtual Move makeMove() override;
+    explicit HumanPlayer(Colours colour = WHITE);
 
     void pickUpPiece(const int clickedSquare){ clickedSquare_ = clickedSquare; }
     [[nodiscard]] int getHeldPiece() const{ return clickedSquare_; }
@@ -23,7 +21,6 @@ public:
 private:
 
     int clickedSquare_;
-
 };
 
 

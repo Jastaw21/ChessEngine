@@ -15,30 +15,24 @@ public:
     explicit TestEngine(Colours colour);
     explicit TestEngine(Colours colour, BoardManager* boardManager);
 
-
     float evaluate(BoardManager& mgr) const;
-    Move search(int depth = 2);
-    virtual Move makeMove() override;
+    virtual Move search(int depth = 2) override;
 
-    void setManager(BoardManager* boardManager){ boardManager_ = boardManager; }
-
-    static std::vector<Move> generateMoveList(BoardManager& mgr);
-
-    PerftResults runPerftTest(const std::string& Fen, int depth) const;
-    std::vector<PerftResults> runDivideTest(const std::string& Fen, int depth) const;
-    static std::vector<PerftResults> runDivideTest(BoardManager& mgr, int depth);
-
-
-    BoardManager* boardManager_ = nullptr;
+    virtual std::vector<Move> generateMoveList(BoardManager& mgr) override;
 
 private:
 
-    static std::vector<Move> generateValidMovesFromPosition(BoardManager& mgr, const Piece& piece, int startSquare);
-    static std::vector<Move> generateMovesForPiece(BoardManager& mgr, const Piece& piece);
+    virtual std::vector<Move>
+    generateValidMovesFromPosition(BoardManager& mgr, const Piece& piece, int startSquare) override;
+    virtual std::vector<Move> generateMovesForPiece(BoardManager& mgr, const Piece& piece) override;
     float minMax(BoardManager& mgr, int depth, bool isMaximising);
-    static PerftResults perft(int depth, BoardManager& boardManager);
-    static auto simplePerft(int depth, BoardManager& boardManager);
-    static auto perftDivide(int depth, BoardManager& boardManager);
+    virtual PerftResults perft(int depth, BoardManager& boardManager) override;
+    virtual int simplePerft(int depth, BoardManager& boardManager) override;
+    virtual std::vector<PerftResults> perftDivide(int depth, BoardManager& boardManager) override;
+
+public:
+
+    virtual float evaluate(BoardManager& mgr) override;
 };
 
 

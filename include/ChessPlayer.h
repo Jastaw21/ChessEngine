@@ -17,7 +17,6 @@ public:
     virtual ~ChessPlayer() = default;
     explicit ChessPlayer(Colours colour, PlayerType playerType);
 
-    virtual Move makeMove() =0;
 
     bool setReady(const bool isReady){
         bIsReady = isReady;

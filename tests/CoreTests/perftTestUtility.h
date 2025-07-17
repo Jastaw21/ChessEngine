@@ -4,10 +4,9 @@
 #include <algorithm>
 #include <fstream>
 #include <ranges>
-#include <unordered_set>
-#include <gtest/gtest.h>
 #include "Engine/TestEngine.h"
 #include "Utility/Fen.h"
+#include "EngineShared/PerftResults.h"
 
 inline const std::string fileRoot = R"(C:\Users\jacks\source\repos\Chess\tests\output\)";
 inline const std::string divideCmd =
