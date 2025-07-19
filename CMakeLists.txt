@@ -44,6 +44,10 @@ add_library(
         src/MagicBitboards/MagicBitBoards.cpp
         include/MagicBitboards/MagicBitBoardShared.h
         src/MagicBitboards/MagicBitBoardShared.cpp
+        src/MatchManager/MatchManager.cpp
+        include/MatchManager/MatchManager.h
+        include/MatchManager/ManagerCommandHandler.cpp
+        include/BoardManager/ManagerCommandHandler.h
 )
 
 target_include_directories(chess_lib PUBLIC include)

@@ -72,9 +72,12 @@ public:
     bool opponentKingInCheck(Move& move);
     bool checkMove(Move& move);
     bool tryMove(Move& move);
+    bool tryMove(const std::string& moveUCI);
     bool forceMove(Move& move);
     void undoMove(const Move& move);
     void undoMove();
+
+    void setFen(const std::string& fen);
 
     Colours getCurrentTurn() const{ return currentTurn; }
     void setCurrentTurn(const Colours current_turn){ currentTurn = current_turn; }

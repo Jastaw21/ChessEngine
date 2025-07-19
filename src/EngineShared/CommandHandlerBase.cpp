@@ -14,6 +14,14 @@ void CommandHandlerBase::operator()(const IsReadyCommand& cmd, EngineBase* engin
 }
 
 void CommandHandlerBase::operator()(const QuitCommand& cmd, EngineBase* engine){ engine->quit(); }
-void CommandHandlerBase::operator()(const GoCommand& cmd, EngineBase* engine){}
-void CommandHandlerBase::operator()(const PositionCommand& cmd, EngineBase* engine){}
+
+void CommandHandlerBase::operator()(const GoCommand& cmd, EngineBase* engine){
+    if (cmd.depth.has_value()) { engine->go(cmd.depth.value()); } else { engine->go(2); }
+}
+
+void CommandHandlerBase::operator()(const PositionCommand& cmd, EngineBase* engine){
+    engine->boardManager()->setFen(cmd.fen);
+    for (auto& move: cmd.moves) { engine->boardManager()->tryMove(move); }
+}
+
 void CommandHandlerBase::operator()(const BestMoveCommand& cmd, EngineBase* engine){}

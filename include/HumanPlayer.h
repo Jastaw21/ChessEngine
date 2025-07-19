@@ -6,7 +6,9 @@
 #define HUMANPLAYER_H
 
 #include "ChessPlayer.h"
+#include "BoardManager/BoardManager.h"
 
+class BoardManager;
 
 class HumanPlayer final : public ChessPlayer {
 public:
@@ -16,7 +18,9 @@ public:
     void pickUpPiece(const int clickedSquare){ clickedSquare_ = clickedSquare; }
     [[nodiscard]] int getHeldPiece() const{ return clickedSquare_; }
     void dropPiece(){ clickedSquare_ = -1; }
-    void selectDestination(int destSquare, BoardManager* manager);
+    Move selectDestination(int destSquare, BoardManager* manager);
+
+    virtual void parseUCI(const std::string& uci) override;
 
 private:
 

@@ -4,7 +4,10 @@
 
 #ifndef CHESSPLAYER_H
 #define CHESSPLAYER_H
-#include "BoardManager/BoardManager.h"
+
+
+#include "Engine/Piece.h"
+#include "EngineShared/CommandHandlerBase.h"
 
 enum PlayerType {
     ENGINE,
@@ -17,6 +20,7 @@ public:
     virtual ~ChessPlayer() = default;
     explicit ChessPlayer(Colours colour, PlayerType playerType);
 
+    virtual void parseUCI(const std::string& uci) = 0;
 
     bool setReady(const bool isReady){
         bIsReady = isReady;
@@ -33,6 +37,9 @@ protected:
     bool bIsReady = false;
 
     Colours colour;
+
+    UCIParser parser;
+    CommandHandlerBase commandHandler;
 };
 
 

@@ -3,10 +3,12 @@
 
 #include <bitset>
 #include <iostream>
+#include <sstream>
 #include <vector>
 
 #include "BoardManager/BitBoards.h"
 #include "BoardManager/Rules.h"
+#include "Utility/Fen.h"
 
 std::string Move::toUCI() const{
     return std::string{static_cast<char>('a' + fileFrom - 1)} + std::to_string(rankFrom) + static_cast<char>(
@@ -105,6 +107,18 @@ bool BoardManager::tryMove(Move& move){
     if (!checkMove(move)) { return false; }
     makeMove(move);
     return true;
+}
+
+bool BoardManager::tryMove(const std::string& moveUCI){
+    const auto fromSquare = Fen::FenToSquare(moveUCI);
+    const auto pieceatLocation = bitboards.getPiece(fromSquare);
+    if (!pieceatLocation.has_value()) {
+        std::cout << "Error: No piece at location " << fromSquare << std::endl;
+        return false;
+    }
+    const auto piece = pieceatLocation.value();
+    auto move = createMove(piece, moveUCI);
+    return tryMove(move);
 }
 
 bool BoardManager::forceMove(Move& move){
@@ -226,6 +240,24 @@ void BoardManager::undoMove(){
     if (moveHistory.empty())
         return;
     undoMove(moveHistory.top());
+}
+
+void BoardManager::setFen(const std::string& fen){
+    std::istringstream fenStream(fen);
+
+    std::string line;
+    std::string fenPiecePlacement;
+    std::string fenActiveColour;
+    std::string fenCastling;
+    std::string fenEnPassant;
+    std::string fenHalfMoveClock;
+    std::string fenFullMoveNumber;
+
+    fenStream >> fenPiecePlacement >> fenActiveColour >> fenCastling >> fenEnPassant >> fenHalfMoveClock >>
+            fenFullMoveNumber;
+
+    bitboards.loadFEN(fenPiecePlacement);
+    setCurrentTurn(fenActiveColour == "w" ? WHITE : BLACK);
 }
 
 bool BoardManager::opponentKingInCheck(Move& move){

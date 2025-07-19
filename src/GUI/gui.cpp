@@ -8,25 +8,23 @@
 #include "GUI/VisualBoard.h"
 
 
-ChessGui::ChessGui(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer) : whitePlayer_(whitePlayer),
-                                                                         blackPlayer_(blackPlayer){
+ChessGui::ChessGui(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer){
+    initSDLStuff();
+    matchManager_ = new MatchManager(whitePlayer, blackPlayer);
+}
+
+void ChessGui::initSDLStuff(){
     window = SDL_CreateWindow("Chess", 800, 800, 0);
     renderer = SDL_CreateRenderer(window, nullptr);
     running = true;
     visualBoard = new VisualBoard(Vec2D(800, 800), this);
     registerEntity(visualBoard);
-
     SDL_Init(SDL_INIT_VIDEO);
 }
 
 ChessGui::ChessGui(){
-    window = SDL_CreateWindow("Chess", 800, 800, 0);
-    renderer = SDL_CreateRenderer(window, nullptr);
-    running = true;
-    visualBoard = new VisualBoard(Vec2D(800, 800), this);
-    registerEntity(visualBoard);
-
-    SDL_Init(SDL_INIT_VIDEO);
+    initSDLStuff();
+    matchManager_ = new MatchManager();
 }
 
 bool ChessGui::wasInit() const{ return window != nullptr && renderer != nullptr; }
@@ -35,15 +33,6 @@ SDL_Renderer *ChessGui::getRenderer() const{ return renderer; }
 
 void ChessGui::registerEntity(DrawableEntity* entity){ drawables.push_back(entity); }
 
-HumanPlayer *ChessGui::getBlackPlayerAsHuman() const{
-    if (const auto humanPlayer = static_cast<HumanPlayer *>(getBlackPlayer())) { return humanPlayer; }
-    return nullptr;;
-}
-
-HumanPlayer *ChessGui::getWhitePlayerAsHuman() const{
-    if (const auto humanPlayer = static_cast<HumanPlayer *>(getWhitePlayer())) { return humanPlayer; }
-    return nullptr;
-}
 
 void ChessGui::loop(){
     if (!wasInit()) { return; }
@@ -117,7 +106,7 @@ void ChessGui::handleKeyDown(const SDL_Keycode keycode){
             break;
         case SDLK_Z:
             if (modifiersSet[SDLK_LCTRL])
-                boardManager_.undoMove();
+                matchManager_->getBoardManager().undoMove();
             break;
         default:
             break;
@@ -130,16 +119,8 @@ void ChessGui::handleKeyUp(const SDL_Keycode key){
     }
 }
 
-ChessPlayer *ChessGui::getCurrentPlayer() const{
-    if (boardManager_.getCurrentTurn() == WHITE) { return whitePlayer_; }
-    return blackPlayer_;
-}
-
 void ChessGui::handleMouseDown(const Uint8 button){
-    if ((boardManager_.getCurrentTurn() == WHITE && whitePlayer_->playerType != HUMAN)
-        ||
-        (boardManager_.getCurrentTurn() == BLACK && blackPlayer_->playerType != HUMAN)
-    ) { return; }
+    if (matchManager_->currentPlayer->playerType != HUMAN) { return; }
 
     switch (button) {
         case SDL_BUTTON_LEFT: {
@@ -173,33 +154,30 @@ void ChessGui::addMouseClick(const int x, const int y){
     const int candidateClickedSquare = rankAndFileToSquare(rank, file);
 
     // check if we clicked on a piece
-    const auto clickedPiece = boardManager_.getBitboards()->getPiece(rank, file);
+    const auto clickedPiece = matchManager_->getBoardManager().getBitboards()->getPiece(rank, file);
 
     if (clickedPiece.has_value()) {
         clickedSquare = candidateClickedSquare;
-        if (pieceColours[clickedPiece.value()] != getCurrentPlayer()->getColour())
-            return;
-
-        // dispatch this click to the current player
-        if (const auto humanPlayer = static_cast<HumanPlayer *>(getCurrentPlayer())) {
-            if (!humanPlayer->playerType == HUMAN)
-                return;
+        if (matchManager_->currentPlayer->playerType == HUMAN) {
+            const auto humanPlayer = static_cast<HumanPlayer *>(matchManager_->currentPlayer);
             humanPlayer->pickUpPiece(candidateClickedSquare);
         }
     }
 }
+
 
 void ChessGui::addMouseRelease(const int x, const int y){
     // need to effectively round down to the nearest rank/file
     const int rank = 1 + static_cast<int>(8 - y / (visualBoard->boardSize().y / 8.f));
     const int file = 1 + static_cast<int>(x / (visualBoard->boardSize().x / 8.f));
 
-    if (const auto humanPlayer = static_cast<HumanPlayer *>(getCurrentPlayer())) {
-        if (humanPlayer->getHeldPiece() == -1)
-            return;
-        if (!humanPlayer->playerType == HUMAN)
-            return;
-        humanPlayer->selectDestination(rankAndFileToSquare(rank, file), &boardManager_);
-    }
+    if (matchManager_->currentPlayer->playerType != HUMAN) { return; }
+
+    auto humanPlayer = static_cast<HumanPlayer *>(matchManager_->currentPlayer);
+
+    if (humanPlayer->getHeldPiece() == -1)
+        return;
+    auto move = humanPlayer->selectDestination(rankAndFileToSquare(rank, file), &matchManager_->getBoardManager());
+    matchManager_->parseUCI("bestmove " + move.toUCI());
 }
 

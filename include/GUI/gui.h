@@ -7,6 +7,7 @@
 
 #include "HumanPlayer.h"
 #include "BoardManager/BoardManager.h"
+#include "MatchManager/MatchManager.h"
 
 
 class VisualPiece;
@@ -24,21 +25,14 @@ class ChessGui {
 public:
 
     explicit ChessGui(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer);
+    void initSDLStuff();
     ChessGui();
 
     [[nodiscard]] bool wasInit() const;
 
     [[nodiscard]] SDL_Renderer *getRenderer() const;
-    BoardManager *getBoardManager(){ return &boardManager_; }
+    MatchManager *getMatchManager(){ return matchManager_; }
     void registerEntity(DrawableEntity* entity);
-
-
-    ChessPlayer *getWhitePlayer() const{ return whitePlayer_; }
-    ChessPlayer *getBlackPlayer() const{ return blackPlayer_; }
-
-    HumanPlayer *getWhitePlayerAsHuman() const;
-    HumanPlayer *getBlackPlayerAsHuman() const;
-
 
     void loop();
 
@@ -51,7 +45,6 @@ private:
 
     // loop stuff
     bool running;
-
     void pollEvents();
     void render() const;
 
@@ -61,10 +54,8 @@ private:
     std::vector<DrawableEntity *> drawables;
     VisualBoard* visualBoard;
 
-    BoardManager boardManager_;
 
-    ChessPlayer* whitePlayer_;
-    ChessPlayer* blackPlayer_;
+    MatchManager* matchManager_ = nullptr;
 
     // event handling
     void handleMouseDown(Uint8 button);
@@ -74,8 +65,6 @@ private:
     std::shared_ptr<VisualPiece> heldPiece;
 
     int clickedSquare = -1;
-
-    ChessPlayer *getCurrentPlayer() const;
 };
 
 

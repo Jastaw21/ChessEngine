@@ -1175,8 +1175,7 @@ TEST(BoardManagerAdvancedRules, EnPassantMustBeAttackingLastMovedPiece){
 }
 
 
-TEST(BoardManager, StartingSquares)
-{
+TEST(BoardManager, StartingSquares){
     auto manager = BoardManager();
 
     manager.getBitboards()->loadFEN(Fen::STARTING_FEN);
@@ -1185,11 +1184,20 @@ TEST(BoardManager, StartingSquares)
     EXPECT_EQ(startingWhitePawns.size(), 8);
 
     std::vector<int> expectedStarts;
-    for (int i = 8; i <= 15; i++) {
-        expectedStarts.push_back(i);
-    }
+    for (int i = 8; i <= 15; i++) { expectedStarts.push_back(i); }
 
-    for (const auto& start : startingWhitePawns) {
-       EXPECT_TRUE( std::ranges::any_of(expectedStarts, [&](const auto actualStart) { return actualStart == start; }));
+    for (const auto& start: startingWhitePawns) {
+        EXPECT_TRUE(std::ranges::any_of(expectedStarts, [&](const auto actualStart) { return actualStart == start; }));
     }
+}
+
+TEST(BoardManager, LoadingFen){
+    auto manager = BoardManager();
+    manager.setFen(Fen::STARTING_FEN + " w KQkq - 0 1");
+    EXPECT_EQ(manager.getBitboards()->toFEN(), Fen::STARTING_FEN);
+    EXPECT_EQ(manager.getCurrentTurn(), WHITE);
+
+    manager.setFen(Fen::STARTING_FEN + " b KQkq - 0 1");
+    EXPECT_EQ(manager.getBitboards()->toFEN(), Fen::STARTING_FEN);
+    EXPECT_EQ(manager.getCurrentTurn(), BLACK);
 }

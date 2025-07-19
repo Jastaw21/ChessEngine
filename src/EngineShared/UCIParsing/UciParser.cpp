@@ -59,11 +59,12 @@ std::optional<Command> UCIParser::parsePosition(){
         std::string fenBody = peek().value;
         consume();
         result.isStartPos = false;
+        result.fen = fenBody;
 
         while (peek().type == TokenType::STRING_LITERAL
                || peek().type == TokenType::INT_LITERAL
                || peek().type == TokenType::DASH
-        ) { result.fen += consume().value; }
+        ) { result.fen += ' ' + consume().value; }
     }
 
     if (peek().type == TokenType::MOVES) {

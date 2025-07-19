@@ -6,3 +6,5 @@
 
 ChessPlayer::ChessPlayer(const Colours colour, const PlayerType playerType) : playerType(playerType),
                                                                               colour(colour){}
+
+void ChessPlayer::parseUCI(const std::string& uci){}

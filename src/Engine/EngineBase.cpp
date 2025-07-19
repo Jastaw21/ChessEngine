@@ -9,14 +9,19 @@
 EngineBase::EngineBase(const Colours colour): ChessPlayer(colour, ENGINE){}
 
 
+void EngineBase::go(int depth){
+    auto move = search(depth);
+    std::cout << move.toUCI() << std::endl;
+}
+
+void EngineBase::makeReady(){}
+
 void EngineBase::parseUCI(const std::string& uci){
     auto command = parser.parse(uci);
     // Create a visitor lambda that captures 'this' and forwards to command handler
     auto visitor = [this](const auto& cmd) { this->commandHandler(cmd, this); };
     std::visit(visitor, *command);
 }
-
-void EngineBase::makeReady(){}
 
 PerftResults EngineBase::runPerftTest(const std::string& Fen, int depth){
     auto mgr = BoardManager(colour);

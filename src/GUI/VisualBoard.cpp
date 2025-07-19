@@ -62,26 +62,26 @@ VisualBoard::~VisualBoard(){
 void VisualBoard::draw(SDL_Renderer* renderer){
     for (auto& square: squares_) { square.draw(renderer); }
 
-    const auto& boards = parent_->getBoardManager()->getBitboards();
+    const auto& boards = parent_->getMatchManager()->getBitboards();
     for (int pieceIndex = 0; pieceIndex < PIECE_N; pieceIndex++) {
         const auto piece = static_cast<Piece>(pieceIndex);
-        auto bits = std::bitset<64>(boards->getBitboard(piece));
+        auto board = boards->getBitboard(static_cast<Piece>(pieceIndex));
 
-        for (size_t index = 0; index < bits.size(); ++index) {
-            if (bits.test(index)) {
-                const int rank = 7- index / 8;
-                const int file = index % 8;
-
-                const auto destRect = SDL_FRect{
-                            .x = file * squareSize().x, .y = rank * squareSize().y, .w = squareSize().x,
-                            .h = squareSize().y
-                        };
-                pieces_[pieceIndex]->draw(renderer, destRect);
-            }
+        while (board) {
+            const auto square = std::countr_zero(board);
+            board &= ~(1ULL << square);
+            int rank, file;
+            squareToRankAndFile(square, rank, file);
+            int invertedRank = 8 - rank;
+            int invertedFile = 8 - file;
+            const auto destRect = SDL_FRect{
+                        .x = invertedFile * squareSize().x, .y = invertedRank * squareSize().y, .w = squareSize().x,
+                        .h = squareSize().y
+                    };
+            pieces_[pieceIndex]->draw(renderer, destRect);
         }
     }
 }
-
 
 std::shared_ptr<VisualPiece> VisualBoard::pieceAtLocation(const int rank, const int file) const{
     for (const auto& piece: pieces_) {
@@ -102,7 +102,7 @@ void VisualBoard::updatePieceLocation(const Piece piece, const size_t index){
 
 
 void VisualBoard::updatePieceLocations(){
-    const auto bb = parent_->getBoardManager()->getBitboards();
+    const auto bb = parent_->getMatchManager()->getBitboards();
     for (int pieceIndex = 0; pieceIndex < PIECE_N; pieceIndex++) {
         const auto piece = static_cast<Piece>(pieceIndex);
         auto bits = std::bitset<64>(bb->getBitboard(piece));

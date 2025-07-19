@@ -6,10 +6,9 @@
 #define ENGINEBASE_H
 
 #include <filesystem>
-
 #include "ChessPlayer.h"
-#include "EngineShared/CommandHandlerBase.h"
-#include "EngineShared/UCIParsing/UciParser.h"
+#include "BoardManager/BoardManager.h"
+
 
 class PerftResults;
 
@@ -18,7 +17,6 @@ public:
 
     //ctor etc
     explicit EngineBase(Colours colour = WHITE);
-    void parseUCI(const std::string& uci);
     void setManager(BoardManager* boardManager){ boardManager_ = boardManager; }
 
     // testing
@@ -32,10 +30,12 @@ public:
     void go(int depth);
     void makeReady();
 
+    virtual void parseUCI(const std::string& uci) override;
+
     // base engine functions
     virtual float evaluate(BoardManager& mgr) = 0;
     virtual Move search(int depth = 2) = 0;
-    virtual std::vector<Move> generateMoveList(BoardManager& mgr);
+    [[nodiscard]] BoardManager *boardManager() const{ return boardManager_; }
 
 protected:
 
@@ -46,12 +46,10 @@ protected:
     virtual PerftResults perft(int depth, BoardManager& boardManager);
     virtual int simplePerft(int depth, BoardManager& boardManager);
     virtual std::vector<PerftResults> perftDivide(int depth, BoardManager& boardManager);
+    virtual std::vector<Move> generateMoveList(BoardManager& mgr);
 
-    Move getBestMove();
 
     // components
-    UCIParser parser;
-    CommandHandlerBase commandHandler;
     BoardManager* boardManager_ = nullptr;
 
 private:
