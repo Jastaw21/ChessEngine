@@ -9,6 +9,8 @@
 #include "Engine/Piece.h"
 #include "EngineShared/CommandHandlerBase.h"
 
+class CommunicatorBase;
+
 enum PlayerType {
     ENGINE,
     HUMAN
@@ -18,7 +20,7 @@ class ChessPlayer {
 public:
 
     virtual ~ChessPlayer() = default;
-    explicit ChessPlayer(Colours colour, PlayerType playerType);
+    explicit ChessPlayer(PlayerType playerType);
 
     virtual void parseUCI(const std::string& uci) = 0;
 
@@ -27,8 +29,8 @@ public:
         return bIsReady;
     };
     bool isReady() const{ return bIsReady; }
-    void setColour(const Colours& colour){ this->colour = colour; }
-    Colours getColour() const{ return colour; }
+    CommunicatorBase *getCommunicator() const{ return communicator_; }
+    void setCommunicator(CommunicatorBase* communicator){ communicator_ = communicator; }
 
     PlayerType playerType;
 
@@ -36,10 +38,9 @@ protected:
 
     bool bIsReady = false;
 
-    Colours colour;
-
     UCIParser parser;
     CommandHandlerBase commandHandler;
+    CommunicatorBase* communicator_;
 };
 
 

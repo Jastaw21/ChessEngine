@@ -73,7 +73,7 @@ void VisualBoard::draw(SDL_Renderer* renderer){
             int rank, file;
             squareToRankAndFile(square, rank, file);
             int invertedRank = 8 - rank;
-            int invertedFile = 8 - file;
+            int invertedFile = file - 1;
             const auto destRect = SDL_FRect{
                         .x = invertedFile * squareSize().x, .y = invertedRank * squareSize().y, .w = squareSize().x,
                         .h = squareSize().y

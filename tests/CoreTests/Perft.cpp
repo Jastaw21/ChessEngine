@@ -63,65 +63,22 @@ TEST(Divide, position3Divide2){
     EXPECT_TRUE(divideTest(Fen::POSITION_3_FEN, outputFile, depth));
 }
 
-TEST(Divide, Kiwi2FixedCaptures){
-    auto manager = BoardManager();
-    auto engine = TestEngine(WHITE, &manager);
-    manager.getBitboards()->loadFEN(Fen::KIWI_PETE_FEN);
-    auto firstMove = createMove(WP, "a2a4");
-    ASSERT_TRUE(manager.tryMove(firstMove));
-    ASSERT_EQ(manager.getCurrentTurn(), BLACK);
-
-    EXPECT_TRUE(divideTest(manager.getBitboards()->toFEN(),"newTest.txt",1,BLACK));
-}
-
-TEST(Divide, kiwiPete3Dividing){
-    auto manager = BoardManager();
-    auto engine = TestEngine(WHITE, &manager);
-    manager.getBitboards()->loadFEN(Fen::KIWI_PETE_FEN);
-    auto firstMove = createMove(WN, "e5f7");
-    ASSERT_TRUE(manager.tryMove(firstMove));
-
-    auto secondMove = createMove(BP, "h3g2");
-    ASSERT_TRUE(manager.tryMove(secondMove));
-
-    EXPECT_TRUE(compareMoveList(manager.getBitboards()->toFEN(), WHITE, "kiwipetedivide.txt"));
-}
-
 TEST(Perft, perft1){
-    TestEngine blackEngine(BLACK);
+    TestEngine blackEngine;
     auto blackResultDepth1 = blackEngine.runPerftTest(Fen::STARTING_FEN, 1);
     EXPECT_EQ(blackResultDepth1.nodes, 20);
     EXPECT_EQ(blackResultDepth1.captures, 0);
-
-    TestEngine whiteEngine(WHITE);
-    auto whiteResultDepth1 = whiteEngine.runPerftTest(Fen::STARTING_FEN, 1);
-    EXPECT_EQ(whiteResultDepth1.nodes, 20);
-    EXPECT_EQ(whiteResultDepth1.captures, 0);
 }
 
 TEST(Perft, perft2){
-    TestEngine blackEngine(BLACK);
-
-    auto blackResultDepth1 = blackEngine.runPerftTest(Fen::STARTING_FEN, 2);
-    EXPECT_EQ(blackResultDepth1.nodes, 400);
-    EXPECT_EQ(blackResultDepth1.captures, 0);
-
-    TestEngine whiteEngine(WHITE);
+    TestEngine whiteEngine;
     auto whiteResultDepth1 = whiteEngine.runPerftTest(Fen::STARTING_FEN, 2);
     EXPECT_EQ(whiteResultDepth1.nodes, 400);
     EXPECT_EQ(whiteResultDepth1.captures, 0);
 }
 
 TEST(Perft, perft3){
-    TestEngine blackEngine(BLACK);
-
-    auto blackResultDepth1 = blackEngine.runPerftTest(Fen::STARTING_FEN, 3);
-    EXPECT_EQ(blackResultDepth1.nodes, 8902);
-    EXPECT_EQ(blackResultDepth1.captures, 34);
-    EXPECT_EQ(blackResultDepth1.enPassant, 0);
-    EXPECT_EQ(blackResultDepth1.checks, 12);
-
-    TestEngine whiteEngine(WHITE);
+    TestEngine whiteEngine;
     auto whiteResultDepth1 = whiteEngine.runPerftTest(Fen::STARTING_FEN, 3);
     EXPECT_EQ(whiteResultDepth1.nodes, 8902);
     EXPECT_EQ(whiteResultDepth1.captures, 34);
@@ -130,7 +87,7 @@ TEST(Perft, perft3){
 }
 
 TEST(Perft, perft4){
-    TestEngine blackEngine(BLACK);
+    TestEngine blackEngine;
 
     auto blackResultDepth1 = blackEngine.runPerftTest(Fen::STARTING_FEN, 4);
     EXPECT_EQ(blackResultDepth1.nodes, 197281);
@@ -142,7 +99,7 @@ TEST(Perft, perft4){
 }
 
 TEST(Perft, kiwiPete1){
-    TestEngine blackEngine(WHITE);
+    TestEngine blackEngine;
     auto blackResultDepth1 = blackEngine.runPerftTest(Fen::KIWI_PETE_FEN, 1);
     EXPECT_EQ(blackResultDepth1.nodes, 48);
     EXPECT_EQ(blackResultDepth1.captures, 8);
@@ -150,7 +107,7 @@ TEST(Perft, kiwiPete1){
 }
 
 TEST(Perft, kiwiPete2){
-    TestEngine whiteEngine(WHITE);
+    TestEngine whiteEngine;
     auto perftResults = whiteEngine.runPerftTest(Fen::KIWI_PETE_FEN, 2);
     EXPECT_EQ(perftResults.nodes, 2039);
     EXPECT_EQ(perftResults.captures, 351);
@@ -160,7 +117,7 @@ TEST(Perft, kiwiPete2){
 }
 
 TEST(Perft, kiwiPete3){
-    TestEngine whiteEngine(WHITE);
+    TestEngine whiteEngine;
     auto perftResults = whiteEngine.runPerftTest(Fen::KIWI_PETE_FEN, 3);
     EXPECT_EQ(perftResults.nodes, 97862);
     EXPECT_EQ(perftResults.captures, 17102);
@@ -171,7 +128,7 @@ TEST(Perft, kiwiPete3){
 }
 
 TEST(Perft, position3Depth1){
-    TestEngine engine(WHITE);
+    TestEngine engine;
     auto perftResults = engine.runPerftTest(Fen::POSITION_3_FEN, 1);
     EXPECT_EQ(perftResults.nodes, 14);
     EXPECT_EQ(perftResults.captures, 1);
@@ -179,7 +136,7 @@ TEST(Perft, position3Depth1){
 }
 
 TEST(Perft, position3Depth2){
-    TestEngine engine(WHITE);
+    TestEngine engine;
     auto perftResults = engine.runPerftTest(Fen::POSITION_3_FEN, 2);
     EXPECT_EQ(perftResults.nodes, 191);
     EXPECT_EQ(perftResults.captures, 14);

@@ -5,8 +5,8 @@
 #include "../include/HumanPlayer.h"
 #include "BoardManager/BoardManager.h"
 
-HumanPlayer::HumanPlayer(const Colours colour): ChessPlayer(colour, HUMAN),
-                                                clickedSquare_(-1){}
+HumanPlayer::HumanPlayer(const Colours colour): ChessPlayer(HUMAN),
+                                                clickedSquare_(-1){ colour_ = colour; }
 
 
 Move HumanPlayer::selectDestination(const int destSquare, BoardManager* manager){

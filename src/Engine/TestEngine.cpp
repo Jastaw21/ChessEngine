@@ -4,146 +4,142 @@
 
 #include "Engine/TestEngine.h"
 
+#include <math.h>
 
 #include "BoardManager/Rules.h"
-#include "EngineShared/PerftResults.h"
+
 
 std::unordered_map<Piece, int> pieceValues = {
-            {WP, 1},
-            {BP, 1},
+            {WP, 10},
+            {BP, 10},
 
-            {WR, 2},
-            {BR, 2},
+            {WR, 55},
+            {BR, 55},
 
-            {WN, 3},
-            {BN, 3},
+            {WN, 30},
+            {BN, 30},
 
-            {WB, 3},
-            {BB, 3},
+            {WB, 32},
+            {BB, 32},
 
-            {WK, 99},
-            {BK, 99},
+            {WK, 990},
+            {BK, 990},
 
-            {WQ, 20},
-            {BQ, 20}
+            {WQ, 90},
+            {BQ, 90}
         };
 
 
-TestEngine::TestEngine(const Colours colour) : EngineBase(colour){}
+float TestEngine::alphaBeta(const int depth, bool isMaximising, float alpha, float beta){
+    if (depth == 0) { return evaluate(); }
 
-TestEngine::TestEngine(const Colours colour, BoardManager* boardManager): EngineBase(colour){
-    setManager(boardManager);
-}
-
-
-float TestEngine::evaluate(BoardManager& mgr) const{
-    float materialScore = 0.0f;
-
-    for (int piece = 0; piece < PIECE_N; ++piece) {
-        auto pieceName = static_cast<Piece>(piece);
-        const int pieceCount = mgr.getBitboards()->countPiece(pieceName);
-        const int pieceValue = pieceValues[pieceName];
-
-        if (pieceColours[pieceName] == colour) { materialScore += pieceValue * pieceCount; } else {
-            materialScore -= pieceValue * pieceCount;
+    auto moves = generateMoveList();
+    if (isMaximising) {
+        float maxEval = -INFINITY;
+        for (auto& move: moves) {
+            internalBoardManager_.forceMove(move);
+            float eval = alphaBeta(depth - 1, !isMaximising, alpha, beta);
+            internalBoardManager_.undoMove();
+            maxEval = std::max(maxEval, eval);
+            alpha = std::max(alpha, eval);
+            if (beta <= alpha) { break; }
         }
+        return maxEval;
     }
-    return materialScore;
-}
-
-float TestEngine::minMax(BoardManager& mgr, const int depth, const bool isMaximising){
-    if (depth == 0) { return evaluate(mgr); }
-
-    auto moves = generateMoveList(mgr);
-
-    if (moves.empty()) { return evaluate(mgr); }
-
-    int bestEval = isMaximising ? -100000 : 100000;
-
-    for (Move& move: moves) {
-        mgr.forceMove(move);
-        int eval = minMax(mgr, depth - 1, !isMaximising);
-        mgr.undoMove();
-
-        if (isMaximising) { bestEval = std::max(bestEval, eval); } else { bestEval = std::min(bestEval, eval); }
+    float minEval = INFINITY;
+    for (auto& move: moves) {
+        internalBoardManager_.forceMove(move);
+        float eval = alphaBeta(depth - 1, !isMaximising, alpha, beta);
+        internalBoardManager_.undoMove();
+        minEval = std::min(minEval, eval);
+        beta = std::min(beta, eval);
+        if (beta <= alpha) { break; }
     }
-    return bestEval;
+    return minEval;
 }
 
 
 Move TestEngine::search(const int depth){
-    BoardManager startingManager = *boardManager_;
-
-    auto moves = generateMoveList(startingManager);
+    auto moves = generateMoveList();
     if (moves.empty()) { return Move(); }
 
     Move bestMove = moves[0];
-    float bestEval = -100000;
+    float bestEval = -INFINITY;
 
-    const Colours thisTurn = startingManager.getCurrentTurn();
+    const Colours thisTurn = internalBoardManager_.getCurrentTurn();
+    bool isWhite = thisTurn == WHITE;
 
     for (auto& move: moves) {
-        startingManager.forceMove(move);
-        const float eval = minMax(startingManager, 2, thisTurn == colour);
-        startingManager.undoMove();
+        internalBoardManager_.forceMove(move);
+        float eval = alphaBeta(depth - 1, !isWhite, -INFINITY, INFINITY);
+        internalBoardManager_.undoMove();
 
-        if (thisTurn == colour) {
-            if (eval > bestEval) {
-                bestEval = eval;
-                bestMove = move;
-            }
-        } else {
-            if (eval < bestEval) {
-                bestEval = eval;
-                bestMove = move;
-            }
+        if (!isWhite) { eval = -eval; }
+
+        if (eval > bestEval) {
+            bestEval = eval;
+            bestMove = move;
         }
     }
     return bestMove;
 }
 
-std::vector<Move> TestEngine::generateValidMovesFromPosition(BoardManager& mgr, const Piece& piece,
+std::vector<Move> TestEngine::generateValidMovesFromPosition(const Piece& piece,
                                                              const int startSquare){
     std::vector<Move> validMoves;
 
-    auto possibleMoves2 = mgr.getMagicBitBoards()->getMoves(startSquare, piece, *mgr.getBitboards());
+    auto possibleMoves2 = internalBoardManager_.getMagicBitBoards()->getMoves(
+        startSquare, piece, *internalBoardManager_.getBitboards());
 
     while (possibleMoves2) {
         const auto endSquare = std::countr_zero(possibleMoves2); // bottom set bit
         possibleMoves2 &= ~(1ULL << endSquare); // pop the bit
         auto candidateMove = Move(piece, startSquare, endSquare);
-        if (mgr.checkMove(candidateMove))
+        if (internalBoardManager_.checkMove(candidateMove))
             validMoves.push_back(candidateMove);
     }
     return validMoves;
 }
 
-
-std::vector<Move> TestEngine::generateMovesForPiece(BoardManager& mgr, const Piece& piece){
+std::vector<Move> TestEngine::generateMovesForPiece(const Piece& piece){
     std::vector<Move> pieceMoves;
 
-    auto piecePositions = mgr.getBitboards()->getBitboard(piece);
+    auto piecePositions = internalBoardManager_.getBitboards()->getBitboard(piece);
 
     while (piecePositions) {
         const auto startSquare = std::countr_zero(piecePositions); // bottom set bit
         piecePositions &= ~(1ULL << startSquare); // pop the bit
-        auto validMoves = generateValidMovesFromPosition(mgr, piece, startSquare);
+        auto validMoves = generateValidMovesFromPosition(piece, startSquare);
         pieceMoves.insert(pieceMoves.end(), validMoves.begin(), validMoves.end());
     }
 
     return pieceMoves;
 }
 
-std::vector<Move> TestEngine::generateMoveList(BoardManager& mgr){
+std::vector<Move> TestEngine::generateMoveList(){
     std::vector<Move> moves;
     // check each piece we have
-    for (const auto& pieceName: filteredPieces[mgr.getCurrentTurn()]) {
-        auto pieceMoves = generateMovesForPiece(mgr, pieceName);
+    for (const auto& pieceName: filteredPieces[internalBoardManager_.getCurrentTurn()]) {
+        auto pieceMoves = generateMovesForPiece(pieceName);
         moves.insert(moves.end(), pieceMoves.begin(), pieceMoves.end());
     }
     return moves;
 }
 
 
-float TestEngine::evaluate(BoardManager& mgr){ return 0.0f; }
+float TestEngine::evaluate(){
+    int whiteScore = 0;
+    int blackScore = 0;
+
+    for (int piece = 0; piece < PIECE_N; ++piece) {
+        auto pieceName = static_cast<Piece>(piece);
+        const int pieceCount = internalBoardManager_.getBitboards()->countPiece(pieceName);
+        const int pieceValue = pieceValues[pieceName];
+
+        if (pieceColours[pieceName] == WHITE) { whiteScore += pieceValue * pieceCount; } else {
+            blackScore += pieceValue * pieceCount;
+        }
+    }
+    return whiteScore - blackScore;
+}
 

@@ -4,7 +4,6 @@
 
 #include "../include/ChessPlayer.h"
 
-ChessPlayer::ChessPlayer(const Colours colour, const PlayerType playerType) : playerType(playerType),
-                                                                              colour(colour){}
+ChessPlayer::ChessPlayer(const PlayerType playerType) : playerType(playerType){}
 
 void ChessPlayer::parseUCI(const std::string& uci){}

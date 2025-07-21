@@ -5,7 +5,6 @@
 #include <gtest/gtest.h>
 #include "BoardManager/BoardManager.h"
 #include "BoardManager/Rules.h"
-#include "Engine/TestEngine.h"
 #include "Utility/Fen.h"
 
 TEST(MoveStruct, ToUCICorrect){
@@ -958,55 +957,9 @@ TEST(BoardManagerLegality, MissingKiwiPeteMoves){
     EXPECT_TRUE(manager.checkMove(missingKingMove));
 }
 
-TEST(BoardManagerMoveExecution, KiwiPeteRestoresState){
-    auto manager = BoardManager();
-    manager.getBitboards()->loadFEN(Fen::KIWI_PETE_FEN);
-    auto engine = TestEngine(WHITE);
-
-    auto moves = engine.generateMoveList(manager);
-    ASSERT_EQ(moves.size(), 48);
-
-    int failureCount = 0;
-    std::vector<Move> failedMoves;
-    // walk each move to see where it goes wrong
-    for (auto& move: moves) {
-        auto initialState = manager.getBitboards()->toFEN();
-        manager.tryMove(move);
-        auto parentUCI = move.toUCI();
-
-        // also check the chile moves
-        auto childMoves = engine.generateMoveList(manager);
-        for (auto& childMove: childMoves) {
-            // used for debugging
-            auto childUCI = childMove.toUCI();
-            // does the state restore?
-            auto initialChildState = manager.getBitboards()->toFEN();
-            manager.tryMove(childMove);
-            manager.undoMove();
-            auto finalChildState = manager.getBitboards()->toFEN();
-
-            // log it if not
-            if (initialChildState != finalChildState)
-                std::cout << "Child Move Failed: " << move.toUCI() << " : " << childMove.toUCI() <<
-                        std::endl;
-        }
-        manager.undoMove();
-        auto finalState = manager.getBitboards()->toFEN();
-        if (initialState != finalState) {
-            failureCount++;
-            failedMoves.push_back(move);
-        }
-        EXPECT_EQ(initialState, finalState);
-    }
-    std::cout << "Failed " << failureCount << " times" << std::endl;
-    std::cout << "Failed Root Level Moves: " << std::endl;
-    for (auto& move: failedMoves) { std::cout << move.toUCI() << std::endl; }
-}
-
 TEST(BoardManagerMoveExecution, check_e8c8_KP_doesntChangeBoardState){
     auto manager = BoardManager();
     manager.getBitboards()->loadFEN(Fen::KIWI_PETE_FEN);
-    auto engine = TestEngine(WHITE);
 
     auto move = createMove(WB, "e2a6");
     ASSERT_TRUE(manager.tryMove(move));

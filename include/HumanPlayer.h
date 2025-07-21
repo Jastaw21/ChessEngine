@@ -25,6 +25,7 @@ public:
 private:
 
     int clickedSquare_;
+    Colours colour_;
 };
 
 

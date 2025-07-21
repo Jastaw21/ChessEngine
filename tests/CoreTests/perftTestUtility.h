@@ -1,6 +1,10 @@
 //
 // Created by jacks on 14/07/2025.
 //
+
+#ifndef PERFTTESTUTILITY_H
+#define PERFTTESTUTILITY_H
+
 #include <algorithm>
 #include <fstream>
 #include <ranges>
@@ -118,12 +122,10 @@ inline bool divideTest(const std::string& desiredFen, const std::string& outputF
 
     generateExternalEngineMoves(fen, outputFile, depth);
     auto pyMoves = getDivideResults(outputFile); // get our own starting moves
-    auto manager = BoardManager();
-    manager.setCurrentTurn(colourToMove);
-    manager.getBitboards()->loadFEN(desiredFen);
-    TestEngine whiteEngine(WHITE);
+    TestEngine whiteEngine;
+    whiteEngine.loadFEN(desiredFen);
 
-    std::vector<PerftResults> engineResults = whiteEngine.runDivideTest(manager, depth);
+    std::vector<PerftResults> engineResults = whiteEngine.runDivideTest(depth);
 
     PerftResults totalPy;
     for (const auto& move: pyMoves) { totalPy += move; }
@@ -178,11 +180,12 @@ inline bool divideTest(const std::string& desiredFen, const std::string& outputF
         std::cout << printInset << "============Dividing further=========== " << move.fen << " " << std::endl;
         int iRank, iFile;
         Fen::FenToRankAndFile(move.fen, iRank, iFile);
-        auto inferredPiece = manager.getBitboards()->getPiece(iRank, iFile);
+        auto inferredPiece = whiteEngine.boardManager()->getBitboards()->getPiece(iRank, iFile);
         if (inferredPiece.has_value()) {
             auto subMove = createMove(inferredPiece.value(), move.fen);
-            manager.tryMove(subMove);
-            divideTest(manager.getBitboards()->toFEN(), outputFile, depth - 1, colourToMove == WHITE ? BLACK : WHITE);
+            whiteEngine.boardManager()->tryMove(subMove);
+            divideTest(whiteEngine.boardManager()->getBitboards()->toFEN(), outputFile, depth - 1,
+                       colourToMove == WHITE ? BLACK : WHITE);
         } else { std::cout << printInset << "No inferred piece found for " << move.fen << std::endl; }
     }
 
@@ -201,11 +204,12 @@ inline bool divideTest(const std::string& desiredFen, const std::string& outputF
         std::cout << printInset << "============Dividing further=========== " << move.fen << " " << std::endl;
         int iRank, iFile;
         Fen::FenToRankAndFile(move.fen, iRank, iFile);
-        auto inferredPiece = manager.getBitboards()->getPiece(iRank, iFile);
+        auto inferredPiece = whiteEngine.boardManager()->getBitboards()->getPiece(iRank, iFile);
         if (inferredPiece.has_value()) {
             auto subMove = createMove(inferredPiece.value(), move.fen);
-            manager.tryMove(subMove);
-            divideTest(manager.getBitboards()->toFEN(), outputFile, depth - 1, colourToMove == WHITE ? BLACK : WHITE);
+            whiteEngine.boardManager()->tryMove(subMove);
+            divideTest(whiteEngine.boardManager()->getBitboards()->toFEN(), outputFile, depth - 1,
+                       colourToMove == WHITE ? BLACK : WHITE);
         } else { std::cout << printInset << "No inferred piece found for " << move.fen << std::endl; }
     }
 
@@ -215,16 +219,13 @@ inline bool divideTest(const std::string& desiredFen, const std::string& outputF
 }
 
 inline bool compareMoveList(const std::string& startingFen, const Colours& colourtoMove, const std::string& outputFile){
-    bool passing = true;
+    auto engine = TestEngine();
+    engine.loadFEN(startingFen);
 
-    auto manager = BoardManager(colourtoMove);
-    manager.getBitboards()->loadFEN(startingFen);
-    auto engine = TestEngine(WHITE, &manager);
-
-    auto ourMoves = engine.generateMoveList(manager);
+    auto ourMoves = engine.generateMoveList();
 
     auto fenAppendage = colourtoMove == WHITE ? " w KQkq -" : " b KQkq -";
-    generateExternalEngineMoves(manager.getBitboards()->toFEN() + fenAppendage, outputFile, 1);
+    generateExternalEngineMoves(engine.boardManager()->getBitboards()->toFEN() + fenAppendage, outputFile, 1);
     auto pyMoves = readMoves(outputFile);
 
     std::vector<std::string> ourMovesToTest;
@@ -255,3 +256,5 @@ inline bool compareMoveList(const std::string& startingFen, const Colours& colou
 
     return inEngineNotInOurs.empty() && inOursNotInEngine.empty();
 }
+
+#endif //PERFTTESTUTILITY_H

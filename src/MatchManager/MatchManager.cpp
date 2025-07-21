@@ -3,6 +3,17 @@
 //
 
 #include "../../include/MatchManager/MatchManager.h"
+#include "EngineShared/CommunicatorBase.h"
+
+MatchManager::MatchManager(ChessPlayer* startingPlayer, ChessPlayer* otherPlayer){
+    currentPlayer_ = startingPlayer;
+    otherPlayer_ = otherPlayer;
+    const auto currentCommunicator = new MatchManagerCommunicator(this);
+    currentPlayer_->setCommunicator(currentCommunicator);
+    const auto otherCommunicator = new MatchManagerCommunicator(this);
+    otherPlayer_->setCommunicator(otherCommunicator);
+}
+
 
 void MatchManager::tick(){}
 

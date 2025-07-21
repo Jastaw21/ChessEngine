@@ -11,6 +11,8 @@ add_library(EngineSharedLib
         UCIParsing/Tokeniser.cpp
         CommandHandlerBase.cpp
         ../../include/EngineShared/CommandHandlerBase.h
+        CommunicatorBase.cpp
+        ../../include/EngineShared/CommunicatorBase.h
 )
 
 

@@ -12,24 +12,19 @@
 class TestEngine final : public EngineBase {
 public:
 
-    explicit TestEngine(Colours colour);
-    explicit TestEngine(Colours colour, BoardManager* boardManager);
-
-    float evaluate(BoardManager& mgr) const;
+    virtual float evaluate() override;
     virtual Move search(int depth = 2) override;
 
-    virtual std::vector<Move> generateMoveList(BoardManager& mgr) override;
+    virtual std::vector<Move> generateMoveList() override;
 
 private:
 
-    virtual std::vector<Move>
-    generateValidMovesFromPosition(BoardManager& mgr, const Piece& piece, int startSquare) override;
-    virtual std::vector<Move> generateMovesForPiece(BoardManager& mgr, const Piece& piece) override;
-    float minMax(BoardManager& mgr, int depth, bool isMaximising);
+    virtual std::vector<Move> generateValidMovesFromPosition(const Piece& piece, int startSquare) override;
+    virtual std::vector<Move> generateMovesForPiece(const Piece& piece) override;
+    float alphaBeta(int depth, bool isMaximising, float alpha, float beta);
+    float minMax(int depth, bool isMaximising);
 
 public:
-
-    virtual float evaluate(BoardManager& mgr) override;
 };
 
 

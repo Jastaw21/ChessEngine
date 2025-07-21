@@ -8,22 +8,22 @@
 #include "MatchManager.h"
 
 void ManagerCommandHandler::operator()(const UCICommand& cmd, MatchManager* matchManager){
-    matchManager->otherPlayer->parseUCI("uci");
+    matchManager->otherPlayer()->parseUCI("uci");
     matchManager->swapPlayers();
 }
 
 void ManagerCommandHandler::operator()(const StopCommand& cmd, MatchManager* matchManager){
-    matchManager->otherPlayer->parseUCI("stop");
+    matchManager->otherPlayer()->parseUCI("stop");
     matchManager->swapPlayers();
 }
 
 void ManagerCommandHandler::operator()(const IsReadyCommand& cmd, MatchManager* matchManager){
-    matchManager->otherPlayer->parseUCI("isready");
+    matchManager->otherPlayer()->parseUCI("isready");
     matchManager->swapPlayers();
 }
 
 void ManagerCommandHandler::operator()(const QuitCommand& cmd, MatchManager* matchManager){
-    matchManager->otherPlayer->parseUCI("quit");
+    matchManager->otherPlayer()->parseUCI("quit");
     matchManager->swapPlayers();
 }
 
@@ -47,7 +47,7 @@ void ManagerCommandHandler::operator()(const PositionCommand& cmd, MatchManager*
             fullPositionCommand += " ";
         }
     }
-    matchManager->otherPlayer->parseUCI(fullPositionCommand);
+    matchManager->otherPlayer()->parseUCI(fullPositionCommand);
     matchManager->swapPlayers();
 }
 
@@ -63,13 +63,15 @@ void ManagerCommandHandler::operator()(const BestMoveCommand& cmd, MatchManager*
     if (!moveHistory.empty()) {
         fullPositionCommand += " moves ";
 
+        std::vector<std::string> moves;
         auto tempStack = moveHistory;
         while (!tempStack.empty()) {
-            fullPositionCommand += tempStack.top().toUCI();
-            fullPositionCommand += " ";
+            moves.push_back(tempStack.top().toUCI());
             tempStack.pop();
         }
+
+        for (auto it = moves.rbegin(); it != moves.rend(); ++it) { fullPositionCommand += *it + " "; }
     }
-    matchManager->currentPlayer->parseUCI(fullPositionCommand);
-    matchManager->currentPlayer->parseUCI("go depth 2");
+    matchManager->currentPlayer()->parseUCI(fullPositionCommand);
+    matchManager->currentPlayer()->parseUCI("go depth 2");
 }

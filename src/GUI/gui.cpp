@@ -120,7 +120,7 @@ void ChessGui::handleKeyUp(const SDL_Keycode key){
 }
 
 void ChessGui::handleMouseDown(const Uint8 button){
-    if (matchManager_->currentPlayer->playerType != HUMAN) { return; }
+    if (matchManager_->currentPlayer()->playerType != HUMAN) { return; }
 
     switch (button) {
         case SDL_BUTTON_LEFT: {
@@ -158,26 +158,27 @@ void ChessGui::addMouseClick(const int x, const int y){
 
     if (clickedPiece.has_value()) {
         clickedSquare = candidateClickedSquare;
-        if (matchManager_->currentPlayer->playerType == HUMAN) {
-            const auto humanPlayer = static_cast<HumanPlayer *>(matchManager_->currentPlayer);
+        if (matchManager_->currentPlayer()->playerType == HUMAN) {
+            const auto humanPlayer = static_cast<HumanPlayer *>(matchManager_->currentPlayer());
             humanPlayer->pickUpPiece(candidateClickedSquare);
         }
     }
 }
 
 
-void ChessGui::addMouseRelease(const int x, const int y){
+void ChessGui::addMouseRelease(const int x, const int y) const{
     // need to effectively round down to the nearest rank/file
     const int rank = 1 + static_cast<int>(8 - y / (visualBoard->boardSize().y / 8.f));
     const int file = 1 + static_cast<int>(x / (visualBoard->boardSize().x / 8.f));
 
-    if (matchManager_->currentPlayer->playerType != HUMAN) { return; }
+    if (matchManager_->currentPlayer()->playerType != HUMAN) { return; }
 
-    auto humanPlayer = static_cast<HumanPlayer *>(matchManager_->currentPlayer);
+    const auto humanPlayer = static_cast<HumanPlayer *>(matchManager_->currentPlayer());
 
     if (humanPlayer->getHeldPiece() == -1)
         return;
-    auto move = humanPlayer->selectDestination(rankAndFileToSquare(rank, file), &matchManager_->getBoardManager());
-    matchManager_->parseUCI("bestmove " + move.toUCI());
+    const auto move = humanPlayer->
+            selectDestination(rankAndFileToSquare(rank, file), &matchManager_->getBoardManager());
+    matchManager_->receiveCommand("bestmove " + move.toUCI());
 }
 

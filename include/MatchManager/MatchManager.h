@@ -11,35 +11,33 @@
 #include "EngineShared/UCIParsing/UciParser.h"
 #include "Utility/Fen.h"
 
+class CommunicatorBase;
+
 class MatchManager {
 public:
 
     MatchManager() = default;
 
     MatchManager(ChessPlayer* startingPlayer, ChessPlayer* otherPlayer,
-                 const std::string& startingFen) : currentPlayer(startingPlayer),
-                                                   otherPlayer(otherPlayer),
+                 const std::string& startingFen) : currentPlayer_(startingPlayer),
+                                                   otherPlayer_(otherPlayer),
                                                    startingFen_(startingFen){}
 
-    MatchManager(ChessPlayer* startingPlayer, ChessPlayer* otherPlayer) : currentPlayer(startingPlayer),
-                                                                          otherPlayer(otherPlayer){}
+    MatchManager(ChessPlayer* startingPlayer, ChessPlayer* otherPlayer);
 
     void tick();
 
-    void parseUCI(const std::string& uci);
-    void sendCommand(Command cmd);
     std::stack<Move> &getMoveHistory();
-    void swapPlayers(){ std::swap(currentPlayer, otherPlayer); };
-    ChessPlayer* currentPlayer = nullptr;
-    ChessPlayer* otherPlayer = nullptr;
-
+    void swapPlayers(){ std::swap(currentPlayer_, otherPlayer_); };
     void addMove(const std::string& moveUCI);
-
-    BoardManager &getBoardManager(){ return boardManager; }
-    BitBoards *getBitboards(){ return boardManager.getBitboards(); }
+    void receiveCommand(const std::string& command){ parseUCI(command); }
 
 private:
 
+    void parseUCI(const std::string& uci);
+
+    ChessPlayer* currentPlayer_ = nullptr;
+    ChessPlayer* otherPlayer_ = nullptr;
     UCIParser parser;
     ManagerCommandHandler commandHandler;
     BoardManager boardManager;
@@ -49,6 +47,12 @@ private:
 public:
 
     [[nodiscard]] std::string startingFen() const{ return startingFen_; }
+    ChessPlayer *currentPlayer() const{ return currentPlayer_; }
+    ChessPlayer *otherPlayer() const{ return otherPlayer_; }
+    void setCurrentPlayer(ChessPlayer* current_player){ currentPlayer_ = current_player; }
+    void setOtherPlayer(ChessPlayer* other_player){ otherPlayer_ = other_player; }
+    BoardManager &getBoardManager(){ return boardManager; }
+    BitBoards *getBitboards(){ return boardManager.getBitboards(); }
 };
 
 

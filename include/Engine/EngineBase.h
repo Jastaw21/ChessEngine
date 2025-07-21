@@ -16,41 +16,42 @@ class EngineBase : public ChessPlayer {
 public:
 
     //ctor etc
-    explicit EngineBase(Colours colour = WHITE);
-    void setManager(BoardManager* boardManager){ boardManager_ = boardManager; }
+    explicit EngineBase();
 
     // testing
     virtual PerftResults runPerftTest(const std::string& Fen, int depth);
     virtual std::vector<PerftResults> runDivideTest(const std::string& Fen, int depth);
-    virtual std::vector<PerftResults> runDivideTest(BoardManager& mgr, int depth);
+    virtual std::vector<PerftResults> runDivideTest(int depth);
 
     // command runners
     void stop(){ shouldStop = true; };
     void quit(){ shouldQuit = true; };
     void go(int depth);
-    void makeReady();
+    static void makeReady();
 
     virtual void parseUCI(const std::string& uci) override;
 
     // base engine functions
-    virtual float evaluate(BoardManager& mgr) = 0;
+    virtual float evaluate() = 0;
     virtual Move search(int depth = 2) = 0;
-    [[nodiscard]] BoardManager *boardManager() const{ return boardManager_; }
+    [[nodiscard]] BoardManager *boardManager(){ return &internalBoardManager_; }
+
+    void loadFEN(const std::string& fen);
 
 protected:
 
     virtual std::vector<Move> generateValidMovesFromPosition(
-        BoardManager& mgr, const Piece& piece, int startSquare) = 0;
+        const Piece& piece, int startSquare) = 0;
 
-    virtual std::vector<Move> generateMovesForPiece(BoardManager& mgr, const Piece& piece) = 0;
-    virtual PerftResults perft(int depth, BoardManager& boardManager);
-    virtual int simplePerft(int depth, BoardManager& boardManager);
-    virtual std::vector<PerftResults> perftDivide(int depth, BoardManager& boardManager);
-    virtual std::vector<Move> generateMoveList(BoardManager& mgr);
+    virtual std::vector<Move> generateMovesForPiece(const Piece& piece) = 0;
+    virtual PerftResults perft(int depth);
+    virtual int simplePerft(int depth);
+    virtual std::vector<PerftResults> perftDivide(int depth);
+    virtual std::vector<Move> generateMoveList();
 
 
     // components
-    BoardManager* boardManager_ = nullptr;
+    BoardManager internalBoardManager_;
 
 private:
 

@@ -37,7 +37,7 @@ public:
     void loop();
 
     void addMouseClick(int x, int y);
-    void addMouseRelease(int x, int y);
+    void addMouseRelease(int x, int y) const;
 
     [[nodiscard]] int clicked_square(){ return clickedSquare; }
 

@@ -3,15 +3,16 @@
 //
 
 #include "Engine/EngineBase.h"
+
+#include "EngineShared/CommunicatorBase.h"
 #include "EngineShared/PerftResults.h"
 
 
-EngineBase::EngineBase(const Colours colour): ChessPlayer(colour, ENGINE){}
+EngineBase::EngineBase(): ChessPlayer(ENGINE){}
 
-
-void EngineBase::go(int depth){
+void EngineBase::go(const int depth){
     auto move = search(depth);
-    std::cout << move.toUCI() << std::endl;
+    communicator_->send("bestmove " + move.toUCI());
 }
 
 void EngineBase::makeReady(){}
@@ -23,30 +24,40 @@ void EngineBase::parseUCI(const std::string& uci){
     std::visit(visitor, *command);
 }
 
-PerftResults EngineBase::runPerftTest(const std::string& Fen, int depth){
-    auto mgr = BoardManager(colour);
-    mgr.getBitboards()->loadFEN(Fen);
-    return perft(depth, mgr);
+PerftResults EngineBase::runPerftTest(const std::string& Fen, const int depth){
+    internalBoardManager_.getBitboards()->loadFEN(Fen);
+    return perft(depth);
 }
 
-std::vector<PerftResults> EngineBase::runDivideTest(const std::string& Fen, int depth){
-    auto mgr = BoardManager(colour);
-    mgr.getBitboards()->loadFEN(Fen);
-    return perftDivide(depth, mgr);
+std::vector<PerftResults> EngineBase::runDivideTest(const std::string& Fen, const int depth){
+    internalBoardManager_.getBitboards()->loadFEN(Fen);
+    return perftDivide(depth);
 }
 
-std::vector<PerftResults> EngineBase::runDivideTest(BoardManager& mgr, int depth){ return perftDivide(depth, mgr); }
-std::vector<Move> EngineBase::generateMoveList(BoardManager& mgr){ return std::vector<Move>(); }
+std::vector<PerftResults> EngineBase::runDivideTest(const int depth){ return perftDivide(depth); }
 
-PerftResults EngineBase::perft(int depth, BoardManager& boardManager){
+std::vector<Move> EngineBase::generateMoveList(){ return std::vector<Move>(); }
+
+void EngineBase::loadFEN(const std::string& fen){
+    // std::string firstPartOfFen;
+    // for (int i = 0; i < fen.size(); i++) {
+    //     if (fen[i] == ' ') { break; }
+    //     firstPartOfFen += fen[i];
+    // }
+    // internalBoardManager_.getBitboards()->loadFEN(firstPartOfFen);
+    boardManager()->setFen(fen);
+}
+
+PerftResults EngineBase::perft(const int depth){
     if (depth == 0) return PerftResults{1, 0, 0, 0, 0, 0};
 
     PerftResults result{0, 0, 0, 0, 0, 0};
-    auto moves = generateMoveList(boardManager);
+    auto moves = generateMoveList();
 
     for (auto& move: moves) {
-        boardManager.forceMove(move); // moves should be checked for legality already at this point so don't even worry
-        PerftResults child = perft(depth - 1, boardManager);
+        internalBoardManager_.forceMove(move);
+        // moves should be checked for legality already at this point so don't even worry
+        PerftResults child = perft(depth - 1);
 
         if (depth == 1) {
             result.nodes++;
@@ -58,37 +69,37 @@ PerftResults EngineBase::perft(int depth, BoardManager& boardManager){
             if (move.resultBits & CHECK_MATE) { result.checkMate++; }
         } else { result += child; }
 
-        boardManager.undoMove();
+        internalBoardManager_.undoMove();
     }
     return result;
 }
 
-int EngineBase::simplePerft(int depth, BoardManager& boardManager){
+int EngineBase::simplePerft(const int depth){
     if (depth == 0)
         return 1;
 
     int nodes = 0;
-    auto moves = generateMoveList(boardManager);
+    auto moves = generateMoveList();
     for (Move& move: moves) {
-        boardManager.forceMove(move);
-        nodes += simplePerft(depth - 1, boardManager);
-        boardManager.undoMove();
+        internalBoardManager_.forceMove(move);
+        nodes += simplePerft(depth - 1);
+        internalBoardManager_.undoMove();
     }
 
     return nodes;
 }
 
-std::vector<PerftResults> EngineBase::perftDivide(int depth, BoardManager& boardManager){
-    auto moves = generateMoveList(boardManager);
+std::vector<PerftResults> EngineBase::perftDivide(const int depth){
+    auto moves = generateMoveList();
     std::vector<PerftResults> results;
 
     for (auto& move: moves) {
         auto result = PerftResults();
         result.nodes = 0;
         result.fen = move.toUCI();
-        boardManager.forceMove(move);
-        result += perft(depth - 1, boardManager);
-        boardManager.undoMove();
+        internalBoardManager_.forceMove(move);
+        result += perft(depth - 1);
+        internalBoardManager_.undoMove();
 
         results.push_back(result);
     }
