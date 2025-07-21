@@ -5,7 +5,7 @@
 #include "Engine/EngineBase.h"
 
 #include "EngineShared/CommunicatorBase.h"
-#include "EngineShared/PerftResults.h"
+
 
 
 EngineBase::EngineBase(): ChessPlayer(ENGINE){}
@@ -24,12 +24,12 @@ void EngineBase::parseUCI(const std::string& uci){
     std::visit(visitor, *command);
 }
 
-PerftResults EngineBase::runPerftTest(const std::string& Fen, const int depth){
+PerftResults EngineBase::runPerftTest(const std::string& Fen, int depth){
     internalBoardManager_.getBitboards()->loadFEN(Fen);
     return perft(depth);
 }
 
-std::vector<PerftResults> EngineBase::runDivideTest(const std::string& Fen, const int depth){
+std::vector<PerftResults> EngineBase::runDivideTest(const std::string& Fen, int depth){
     internalBoardManager_.getBitboards()->loadFEN(Fen);
     return perftDivide(depth);
 }
@@ -48,7 +48,7 @@ void EngineBase::loadFEN(const std::string& fen){
     boardManager()->setFen(fen);
 }
 
-PerftResults EngineBase::perft(const int depth){
+PerftResults EngineBase::perft(int depth){
     if (depth == 0) return PerftResults{1, 0, 0, 0, 0, 0};
 
     PerftResults result{0, 0, 0, 0, 0, 0};
@@ -74,7 +74,7 @@ PerftResults EngineBase::perft(const int depth){
     return result;
 }
 
-int EngineBase::simplePerft(const int depth){
+int EngineBase::simplePerft(int depth){
     if (depth == 0)
         return 1;
 
@@ -89,7 +89,7 @@ int EngineBase::simplePerft(const int depth){
     return nodes;
 }
 
-std::vector<PerftResults> EngineBase::perftDivide(const int depth){
+std::vector<PerftResults> EngineBase::perftDivide(int depth){
     auto moves = generateMoveList();
     std::vector<PerftResults> results;
 

@@ -10,7 +10,7 @@
 #include "BoardManager/BoardManager.h"
 
 
-class PerftResults;
+#include "EngineShared/PerftResults.h"
 
 class EngineBase : public ChessPlayer {
 public:

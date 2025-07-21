@@ -23,4 +23,7 @@ void MatchManagerCommunicator::send(const std::string& command){
     manager_->receiveCommand(command);
 }
 
-std::string MatchManagerCommunicator::receive(){}
+std::string MatchManagerCommunicator::receive()
+{
+    return std::string();
+}
