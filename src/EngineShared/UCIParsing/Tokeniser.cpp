@@ -86,6 +86,9 @@ TokenType Tokeniser::getUnknownTokenType(const std::string& token){
 }
 
 bool Tokeniser::isMove(const std::string& token){
+
+    if (token.size() < 4)
+        return false;
     bool isMove = false;
 
     if (token.size() == 4) { isMove = true; }
@@ -104,5 +107,10 @@ bool Tokeniser::isPosition(const std::string& token){
     return slashCount == 7;
 }
 
-bool Tokeniser::isIntLiteral(const std::string& token){ return std::ranges::all_of(token, ::isdigit); }
-bool Tokeniser::isStringLiteral(const std::string& token){ return std::ranges::all_of(token, ::isalpha); }
+
+bool Tokeniser::isIntLiteral(const std::string& token) {
+    return std::ranges::all_of(token, [](char c){ return std::isdigit(static_cast<unsigned char>(c)); });
+}
+bool Tokeniser::isStringLiteral(const std::string& token) {
+    return std::ranges::all_of(token, [](char c){ return std::isalpha(static_cast<unsigned char>(c)); });
+}
