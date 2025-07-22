@@ -64,7 +64,7 @@ private:
     bool shouldStop = false;
     bool shouldQuit = false;
 
-    int searchDepth_ = 2;
+    int searchDepth_ = 3;
 };
 
 

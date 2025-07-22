@@ -48,8 +48,6 @@ struct Move {
     int rankTo = 0;
     int fileTo = 0;
 
-    bool checkedOpponent = false;
-
     int resultBits = 0ULL;
     Piece capturedPiece = PIECE_N;
 
@@ -66,7 +64,6 @@ public:
 
     BitBoards *getBitboards(){ return &bitboards; }
     std::stack<Move> &getMoveHistory(){ return moveHistory; }
-
     MagicBitBoards *getMagicBitBoards(){ return &magicBitBoards; }
 
     bool opponentKingInCheck(Move& move);
@@ -76,6 +73,7 @@ public:
     bool forceMove(Move& move);
     void undoMove(const Move& move);
     void undoMove();
+    bool isGameOver();
 
     void setFen(const std::string& fen);
 
@@ -93,7 +91,6 @@ private:
     bool prelimCheckMove(Move& move);
 
     bool friendlyKingInCheck(const Move& move);
-
 
     // do the move
     void makeMove(Move& move);

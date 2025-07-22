@@ -25,6 +25,10 @@ void MatchManager::startGame(){
 }
 
 void MatchManager::tick(){
+    if (boardManager.isGameOver()) {
+        std::cout << "Game Over" << std::endl;
+        return;
+    }
     while (!messageQueueOutbound_.empty()) {
         std::cout << "Manager sending from to queue: " << messageQueueOutbound_.front() << std::endl;
         currentPlayer()->parseUCI(messageQueueOutbound_.front());

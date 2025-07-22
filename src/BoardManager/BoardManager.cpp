@@ -242,6 +242,13 @@ void BoardManager::undoMove(){
     undoMove(moveHistory.top());
 }
 
+bool BoardManager::isGameOver(){
+    if (moveHistory.size() >= 100) { return true; }
+    if (isNowCheckMate()) { return true; }
+
+    return false;
+}
+
 void BoardManager::setFen(const std::string& fen){
     std::istringstream fenStream(fen);
 

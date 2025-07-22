@@ -35,9 +35,11 @@ namespace Weights {
 }
 
 float TestEngine::alphaBeta(const int depth, bool isMaximising, float alpha, float beta){
-    if (depth == 0) { return evaluate(); }
+    if (depth == 0 || internalBoardManager_.isGameOver()) { return evaluate(); }
 
     auto moves = generateMoveList();
+    std::ranges::sort(moves.begin(), moves.end(),
+                      [&](const Move& a, const Move& b) { return a.resultBits & CAPTURE > b.resultBits & CAPTURE; });
     if (isMaximising) {
         float maxEval = -INFINITY;
         for (auto& move: moves) {
@@ -152,7 +154,6 @@ float TestEngine::materialScore(){
     return MathUtility::map(whiteScore - blackScore, minScore, maxScore, -1, 1);
 }
 
-
 float TestEngine::pieceSquareScore(){ return 0; }
 
 float TestEngine::evaluateMove(Move& move){
@@ -172,8 +173,14 @@ float TestEngine::evaluate(){
     const float materialScore_ = materialScore();
     const float pieceSquareScore_ = pieceSquareScore();
 
+    float attackKingScore = 0.f;
+    if (internalBoardManager_.getMoveHistory().top().resultBits & CHECK_MATE) {
+        attackKingScore += internalBoardManager_.getCurrentTurn() == WHITE ? INFINITY : -INFINITY;
+    }
+
     score = materialScore_ * Weights::MATERIAL_WEIGHT;
     score += pieceSquareScore_ * Weights::PIECE_SQUARE_SCORE;
+    score += attackKingScore;
     return score;
 }
 
