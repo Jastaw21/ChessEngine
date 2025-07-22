@@ -958,8 +958,8 @@ namespace RulesCheck {
             const int deltaFile = file - fileFrom;
             bool canCastle = true;
 
-            for (int intermediateFile = fileFrom + sign(deltaFile); intermediateFile != file;
-                 intermediateFile += sign(deltaFile)) {
+            for (int intermediateFile = fileFrom +MathUtility::sign(deltaFile); intermediateFile != file;
+                 intermediateFile +=MathUtility::sign(deltaFile)) {
                 if (boards->testSquare(rankAndFileToSquare(rankFrom, intermediateFile))) {
                     canCastle = false;
                     break; // if we cross anything on the way, break out and don't continue checking the others

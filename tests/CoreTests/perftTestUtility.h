@@ -112,6 +112,20 @@ inline bool runGetMoveResults(const std::string& fen, const std::string& outputF
 }
 
 
+void printMoveResults(const PerftResults& totalPy, const PerftResults& totalEngine, const std::string& printInset){
+    std::cout << printInset << "Type\tNodes\tCaptures\tCastles\tEP\tChecks\tCheckMates" << std::endl;
+
+    // Print Python results
+    std::cout << printInset << "Python\t" << totalPy.nodes << "\t" << totalPy.captures << "\t"
+            << totalPy.castling << "\t" << totalPy.enPassant << "\t" << totalPy.checks << "\t" << totalPy.checkMate <<
+            std::endl;
+
+    // Print Engine results
+    std::cout << printInset << "Engine\t" << totalEngine.nodes << "\t" << totalEngine.captures << "\t"
+            << totalEngine.castling << "\t" << totalEngine.enPassant << "\t" << totalEngine.checks << "\t" <<
+            totalEngine.checkMate << std::endl;
+}
+
 inline bool divideTest(const std::string& desiredFen, const std::string& outputFile, const int depth,
                        const Colours& colourToMove = WHITE){
     if (depth == 0)
@@ -124,6 +138,7 @@ inline bool divideTest(const std::string& desiredFen, const std::string& outputF
     auto pyMoves = getDivideResults(outputFile); // get our own starting moves
     TestEngine whiteEngine;
     whiteEngine.loadFEN(desiredFen);
+    whiteEngine.setFullFen(fen);
 
     std::vector<PerftResults> engineResults = whiteEngine.runDivideTest(depth);
 
@@ -134,18 +149,7 @@ inline bool divideTest(const std::string& desiredFen, const std::string& outputF
 
     std::string printInset = insets[depth];
 
-    // Print headers
-    std::cout << printInset << "Type\tNodes\tCaptures\tCastles\tEP\tChecks\tCheckMates" << std::endl;
-
-    // Print Python results
-    std::cout << printInset << "Python\t" << totalPy.nodes << "\t" << totalPy.captures << "\t"
-            << totalPy.castling << "\t" << totalPy.enPassant << "\t" << totalPy.checks << "\t" << totalPy.checkMate <<
-            std::endl;
-
-    // Print Engine results
-    std::cout << printInset << "Engine\t" << totalEngine.nodes << "\t" << totalEngine.captures << "\t"
-            << totalEngine.castling << "\t" << totalEngine.enPassant << "\t" << totalEngine.checks << "\t" <<
-            totalEngine.checkMate << std::endl;
+    printMoveResults(totalPy, totalEngine, printInset);
 
     // gather errors in both directions for printing
     std::vector<PerftResults> inEngineNotInPy;

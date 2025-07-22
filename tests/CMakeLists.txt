@@ -12,6 +12,7 @@ add_executable(chess_tests
         CoreTests/perftTestUtility.h
         CoreTests/Perft.cpp
         UCIParserTests.cpp
+        CoreTests/utilityTests.cpp
         # Add more test files here
 )
 

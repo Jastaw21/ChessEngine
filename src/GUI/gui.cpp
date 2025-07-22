@@ -37,10 +37,15 @@ void ChessGui::registerEntity(DrawableEntity* entity){ drawables.push_back(entit
 void ChessGui::loop(){
     if (!wasInit()) { return; }
 
+    bool gameStarted = false;
     while (running) {
         pollEvents();
         render();
         SDL_Delay(16); // Simulate ~60 FPS
+        if (!gameStarted) {
+            matchManager_->startGame();
+            gameStarted = true;
+        }
     }
 
     SDL_DestroyWindow(window);
@@ -164,7 +169,6 @@ void ChessGui::addMouseClick(const int x, const int y){
         }
     }
 }
-
 
 void ChessGui::addMouseRelease(const int x, const int y) const{
     // need to effectively round down to the nearest rank/file

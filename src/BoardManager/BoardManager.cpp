@@ -413,3 +413,9 @@ std::vector<int> BoardManager::getStartingSquaresOfPiece(const Piece& piece){
 
     return startingSquares;
 }
+
+std::string BoardManager::getFullFen(){
+    auto baseFen = bitboards.toFEN();
+    auto resultFen = baseFen + (currentTurn == WHITE ? " w" : " b") + " - - 0 1";
+    return resultFen;
+}

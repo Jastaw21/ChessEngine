@@ -29,6 +29,10 @@ std::unordered_map<Piece, int> pieceValues = {
             {BQ, 90}
         };
 
+namespace Weights {
+    float MATERIAL_WEIGHT = 10;
+    float PIECE_SQUARE_SCORE = 2;
+}
 
 float TestEngine::alphaBeta(const int depth, bool isMaximising, float alpha, float beta){
     if (depth == 0) { return evaluate(); }
@@ -67,7 +71,7 @@ Move TestEngine::search(const int depth){
     float bestEval = -INFINITY;
 
     const Colours thisTurn = internalBoardManager_.getCurrentTurn();
-    bool isWhite = thisTurn == WHITE;
+    const bool isWhite = thisTurn == WHITE;
 
     for (auto& move: moves) {
         internalBoardManager_.forceMove(move);
@@ -126,8 +130,10 @@ std::vector<Move> TestEngine::generateMoveList(){
     return moves;
 }
 
+void TestEngine::setFullFen(const std::string& fen){ internalBoardManager_.setFen(fen); }
 
-float TestEngine::evaluate(){
+
+float TestEngine::materialScore(){
     int whiteScore = 0;
     int blackScore = 0;
 
@@ -140,6 +146,34 @@ float TestEngine::evaluate(){
             blackScore += pieceValue * pieceCount;
         }
     }
-    return whiteScore - blackScore;
+    // lerp the score between + 2Q - 2Q
+    const float minScore = -2 * pieceValues[WQ];
+    const float maxScore = 2 * pieceValues[WQ];
+    return MathUtility::map(whiteScore - blackScore, minScore, maxScore, -1, 1);
+}
+
+
+float TestEngine::pieceSquareScore(){ return 0; }
+
+float TestEngine::evaluateMove(Move& move){
+    const float scoreBefore = evaluate();
+    internalBoardManager_.tryMove(move);
+    const float scoreAfter = evaluate();
+    internalBoardManager_.undoMove();
+
+    const auto result = scoreAfter - scoreBefore;
+    if (internalBoardManager_.getCurrentTurn() == WHITE) { return result; }
+
+    return -result;
+}
+
+float TestEngine::evaluate(){
+    float score = 0;
+    const float materialScore_ = materialScore();
+    const float pieceSquareScore_ = pieceSquareScore();
+
+    score = materialScore_ * Weights::MATERIAL_WEIGHT;
+    score += pieceSquareScore_ * Weights::PIECE_SQUARE_SCORE;
+    return score;
 }
 

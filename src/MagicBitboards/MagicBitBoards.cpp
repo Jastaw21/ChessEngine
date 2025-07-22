@@ -104,10 +104,12 @@ Bitboard MagicBitBoards::getMoves(const int square, const Piece& piece, const Bi
                     pushes &= ~(1ULL << blockingSquare); // just blank that square off
             }
 
-            const Bitboard rawMoves = rules.getPseudoPawnAttacks(piece, square) | pushes;
+            Bitboard attacks = rules.getPseudoPawnAttacks(piece, square);
+            attacks &= boards.getOccupancy((pieceColours[piece] == WHITE ? BLACK : WHITE));
+
             const Piece opponentPawn = piece == BP ? WP : BP;
             const Bitboard epSquare = rules.getPseudoPawnEP(piece, square, boards.getOccupancy(opponentPawn));
-            return (rawMoves | epSquare) & ~boards.getOccupancy(pieceColours[piece]);
+            return (attacks | epSquare | pushes);
         }
         default:
             return 0ULL;

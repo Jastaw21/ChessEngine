@@ -12,10 +12,14 @@
 class TestEngine final : public EngineBase {
 public:
 
+    float pieceSquareScore();
+    virtual float evaluateMove(Move& move) override;
     virtual float evaluate() override;
     virtual Move search(int depth = 2) override;
 
     virtual std::vector<Move> generateMoveList() override;
+    void setFullFen(const std::string& fen);
+    float materialScore();
 
 private:
 

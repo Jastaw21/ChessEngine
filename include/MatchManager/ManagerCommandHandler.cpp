@@ -6,6 +6,7 @@
 #include "../BoardManager/ManagerCommandHandler.h"
 
 #include "MatchManager.h"
+#include "Engine/EngineBase.h"
 
 void ManagerCommandHandler::operator()(const UCICommand& cmd, MatchManager* matchManager){
     matchManager->otherPlayer()->parseUCI("uci");
@@ -52,6 +53,8 @@ void ManagerCommandHandler::operator()(const PositionCommand& cmd, MatchManager*
 }
 
 void ManagerCommandHandler::operator()(const BestMoveCommand& cmd, MatchManager* matchManager){
+    std::cout << "manager recieved move: " << cmd.move << std::endl;
+    std::cout << "Boards: " << matchManager->getBoardManager().getFullFen() << std::endl;
     matchManager->addMove(cmd.move);
     matchManager->swapPlayers();
     std::vector<std::string> movesString;
@@ -73,5 +76,7 @@ void ManagerCommandHandler::operator()(const BestMoveCommand& cmd, MatchManager*
         for (auto it = moves.rbegin(); it != moves.rend(); ++it) { fullPositionCommand += *it + " "; }
     }
     matchManager->currentPlayer()->parseUCI(fullPositionCommand);
-    matchManager->currentPlayer()->parseUCI("go depth 2");
+    const auto engine = static_cast<EngineBase *>(matchManager->currentPlayer());
+    const auto depth = matchManager->currentPlayer()->playerType == HUMAN ? 2 : engine->getSearchDepth();
+    matchManager->currentPlayer()->parseUCI("go depth " + std::to_string(depth));
 }

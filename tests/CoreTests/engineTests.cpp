@@ -9,22 +9,22 @@
 
 TEST(EngineTests, BasicEvaluation){
     auto engine = TestEngine();
-    engine.loadFEN(Fen::STARTING_FEN);
+    engine.setFullFen(Fen::FULL_STARTING_FEN);
 
     auto result = engine.evaluate();
     EXPECT_EQ(result, 0);
 
-    engine.loadFEN("rn6/2pppp1p/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    engine.setFullFen("rn6/2pppp1p/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     EXPECT_GT(engine.evaluate(), 0);
 }
 
-TEST(AmundsenPostionTests, Basics){
+
+TEST(EngineTests, LikeForLikeSwapStillGood){
     auto engine = TestEngine();
-    engine.loadFEN("r1bq1r1k/p1pnbpp1/1p2p3/6p1/3PB3/5N2/PPPQ1PPP/2KR3R w - - ");
+    engine.setFullFen("r3k2r/p1pp1pb1/bn1qpnp1/2QPN3/1p2P3/2N4p/PPPBBPPP/R3K2R w KQkq");
+    auto move = createMove(WQ, "c5d6");
 
-    for (int depth = 1; depth < 5; depth++) {
-        auto result = engine.search(depth);
-        std::cout << result.toUCI() << std::endl;
-    }
+    auto eval = engine.evaluateMove(move);
+
+    EXPECT_GT(eval, 0);
 }
-

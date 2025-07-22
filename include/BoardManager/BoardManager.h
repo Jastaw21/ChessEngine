@@ -18,16 +18,16 @@ class MagicBitBoards;
 
 enum MoveResult {
     // successes
-    PUSH = 1 << 0, // 0000 0001
-    CAPTURE = 1 << 1, // 0000 0010
-    EN_PASSANT = 1 << 2, // 0000 0100
-    CASTLING = 1 << 3, // 0000 1000
-    CHECK = 1 << 4, // 0001 0000
+    PUSH = 1 << 0, // 0000 0001 - 1
+    CAPTURE = 1 << 1, // 0000 0010 - 2
+    EN_PASSANT = 1 << 2, // 0000 0100 - 4
+    CASTLING = 1 << 3, // 0000 1000 - 8
+    CHECK = 1 << 4, // 0001 0000 - 16
 
     // failures
-    ILLEGAL_MOVE = 1 << 5,
-    KING_IN_CHECK = 1 << 6,
-    CHECK_MATE = 1 << 7,
+    ILLEGAL_MOVE = 1 << 5, // 0010 0000 - 32
+    KING_IN_CHECK = 1 << 6, // 0100 0000 - 64
+    CHECK_MATE = 1 << 7, // 1000 0000 - 128
 };
 
 
@@ -84,6 +84,7 @@ public:
 
     bool isNowCheckMate();
     std::vector<int> getStartingSquaresOfPiece(const Piece& piece);
+    std::string getFullFen();
 
 private:
 

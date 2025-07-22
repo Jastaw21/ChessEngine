@@ -23,6 +23,8 @@ public:
     virtual std::vector<PerftResults> runDivideTest(const std::string& Fen, int depth);
     virtual std::vector<PerftResults> runDivideTest(int depth);
 
+    virtual float evaluateMove(Move& move) = 0;
+
     // command runners
     void stop(){ shouldStop = true; };
     void quit(){ shouldQuit = true; };
@@ -37,6 +39,9 @@ public:
     [[nodiscard]] BoardManager *boardManager(){ return &internalBoardManager_; }
 
     void loadFEN(const std::string& fen);
+
+    virtual int getSearchDepth() const{ return searchDepth_; }
+    virtual void setSearchDepth(const int search_depth){ searchDepth_ = search_depth; }
 
 protected:
 
@@ -58,6 +63,8 @@ private:
     // run conditions
     bool shouldStop = false;
     bool shouldQuit = false;
+
+    int searchDepth_ = 2;
 };
 
 

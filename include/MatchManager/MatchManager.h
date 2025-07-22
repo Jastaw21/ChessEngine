@@ -25,7 +25,7 @@ public:
 
     MatchManager(ChessPlayer* startingPlayer, ChessPlayer* otherPlayer);
 
-    void tick();
+    void startGame();
 
     std::stack<Move> &getMoveHistory();
     void swapPlayers(){ std::swap(currentPlayer_, otherPlayer_); };

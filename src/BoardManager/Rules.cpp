@@ -69,8 +69,8 @@ Bitboard Rules::getPseudoCastlingMoves(const Piece& piece, const int fromSquare,
 
         Bitboard passingSquares = 0ULL;
         const int deltaFile = file - fileFrom;
-        for (int intermediateFile = fileFrom + sign(deltaFile); intermediateFile != file;
-             intermediateFile += sign(deltaFile)) {
+        for (int intermediateFile = fileFrom +MathUtility::sign(deltaFile); intermediateFile != file;
+             intermediateFile +=MathUtility::sign(deltaFile)) {
             passingSquares |= 1ULL << rankAndFileToSquare(rankFrom, intermediateFile);
         }
 

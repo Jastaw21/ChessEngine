@@ -14,8 +14,16 @@ MatchManager::MatchManager(ChessPlayer* startingPlayer, ChessPlayer* otherPlayer
     otherPlayer_->setCommunicator(otherCommunicator);
 }
 
+void MatchManager::startGame(){
+    if (currentPlayer_ == nullptr || otherPlayer_ == nullptr)
+        return;
 
-void MatchManager::tick(){}
+    if (currentPlayer_->playerType == HUMAN) { return; }
+
+    currentPlayer()->parseUCI("position " + boardManager.getFullFen());
+    currentPlayer()->parseUCI("go");
+}
+
 
 void MatchManager::parseUCI(const std::string& uci){
     auto command = parser.parse(uci);

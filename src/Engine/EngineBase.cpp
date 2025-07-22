@@ -7,12 +7,12 @@
 #include "EngineShared/CommunicatorBase.h"
 
 
-
 EngineBase::EngineBase(): ChessPlayer(ENGINE){}
 
 void EngineBase::go(const int depth){
-    auto move = search(depth);
-    communicator_->send("bestmove " + move.toUCI());
+    auto rmove = search(depth);
+    std::cout << "Sending Move: " << rmove.toUCI() << std::endl;
+    communicator_->send("bestmove " + rmove.toUCI());
 }
 
 void EngineBase::makeReady(){}
