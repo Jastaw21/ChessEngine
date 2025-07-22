@@ -5,13 +5,17 @@
 #ifndef MATCHMANAGER_H
 #define MATCHMANAGER_H
 
+#include <queue>
+
 #include "ChessPlayer.h"
+#include "ManagerCommandHandler.h"
 #include "BoardManager/BoardManager.h"
-#include "BoardManager/ManagerCommandHandler.h"
 #include "EngineShared/UCIParsing/UciParser.h"
 #include "Utility/Fen.h"
 
 class CommunicatorBase;
+using MessageQueue = std::queue<std::string>;
+
 
 class MatchManager {
 public:
@@ -26,11 +30,14 @@ public:
     MatchManager(ChessPlayer* startingPlayer, ChessPlayer* otherPlayer);
 
     void startGame();
+    void tick();
 
     std::stack<Move> &getMoveHistory();
     void swapPlayers(){ std::swap(currentPlayer_, otherPlayer_); };
     void addMove(const std::string& moveUCI);
-    void receiveCommand(const std::string& command){ parseUCI(command); }
+    void receiveCommand(const std::string& command){ messageQueueInbound_.push(command); }
+    MessageQueue *getMessageQueueOutbound(){ return &messageQueueOutbound_; }
+    MessageQueue *getMessageQueueInbound(){ return &messageQueueInbound_; }
 
 private:
 
@@ -43,6 +50,9 @@ private:
     BoardManager boardManager;
 
     std::string startingFen_ = Fen::FULL_STARTING_FEN;
+
+    MessageQueue messageQueueOutbound_;
+    MessageQueue messageQueueInbound_;
 
 public:
 

@@ -24,6 +24,20 @@ void MatchManager::startGame(){
     currentPlayer()->parseUCI("go");
 }
 
+void MatchManager::tick(){
+    while (!messageQueueOutbound_.empty()) {
+        std::cout << "Manager sending from to queue: " << messageQueueOutbound_.front() << std::endl;
+        currentPlayer()->parseUCI(messageQueueOutbound_.front());
+        messageQueueOutbound_.pop();
+    }
+
+    while (!messageQueueInbound_.empty()) {
+        std::cout << "Manager reading from queue: " << messageQueueInbound_.front() << std::endl;
+        parseUCI(messageQueueInbound_.front());
+        messageQueueInbound_.pop();
+    }
+}
+
 
 void MatchManager::parseUCI(const std::string& uci){
     auto command = parser.parse(uci);

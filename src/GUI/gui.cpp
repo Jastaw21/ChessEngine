@@ -37,6 +37,8 @@ void ChessGui::registerEntity(DrawableEntity* entity){ drawables.push_back(entit
 void ChessGui::loop(){
     if (!wasInit()) { return; }
 
+    int runningTime = 0;
+
     bool gameStarted = false;
     while (running) {
         pollEvents();
@@ -45,6 +47,12 @@ void ChessGui::loop(){
         if (!gameStarted) {
             matchManager_->startGame();
             gameStarted = true;
+        }
+
+        runningTime += 16;
+        if (runningTime >= 1000) {
+            matchManager_->tick();
+            runningTime = 0;
         }
     }
 

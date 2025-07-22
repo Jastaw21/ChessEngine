@@ -3,28 +3,28 @@
 //
 
 // ReSharper disable CppMemberFunctionMayBeConst
-#include "../BoardManager/ManagerCommandHandler.h"
+#include "../../include/MatchManager/ManagerCommandHandler.h"
 
-#include "MatchManager.h"
+#include "../../include/MatchManager/MatchManager.h"
 #include "Engine/EngineBase.h"
 
 void ManagerCommandHandler::operator()(const UCICommand& cmd, MatchManager* matchManager){
-    matchManager->otherPlayer()->parseUCI("uci");
+    matchManager->getMessageQueueOutbound()->push("uci");
     matchManager->swapPlayers();
 }
 
 void ManagerCommandHandler::operator()(const StopCommand& cmd, MatchManager* matchManager){
-    matchManager->otherPlayer()->parseUCI("stop");
+    matchManager->getMessageQueueOutbound()->push("stop");
     matchManager->swapPlayers();
 }
 
 void ManagerCommandHandler::operator()(const IsReadyCommand& cmd, MatchManager* matchManager){
-    matchManager->otherPlayer()->parseUCI("isready");
+    matchManager->getMessageQueueOutbound()->push("isready");
     matchManager->swapPlayers();
 }
 
 void ManagerCommandHandler::operator()(const QuitCommand& cmd, MatchManager* matchManager){
-    matchManager->otherPlayer()->parseUCI("quit");
+    matchManager->getMessageQueueOutbound()->push("quit");
     matchManager->swapPlayers();
 }
 
@@ -48,12 +48,12 @@ void ManagerCommandHandler::operator()(const PositionCommand& cmd, MatchManager*
             fullPositionCommand += " ";
         }
     }
-    matchManager->otherPlayer()->parseUCI(fullPositionCommand);
+    matchManager->getMessageQueueOutbound()->push(fullPositionCommand);
     matchManager->swapPlayers();
 }
 
 void ManagerCommandHandler::operator()(const BestMoveCommand& cmd, MatchManager* matchManager){
-    std::cout << "manager recieved move: " << cmd.move << std::endl;
+    std::cout << "manager received move: " << cmd.move << std::endl;
     std::cout << "Boards: " << matchManager->getBoardManager().getFullFen() << std::endl;
     matchManager->addMove(cmd.move);
     matchManager->swapPlayers();
@@ -75,8 +75,8 @@ void ManagerCommandHandler::operator()(const BestMoveCommand& cmd, MatchManager*
 
         for (auto it = moves.rbegin(); it != moves.rend(); ++it) { fullPositionCommand += *it + " "; }
     }
-    matchManager->currentPlayer()->parseUCI(fullPositionCommand);
+    matchManager->getMessageQueueOutbound()->push(fullPositionCommand);
     const auto engine = static_cast<EngineBase *>(matchManager->currentPlayer());
     const auto depth = matchManager->currentPlayer()->playerType == HUMAN ? 2 : engine->getSearchDepth();
-    matchManager->currentPlayer()->parseUCI("go depth " + std::to_string(depth));
+    matchManager->getMessageQueueOutbound()->push("go depth " + std::to_string(depth));
 }
