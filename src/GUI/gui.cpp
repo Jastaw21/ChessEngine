@@ -33,7 +33,6 @@ SDL_Renderer *ChessGui::getRenderer() const{ return renderer; }
 
 void ChessGui::registerEntity(DrawableEntity* entity){ drawables.push_back(entity); }
 
-
 void ChessGui::loop(){
     if (!wasInit()) { return; }
 
@@ -50,7 +49,7 @@ void ChessGui::loop(){
         }
 
         runningTime += 16;
-        if (runningTime >= 1000) {
+        if (runningTime >= 300) {
             matchManager_->tick();
             runningTime = 0;
         }

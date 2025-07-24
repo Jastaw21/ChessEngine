@@ -54,6 +54,8 @@ private:
     MessageQueue messageQueueOutbound_;
     MessageQueue messageQueueInbound_;
 
+    void restartGame();
+
 public:
 
     [[nodiscard]] std::string startingFen() const{ return startingFen_; }

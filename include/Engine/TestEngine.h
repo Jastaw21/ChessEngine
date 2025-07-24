@@ -13,9 +13,7 @@ class TestEngine final : public EngineBase {
 public:
 
     float pieceSquareScore();
-    virtual float evaluateMove(Move& move) override;
     virtual float evaluate() override;
-    virtual Move search(int depth = 2) override;
 
     virtual std::vector<Move> generateMoveList() override;
     void setFullFen(const std::string& fen);
@@ -25,8 +23,6 @@ private:
 
     virtual std::vector<Move> generateValidMovesFromPosition(const Piece& piece, int startSquare) override;
     virtual std::vector<Move> generateMovesForPiece(const Piece& piece) override;
-    float alphaBeta(int depth, bool isMaximising, float alpha, float beta);
-    float minMax(int depth, bool isMaximising);
 
 public:
 };

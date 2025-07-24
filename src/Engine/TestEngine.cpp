@@ -34,61 +34,6 @@ namespace Weights {
     float PIECE_SQUARE_SCORE = 2;
 }
 
-float TestEngine::alphaBeta(const int depth, bool isMaximising, float alpha, float beta){
-    if (depth == 0 || internalBoardManager_.isGameOver()) { return evaluate(); }
-
-    auto moves = generateMoveList();
-    std::ranges::sort(moves.begin(), moves.end(),
-                      [&](const Move& a, const Move& b) { return a.resultBits & CAPTURE > b.resultBits & CAPTURE; });
-    if (isMaximising) {
-        float maxEval = -INFINITY;
-        for (auto& move: moves) {
-            internalBoardManager_.forceMove(move);
-            float eval = alphaBeta(depth - 1, !isMaximising, alpha, beta);
-            internalBoardManager_.undoMove();
-            maxEval = std::max(maxEval, eval);
-            alpha = std::max(alpha, eval);
-            if (beta <= alpha) { break; }
-        }
-        return maxEval;
-    }
-    float minEval = INFINITY;
-    for (auto& move: moves) {
-        internalBoardManager_.forceMove(move);
-        float eval = alphaBeta(depth - 1, !isMaximising, alpha, beta);
-        internalBoardManager_.undoMove();
-        minEval = std::min(minEval, eval);
-        beta = std::min(beta, eval);
-        if (beta <= alpha) { break; }
-    }
-    return minEval;
-}
-
-
-Move TestEngine::search(const int depth){
-    auto moves = generateMoveList();
-    if (moves.empty()) { return Move(); }
-
-    Move bestMove = moves[0];
-    float bestEval = -INFINITY;
-
-    const Colours thisTurn = internalBoardManager_.getCurrentTurn();
-    const bool isWhite = thisTurn == WHITE;
-
-    for (auto& move: moves) {
-        internalBoardManager_.forceMove(move);
-        float eval = alphaBeta(depth - 1, !isWhite, -INFINITY, INFINITY);
-        internalBoardManager_.undoMove();
-
-        if (!isWhite) { eval = -eval; }
-
-        if (eval > bestEval) {
-            bestEval = eval;
-            bestMove = move;
-        }
-    }
-    return bestMove;
-}
 
 std::vector<Move> TestEngine::generateValidMovesFromPosition(const Piece& piece,
                                                              const int startSquare){
@@ -156,25 +101,13 @@ float TestEngine::materialScore(){
 
 float TestEngine::pieceSquareScore(){ return 0; }
 
-float TestEngine::evaluateMove(Move& move){
-    const float scoreBefore = evaluate();
-    internalBoardManager_.tryMove(move);
-    const float scoreAfter = evaluate();
-    internalBoardManager_.undoMove();
-
-    const auto result = scoreAfter - scoreBefore;
-    if (internalBoardManager_.getCurrentTurn() == WHITE) { return result; }
-
-    return -result;
-}
-
 float TestEngine::evaluate(){
     float score = 0;
     const float materialScore_ = materialScore();
     const float pieceSquareScore_ = pieceSquareScore();
 
     float attackKingScore = 0.f;
-    if (internalBoardManager_.getMoveHistory().top().resultBits & CHECK_MATE) {
+    if (internalBoardManager_.opponentKingInCheck()) {
         attackKingScore += internalBoardManager_.getCurrentTurn() == WHITE ? INFINITY : -INFINITY;
     }
 

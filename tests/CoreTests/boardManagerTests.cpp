@@ -1088,6 +1088,15 @@ TEST(BoardManagerLegality, EnPassantRequiresLastMoveToBePawnMovingTwoSquares){
     ASSERT_FALSE(manager.checkMove(attemptedEnPassant));
 }
 
+TEST(BoardManagerLegality, OpponentKingInCheck){
+    auto manager = BoardManager();
+    manager.setFen("k7/3RR3/8/8/8/8/8/8 w - - 0 1");
+    auto move = createMove(WR, "d7d8");
+    ASSERT_TRUE(manager.tryMove(move));
+    EXPECT_TRUE(move.resultBits & CHECK);
+    EXPECT_TRUE(manager.opponentKingInCheck());
+}
+
 TEST(BoardManagerAdvancedRules, CheckMateWorks){
     auto manager = BoardManager(WHITE);
     manager.getBitboards()->loadFEN("8/4N1pk/8/8/8/4R3/8/6K1"); // pre-check state

@@ -52,6 +52,13 @@ struct Move {
     Piece capturedPiece = PIECE_N;
 
     std::string toUCI() const;
+
+    bool operator==(const Move& other) const{
+        return piece == other.piece && rankFrom == other.rankFrom && fileFrom == other.fileFrom && rankTo == other.
+               rankTo && fileTo == other.fileTo && resultBits == other.resultBits;
+    }
+
+    bool operator!=(const Move& other) const{ return !(*this == other); };
 };
 
 Move createMove(const Piece& piece, const std::string& moveUCI);
@@ -67,6 +74,7 @@ public:
     MagicBitBoards *getMagicBitBoards(){ return &magicBitBoards; }
 
     bool opponentKingInCheck(Move& move);
+    bool opponentKingInCheck();
     bool checkMove(Move& move);
     bool tryMove(Move& move);
     bool tryMove(const std::string& moveUCI);
@@ -105,6 +113,7 @@ private:
     // data
     BitBoards bitboards{};
     std::stack<Move> moveHistory;
+    std::deque<Move> repetitionTable;
     Colours currentTurn = WHITE;
 
     Rules rules;

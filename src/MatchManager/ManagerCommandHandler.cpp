@@ -53,8 +53,6 @@ void ManagerCommandHandler::operator()(const PositionCommand& cmd, MatchManager*
 }
 
 void ManagerCommandHandler::operator()(const BestMoveCommand& cmd, MatchManager* matchManager){
-    std::cout << "manager received move: " << cmd.move << std::endl;
-    std::cout << "Boards: " << matchManager->getBoardManager().getFullFen() << std::endl;
     matchManager->addMove(cmd.move);
     matchManager->swapPlayers();
     std::vector<std::string> movesString;

@@ -178,6 +178,8 @@ void BoardManager::makeMove(Move& move){
         currentTurn = WHITE;
 
     moveHistory.emplace(move);
+    if (!repetitionTable.empty()) { repetitionTable.pop_front(); }
+    repetitionTable.push_back(move);
 }
 
 void BoardManager::undoMove(const Move& move){
@@ -229,6 +231,8 @@ void BoardManager::undoMove(const Move& move){
     bitboards[move.piece] &= ~(1ULL << squareTo);
 
     moveHistory.pop();
+    if (!repetitionTable.empty())
+        repetitionTable.pop_back();
 
     if (currentTurn == WHITE)
         currentTurn = BLACK;
@@ -245,6 +249,13 @@ void BoardManager::undoMove(){
 bool BoardManager::isGameOver(){
     if (moveHistory.size() >= 100) { return true; }
     if (isNowCheckMate()) { return true; }
+    if (repetitionTable.size() >= 6) {
+        const bool lastColour = (repetitionTable.at(5) == repetitionTable.at(3) && repetitionTable.at(3) ==
+                                 repetitionTable.at(1));
+
+        if (lastColour)
+            return true;
+    }
 
     return false;
 }
@@ -285,6 +296,31 @@ bool BoardManager::opponentKingInCheck(Move& move){
 
     return false;
 }
+
+bool BoardManager::opponentKingInCheck(){
+    const auto& opponentKing = currentTurn == WHITE ? WK : BK;
+
+    const auto& opponentKingLocation = bitboards[opponentKing];
+
+    if (opponentKingLocation == 0) {
+        return false; // No king on board
+    }
+
+    const auto piecesToCheck = currentTurn == WHITE ? filteredPieces[BLACK] : filteredPieces[WHITE];
+
+    for (const auto& attacker: piecesToCheck) {
+        auto boardOfPiece = bitboards[attacker];
+        while (boardOfPiece) {
+            const auto setBit = std::countr_zero(boardOfPiece);
+            boardOfPiece &= ~(1ULL << setBit);
+            const auto attacks = RulesCheck::getAttackMoves(setBit, attacker, &bitboards);
+            if ((attacks & opponentKingLocation) != 0) { return true; }
+        }
+    }
+
+    return false;
+}
+
 
 bool BoardManager::isNowCheckMate(){ return !hasLegalMoveToEscapeCheck(); }
 

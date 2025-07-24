@@ -27,16 +27,15 @@ void MatchManager::startGame(){
 void MatchManager::tick(){
     if (boardManager.isGameOver()) {
         std::cout << "Game Over" << std::endl;
+        restartGame();
         return;
     }
     while (!messageQueueOutbound_.empty()) {
-        std::cout << "Manager sending from to queue: " << messageQueueOutbound_.front() << std::endl;
         currentPlayer()->parseUCI(messageQueueOutbound_.front());
         messageQueueOutbound_.pop();
     }
 
     while (!messageQueueInbound_.empty()) {
-        std::cout << "Manager reading from queue: " << messageQueueInbound_.front() << std::endl;
         parseUCI(messageQueueInbound_.front());
         messageQueueInbound_.pop();
     }
@@ -48,6 +47,11 @@ void MatchManager::parseUCI(const std::string& uci){
     // Create a visitor lambda that captures 'this' and forwards to command handler
     auto visitor = [this](const auto& cmd) { this->commandHandler(cmd, this); };
     std::visit(visitor, *command);
+}
+
+void MatchManager::restartGame(){
+    boardManager.setFen(startingFen_);
+    startGame();
 }
 
 

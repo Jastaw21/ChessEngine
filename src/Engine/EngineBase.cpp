@@ -4,14 +4,15 @@
 
 #include "Engine/EngineBase.h"
 
+#include <cmath>
+
 #include "EngineShared/CommunicatorBase.h"
 
 
 EngineBase::EngineBase(): ChessPlayer(ENGINE){}
 
 void EngineBase::go(const int depth){
-    auto rmove = search(depth);
-    std::cout << "Sending Move: " << rmove.toUCI() << std::endl;
+    const auto rmove = search(depth);
     communicator_->send("bestmove " + rmove.toUCI());
 }
 
@@ -19,17 +20,55 @@ void EngineBase::makeReady(){}
 
 void EngineBase::parseUCI(const std::string& uci){
     auto command = parser.parse(uci);
-    // Create a visitor lambda that captures 'this' and forwards to command handler
+    // Create a visitor lambda that captures 'this' and forwards to the command handler
     auto visitor = [this](const auto& cmd) { this->commandHandler(cmd, this); };
     std::visit(visitor, *command);
 }
 
-PerftResults EngineBase::runPerftTest(const std::string& Fen, int depth){
+float EngineBase::evaluateMove(Move& move){
+    const float scoreBefore = evaluate();
+    internalBoardManager_.tryMove(move);
+    const float scoreAfter = evaluate();
+    internalBoardManager_.undoMove();
+
+    const auto result = scoreAfter - scoreBefore;
+    if (internalBoardManager_.getCurrentTurn() == WHITE) { return result; }
+
+    return -result;
+}
+
+Move EngineBase::search(const int depth){
+    std::cout << "Searching for best move " << std::to_string(depth) << std::endl;
+    auto moves = generateMoveList();
+    if (moves.empty()) { return Move(); }
+
+    Move bestMove = moves[0];
+    float bestEval = -INFINITY;
+
+    const Colours thisTurn = internalBoardManager_.getCurrentTurn();
+    const bool isWhite = thisTurn == WHITE;
+
+    for (auto& move: moves) {
+        internalBoardManager_.forceMove(move);
+        float eval = alphaBeta(depth - 1, !isWhite, -INFINITY, INFINITY);
+        internalBoardManager_.undoMove();
+
+        if (!isWhite) { eval = -eval; }
+
+        if (eval > bestEval) {
+            bestEval = eval;
+            bestMove = move;
+        }
+    }
+    return bestMove;
+}
+
+PerftResults EngineBase::runPerftTest(const std::string& Fen, const int depth){
     internalBoardManager_.getBitboards()->loadFEN(Fen);
     return perft(depth);
 }
 
-std::vector<PerftResults> EngineBase::runDivideTest(const std::string& Fen, int depth){
+std::vector<PerftResults> EngineBase::runDivideTest(const std::string& Fen, const int depth){
     internalBoardManager_.getBitboards()->loadFEN(Fen);
     return perftDivide(depth);
 }
@@ -48,7 +87,37 @@ void EngineBase::loadFEN(const std::string& fen){
     boardManager()->setFen(fen);
 }
 
-PerftResults EngineBase::perft(int depth){
+float EngineBase::alphaBeta(const int depth, const bool isMaximising, float alpha, float beta){
+    if (depth == 0 || internalBoardManager_.isGameOver()) { return evaluate(); }
+
+    auto moves = generateMoveList();
+    std::ranges::sort(moves.begin(), moves.end(),
+                      [&](const Move& a, const Move& b) { return a.resultBits & CAPTURE > b.resultBits & CAPTURE; });
+    if (isMaximising) {
+        float maxEval = -INFINITY;
+        for (auto& move: moves) {
+            internalBoardManager_.forceMove(move);
+            float eval = alphaBeta(depth - 1, !isMaximising, alpha, beta);
+            internalBoardManager_.undoMove();
+            maxEval = std::max(maxEval, eval);
+            alpha = std::max(alpha, eval);
+            if (beta <= alpha) { break; }
+        }
+        return maxEval;
+    }
+    float minEval = INFINITY;
+    for (auto& move: moves) {
+        internalBoardManager_.forceMove(move);
+        float eval = alphaBeta(depth - 1, !isMaximising, alpha, beta);
+        internalBoardManager_.undoMove();
+        minEval = std::min(minEval, eval);
+        beta = std::min(beta, eval);
+        if (beta <= alpha) { break; }
+    }
+    return minEval;
+}
+
+PerftResults EngineBase::perft(const int depth){
     if (depth == 0) return PerftResults{1, 0, 0, 0, 0, 0};
 
     PerftResults result{0, 0, 0, 0, 0, 0};
@@ -57,7 +126,7 @@ PerftResults EngineBase::perft(int depth){
     for (auto& move: moves) {
         internalBoardManager_.forceMove(move);
         // moves should be checked for legality already at this point so don't even worry
-        PerftResults child = perft(depth - 1);
+        const PerftResults child = perft(depth - 1);
 
         if (depth == 1) {
             result.nodes++;
@@ -74,7 +143,7 @@ PerftResults EngineBase::perft(int depth){
     return result;
 }
 
-int EngineBase::simplePerft(int depth){
+int EngineBase::simplePerft(const int depth){
     if (depth == 0)
         return 1;
 
@@ -89,7 +158,7 @@ int EngineBase::simplePerft(int depth){
     return nodes;
 }
 
-std::vector<PerftResults> EngineBase::perftDivide(int depth){
+std::vector<PerftResults> EngineBase::perftDivide(const int depth){
     auto moves = generateMoveList();
     std::vector<PerftResults> results;
 

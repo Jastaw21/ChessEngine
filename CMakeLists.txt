@@ -10,6 +10,7 @@ list(APPEND CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/SDL3_image/l
 find_package(SDL3 REQUIRED CONFIG COMPONENTS SDL3)
 find_package(SDL3_image REQUIRED CONFIG)
 
+
 # === GoogleTest Setup ===
 include(FetchContent)
 
@@ -19,6 +20,7 @@ FetchContent_Declare(
 )
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
+
 
 enable_testing()
 
