@@ -6,6 +6,8 @@
 #define ENGINEBASE_H
 
 #include <filesystem>
+#include <random>
+
 #include "ChessPlayer.h"
 #include "BoardManager/BoardManager.h"
 
@@ -66,6 +68,8 @@ private:
     bool shouldStop = false;
     bool shouldQuit = false;
     int searchDepth_ = 4;
+
+    std::mt19937 rng; // used for randomising the moves if no best move found;
 };
 
 

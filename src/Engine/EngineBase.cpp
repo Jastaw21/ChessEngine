@@ -9,7 +9,7 @@
 #include "EngineShared/CommunicatorBase.h"
 
 
-EngineBase::EngineBase(): ChessPlayer(ENGINE){}
+EngineBase::EngineBase(): ChessPlayer(ENGINE), rng(std::chrono::system_clock::now().time_since_epoch().count()){}
 
 void EngineBase::go(const int depth){
     const auto rmove = search(depth);
@@ -38,11 +38,12 @@ float EngineBase::evaluateMove(Move& move){
 }
 
 Move EngineBase::search(const int depth){
-    std::cout << "Searching for best move " << std::to_string(depth) << std::endl;
     auto moves = generateMoveList();
     if (moves.empty()) { return Move(); }
 
-    Move bestMove = moves[0];
+    int randomIndex = rng() % moves.size();
+
+    Move bestMove = moves[randomIndex]; // shuffle the preselected move, so if all are equal it'll pick a random one
     float bestEval = -INFINITY;
 
     const Colours thisTurn = internalBoardManager_.getCurrentTurn();

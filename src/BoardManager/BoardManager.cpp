@@ -260,6 +260,37 @@ bool BoardManager::isGameOver(){
     return false;
 }
 
+int BoardManager::getGameResult(){
+    int resultBits = 0;
+
+    if (moveHistory.size() >= 100) {
+        resultBits |= DRAW;
+        resultBits |= MOVE_COUNT;
+        return resultBits;
+    }
+
+    if (repetitionTable.size() >= 6) {
+        const bool lastColour = (repetitionTable.at(5) == repetitionTable.at(3) && repetitionTable.at(3) ==
+                                 repetitionTable.at(1));
+        if (lastColour) {
+            resultBits |= DRAW;
+            resultBits |= MOVE_COUNT;
+            return resultBits;
+        }
+    }
+    if (isNowCheckMate()) {
+        resultBits |= CHECK_MATE;
+        const auto lastMoveColour = pieceColours[moveHistory.top().piece];
+
+        if (lastMoveColour == WHITE)
+            resultBits |= WHITE_WINS;
+        else
+            resultBits |= BLACK_WINS;
+    }
+
+    return resultBits;
+}
+
 void BoardManager::setFen(const std::string& fen){
     std::istringstream fenStream(fen);
 

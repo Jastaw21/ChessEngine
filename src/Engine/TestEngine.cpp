@@ -105,15 +105,24 @@ float TestEngine::evaluate(){
     float score = 0;
     const float materialScore_ = materialScore();
     const float pieceSquareScore_ = pieceSquareScore();
+    bool wasCheck = internalBoardManager_.opponentKingInCheck();
 
     float attackKingScore = 0.f;
-    if (internalBoardManager_.opponentKingInCheck()) {
-        attackKingScore += internalBoardManager_.getCurrentTurn() == WHITE ? INFINITY : -INFINITY;
-    }
+    // Invert the traditional scoring. If it's now white, it must have been black to move last
+    if (wasCheck) { attackKingScore += internalBoardManager_.getCurrentTurn() == WHITE ? -INFINITY : INFINITY; }
 
     score = materialScore_ * Weights::MATERIAL_WEIGHT;
     score += pieceSquareScore_ * Weights::PIECE_SQUARE_SCORE;
     score += attackKingScore;
+    if (wasCheck) {
+        auto move = internalBoardManager_.getMoveHistory().top();
+        internalBoardManager_.undoMove();
+        std::cout << "Check! From position " << internalBoardManager_.getFullFen() << " Move was: " << move.toUCI() <<
+                "Score: " << score << "Mat: " << materialScore_ << " PSQ: " << pieceSquareScore_ << "King: " <<
+                attackKingScore << std::endl;
+
+        internalBoardManager_.forceMove(move);
+    }
     return score;
 }
 

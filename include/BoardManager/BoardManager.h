@@ -30,6 +30,17 @@ enum MoveResult {
     CHECK_MATE = 1 << 7, // 1000 0000 - 128
 };
 
+enum GameResult {
+    WHITE_WINS = 1 << 0,
+    BLACK_WINS = 1 << 1,
+    DRAW = 1 << 2,
+    REPETITION = 1 << 3,
+    CHECKMATE = 1 << 4,
+    STALEMATE = 1 << 5,
+    IN_PROGRESS = 1 << 6,
+    MOVE_COUNT = 1 << 7
+};
+
 
 struct Move {
     Move() = default;
@@ -82,6 +93,7 @@ public:
     void undoMove(const Move& move);
     void undoMove();
     bool isGameOver();
+    int getGameResult();
 
     void setFen(const std::string& fen);
 
