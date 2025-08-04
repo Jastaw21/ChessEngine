@@ -21,6 +21,7 @@ public:
     virtual void operator()(const GoCommand& cmd, EngineBase* engine);
     virtual void operator()(const PositionCommand& cmd, EngineBase* engine);
     virtual void operator()(const BestMoveCommand& cmd, EngineBase* engine);
+    virtual void operator()(const NewGameCommand& cmd, EngineBase* engine);
 };
 
 

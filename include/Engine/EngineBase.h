@@ -67,7 +67,7 @@ private:
     // Engine Control Flags
     bool shouldStop = false;
     bool shouldQuit = false;
-    int searchDepth_ = 4;
+    int searchDepth_ = 1;
 
     std::mt19937 rng; // used for randomising the moves if no best move found;
 };

@@ -15,7 +15,7 @@ protected:
         whitePlayer = HumanPlayer(WHITE);
         blackPlayer = HumanPlayer(BLACK);
 
-        gui.getMatchManager()->getBitboards()->loadFEN(Fen::STARTING_FEN);
+        gui.getMatchManager()->getBitboards()->setFenPositionOnly(Fen::STARTING_FEN);
     }
 
     HumanPlayer whitePlayer{WHITE};

@@ -23,7 +23,7 @@ public:
     MatchManager() = default;
 
     MatchManager(ChessPlayer* startingPlayer, ChessPlayer* otherPlayer,
-                 const std::string& startingFen) : currentPlayer_(startingPlayer),
+                 const FenString& startingFen) : currentPlayer_(startingPlayer),
                                                    otherPlayer_(otherPlayer),
                                                    startingFen_(startingFen){}
 
@@ -49,7 +49,7 @@ private:
     ManagerCommandHandler commandHandler;
     BoardManager boardManager;
 
-    std::string startingFen_ = Fen::FULL_STARTING_FEN;
+    FenString startingFen_ = Fen::FULL_STARTING_FEN;
 
     MessageQueue messageQueueOutbound_;
     MessageQueue messageQueueInbound_;
@@ -58,7 +58,7 @@ private:
 
 public:
 
-    [[nodiscard]] std::string startingFen() const{ return startingFen_; }
+    [[nodiscard]] FenString startingFen() const{ return startingFen_; }
     ChessPlayer *currentPlayer() const{ return currentPlayer_; }
     ChessPlayer *otherPlayer() const{ return otherPlayer_; }
     void setCurrentPlayer(ChessPlayer* current_player){ currentPlayer_ = current_player; }

@@ -24,6 +24,8 @@ std::optional<Command> UCIParser::parse(const std::string& inString){
 
         if (liveToken.type == TokenType::ISREADY) { return IsReadyCommand{}; }
 
+        if (liveToken.type == TokenType::UCI_NEW_GAME) { return NewGameCommand{}; }
+
         if (liveToken.type == TokenType::GO) { return parseGo(); }
 
         if (liveToken.type == TokenType::POSITION_CMD) { return parsePosition(); }

@@ -78,3 +78,5 @@ void ManagerCommandHandler::operator()(const BestMoveCommand& cmd, MatchManager*
     const auto depth = matchManager->currentPlayer()->playerType == HUMAN ? 2 : engine->getSearchDepth();
     matchManager->getMessageQueueOutbound()->push("go depth " + std::to_string(depth));
 }
+
+void ManagerCommandHandler::operator()(const NewGameCommand& cmd, MatchManager* matchManager){}

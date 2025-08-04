@@ -27,7 +27,7 @@ TEST(MagicBitboards, PawnAttackGeneration){
     MagicBitBoards mbb;
 
     BitBoards boards;
-    boards.loadFEN("rnbqkbnr/p1pppppp/8/Pp6/8/8/1PPPPPPP/RNBQKBNR w KQkq");
+    boards.setFenPositionOnly("rnbqkbnr/p1pppppp/8/Pp6/8/8/1PPPPPPP/RNBQKBNR w KQkq");
 
     auto pawnMoves = mbb.getMoves(32, WP, boards);
     EXPECT_EQ(pawnMoves, 0x30000000000);

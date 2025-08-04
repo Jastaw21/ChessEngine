@@ -20,6 +20,7 @@ public:
     void operator()(const GoCommand& cmd, MatchManager* matchManager);
     void operator()(const PositionCommand& cmd, MatchManager* matchManager);
     void operator()(const BestMoveCommand& cmd, MatchManager* matchManager);
+    void operator()(const NewGameCommand& cmd, MatchManager* matchManager);
 };
 
 

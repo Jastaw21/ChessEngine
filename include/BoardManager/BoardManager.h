@@ -11,6 +11,7 @@
 #include "Rules.h"
 #include "Engine/Piece.h"
 #include "MagicBitboards/MagicBitBoards.h"
+#include "Utility/Fen.h"
 
 
 class BitBoards;
@@ -95,14 +96,26 @@ public:
     bool isGameOver();
     int getGameResult();
 
-    void setFen(const std::string& fen);
+    void resetGame(){
+        bitboards.setFenPositionOnly(Fen::STARTING_FEN);
+        while (!moveHistory.empty()) { moveHistory.pop(); }
+        repetitionTable.clear();
+    };
+
+    void resetGame(const FenString& fen){
+        setFullFen(fen);
+        while (!moveHistory.empty()) { moveHistory.pop(); }
+        repetitionTable.clear();
+    };
+
+    void setFullFen(const FenString& fen);
+    std::string getFullFen();
 
     Colours getCurrentTurn() const{ return currentTurn; }
     void setCurrentTurn(const Colours current_turn){ currentTurn = current_turn; }
 
     bool isNowCheckMate();
     std::vector<int> getStartingSquaresOfPiece(const Piece& piece);
-    std::string getFullFen();
 
 private:
 
@@ -130,8 +143,6 @@ private:
 
     Rules rules;
     MagicBitBoards magicBitBoards;
-
-    bool isCheck = false;
 };
 
 

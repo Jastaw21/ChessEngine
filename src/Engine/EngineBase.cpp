@@ -65,12 +65,12 @@ Move EngineBase::search(const int depth){
 }
 
 PerftResults EngineBase::runPerftTest(const std::string& Fen, const int depth){
-    internalBoardManager_.getBitboards()->loadFEN(Fen);
+    internalBoardManager_.getBitboards()->setFenPositionOnly(Fen);
     return perft(depth);
 }
 
 std::vector<PerftResults> EngineBase::runDivideTest(const std::string& Fen, const int depth){
-    internalBoardManager_.getBitboards()->loadFEN(Fen);
+    internalBoardManager_.getBitboards()->setFenPositionOnly(Fen);
     return perftDivide(depth);
 }
 
@@ -85,7 +85,7 @@ void EngineBase::loadFEN(const std::string& fen){
     //     firstPartOfFen += fen[i];
     // }
     // internalBoardManager_.getBitboards()->loadFEN(firstPartOfFen);
-    boardManager()->setFen(fen);
+    boardManager()->setFullFen(fen);
 }
 
 float EngineBase::alphaBeta(const int depth, const bool isMaximising, float alpha, float beta){

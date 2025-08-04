@@ -12,6 +12,7 @@
 #include <string>
 
 #include "Engine/Piece.h"
+#include "Utility/Fen.h"
 
 typedef uint64_t Bitboard;
 
@@ -135,7 +136,7 @@ public:
 
     BitBoards();
 
-    void loadFEN(const std::string& fen);
+    void setFenPositionOnly(const FenString& fen);
     std::string &toFEN();
 
     [[nodiscard]] Bitboard getBitboard(const Piece& piece) const;

@@ -20,8 +20,12 @@ void CommandHandlerBase::operator()(const GoCommand& cmd, EngineBase* engine){
 }
 
 void CommandHandlerBase::operator()(const PositionCommand& cmd, EngineBase* engine){
-    engine->boardManager()->setFen(cmd.fen);
+    engine->boardManager()->setFullFen(cmd.fen);
     for (auto& move: cmd.moves) { engine->boardManager()->tryMove(move); }
 }
 
 void CommandHandlerBase::operator()(const BestMoveCommand& cmd, EngineBase* engine){}
+
+void CommandHandlerBase::operator()(const NewGameCommand& cmd, EngineBase* engine){
+    engine->boardManager()->resetGame();
+}

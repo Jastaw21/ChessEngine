@@ -45,7 +45,7 @@ int popLowestSetBit(Bitboard& inBoard){
 
 BitBoards::BitBoards(){ bitboards.fill(0ULL); }
 
-void BitBoards::loadFEN(const std::string& fen){
+void BitBoards::setFenPositionOnly(const FenString& fen){
     fen_ = fen;
     bitboards.fill(0ULL);
     // starting from a8, h8 is 63
@@ -102,40 +102,37 @@ void BitBoards::setZero(const int rank, const int file){
     }
 }
 
-void BitBoards::setOne(const Piece& piece, const int rank, const int file){    
+void BitBoards::setOne(const Piece& piece, const int rank, const int file){
     bitboards[piece] |= 1ULL << rankAndFileToSquare(rank, file);
 }
 
 
 bool BitBoards::testBoard(const Bitboard inBoard) const{
-    const bool anyBoardMatches = std::ranges::any_of(bitboards, [&](const Bitboard& board) { return (board & inBoard) != 0; });
+    const bool anyBoardMatches = std::ranges::any_of(bitboards, [&](const Bitboard& board) {
+        return (board & inBoard) != 0;
+    });
     return anyBoardMatches;
 }
 
 bool BitBoards::testSquare(const int square) const{
-
-    const bool anyBoardMatches = std::ranges::any_of(bitboards, [&](const Bitboard& board) { return (board & (1ULL << square)) != 0; });    
+    const bool anyBoardMatches = std::ranges::any_of(bitboards, [&](const Bitboard& board) {
+        return (board & (1ULL << square)) != 0;
+    });
     return anyBoardMatches;
 }
 
-int BitBoards::countPiece(const Piece& pieceToSearch) const{
-    return std::popcount(bitboards[pieceToSearch]);
-}
+int BitBoards::countPiece(const Piece& pieceToSearch) const{ return std::popcount(bitboards[pieceToSearch]); }
 
 Bitboard BitBoards::getOccupancy() const{
-    const auto accumulated = std::accumulate(bitboards.begin(),bitboards.end(),0ULL,std::bit_or<>());   
+    const auto accumulated = std::accumulate(bitboards.begin(), bitboards.end(), 0ULL, std::bit_or<>());
     return accumulated;
 }
 
-Bitboard BitBoards::getOccupancy(const Piece& piece) const{    
-    return bitboards[piece];    
-}
+Bitboard BitBoards::getOccupancy(const Piece& piece) const{ return bitboards[piece]; }
 
 Bitboard BitBoards::getOccupancy(const Colours& colour) const{
     Bitboard result = 0ULL;
-    for (const auto& piece : filteredPieces[colour]) {
-        result |= bitboards[piece];
-    }
+    for (const auto& piece: filteredPieces[colour]) { result |= bitboards[piece]; }
     return result;
 }
 

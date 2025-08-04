@@ -50,8 +50,16 @@ void MatchManager::parseUCI(const std::string& uci){
 }
 
 void MatchManager::restartGame(){
-    boardManager.setFen(startingFen_);
+    boardManager.resetGame(startingFen()); // reset our internal state
+
+    // tell both players it's a new game
+    currentPlayer()->parseUCI("ucinewgame");
+    otherPlayer()->parseUCI("ucinewgame");
+    while (!messageQueueOutbound_.empty()) { messageQueueOutbound_.pop(); }
+    while (!messageQueueInbound_.empty()) { messageQueueInbound_.pop(); }
     startGame();
+
+    std::swap(currentPlayer_, otherPlayer_);
 }
 
 

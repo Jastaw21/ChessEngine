@@ -11,7 +11,7 @@
 TEST(BitBoards, BitBoardsCanBeBuilt){
     auto board = BitBoards();
     const auto blackRookA8Fen = "r7/8/8/8/8/8/8/8";
-    board.loadFEN(blackRookA8Fen);
+    board.setFenPositionOnly(blackRookA8Fen);
 
     const auto blackRookBoard = board[BR];
     // piece added to blackRookBoard
@@ -28,7 +28,7 @@ TEST(BitBoards, BitBoardsCanBeBuilt){
 
     // test board resets on loading a new fen
     const auto whiteRookH1Fen = "8/8/8/8/8/8/8/R7";
-    board.loadFEN(whiteRookH1Fen);
+    board.setFenPositionOnly(whiteRookH1Fen);
     for (int i = 0; i < PIECE_N; i++) {
         const auto piece = static_cast<Piece>(i);
         if (piece == WR) {
@@ -43,12 +43,12 @@ TEST(BitBoards, BitBoardsCanBeBuilt){
 TEST(BitBoards, BitboardsLocationsCorrect){
     auto board = BitBoards();
     const auto blackRookA8Fen = "r7/8/8/8/8/8/8/8";
-    board.loadFEN(blackRookA8Fen);
+    board.setFenPositionOnly(blackRookA8Fen);
 
     auto blackRookBoard = board[BR];
     EXPECT_EQ(blackRookBoard, 0x100000000000000);
 
-    board.loadFEN(Fen::STARTING_FEN);
+    board.setFenPositionOnly(Fen::STARTING_FEN);
     blackRookBoard = board[BR];
     EXPECT_EQ(blackRookBoard, 0x8100000000000000);
 
@@ -61,13 +61,13 @@ TEST(BitBoards, BitboardsLocationsCorrect){
 
 TEST(BitBoards, ToFenWorksAfterInit){
     auto board = BitBoards();
-    board.loadFEN(Fen::STARTING_FEN);
+    board.setFenPositionOnly(Fen::STARTING_FEN);
     EXPECT_EQ(board.toFEN(), Fen::STARTING_FEN);
 }
 
 TEST(BitBoards, ToFenWorksInWeirdPositions){
     auto board = BitBoards();
-    board.loadFEN("rnbqkbnr/p2ppppp/1pp5/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
+    board.setFenPositionOnly("rnbqkbnr/p2ppppp/1pp5/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
     EXPECT_EQ(board.toFEN(), "rnbqkbnr/p2ppppp/1pp5/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
 }
 
@@ -75,7 +75,7 @@ TEST(BitBoards, ToFenWorksInWeirdPositions){
 TEST(BitBoards, SetZeroRemovesBit){
     auto board = BitBoards();
     const auto blackRookA8Fen = "r7/8/8/8/8/8/8/8";
-    board.loadFEN(blackRookA8Fen);
+    board.setFenPositionOnly(blackRookA8Fen);
 
     board.setZero(8, 1);
 
@@ -91,7 +91,7 @@ TEST(BitBoards, SetZeroRemovesBit){
 TEST(BitBoards, SetOneSetsBit){
     auto board = BitBoards();
     const auto blackRookA8Fen = "8/8/8/8/8/8/8/8";
-    board.loadFEN(blackRookA8Fen);
+    board.setFenPositionOnly(blackRookA8Fen);
 
     board.setOne(BR, 8, 1);
 
@@ -125,7 +125,7 @@ TEST(BitBoards, SquareToRankAndFile){
 
 TEST(BitBoards, TestBoardFunction){
     auto board = BitBoards();
-    board.loadFEN(Fen::STARTING_FEN);
+    board.setFenPositionOnly(Fen::STARTING_FEN);
 
     constexpr Bitboard a1 = 1;
     constexpr Bitboard a4 = 0x1000000;
@@ -136,7 +136,7 @@ TEST(BitBoards, TestBoardFunction){
 
 TEST(BitBoards, TestSquareFunction){
     auto board = BitBoards();
-    board.loadFEN(Fen::STARTING_FEN);
+    board.setFenPositionOnly(Fen::STARTING_FEN);
 
     for (int i = 0; i < 64; i++) {
         if (i <= 15 || i >= 48) { EXPECT_TRUE(board.testSquare(i)); } else
@@ -146,21 +146,21 @@ TEST(BitBoards, TestSquareFunction){
 
 TEST(BitBoards, GetPieceFindsPieces){
     auto board = BitBoards();
-    board.loadFEN("pppppppp/8/8/8/8/8/8/8");
+    board.setFenPositionOnly("pppppppp/8/8/8/8/8/8/8");
 
     for (int i = 56; i < 64; i++) { EXPECT_EQ(board.getPiece(i).value(), Piece::BP); }
 }
 
 TEST(BitBoards, GetPieceReturnsNullInEmptySquares){
     auto board = BitBoards();
-    board.loadFEN("pppppppp/8/8/8/8/8/8/8");
+    board.setFenPositionOnly("pppppppp/8/8/8/8/8/8/8");
 
     for (int i = 0; i < 56; i++) { EXPECT_FALSE(board.getPiece(i).has_value()); }
 }
 
 TEST(BitBoards, GetPieceOverloadsMatch){
     auto board = BitBoards();
-    board.loadFEN("pppppppp/8/8/8/8/8/8/8");
+    board.setFenPositionOnly("pppppppp/8/8/8/8/8/8/8");
 
     for (int i = 0; i < 56; i++) {
         int rank, file;
@@ -177,7 +177,7 @@ TEST(BitBoards, GetPieceOverloadsMatch){
 
 TEST(BitBoards, CountPieces){
     auto boards = BitBoards();
-    boards.loadFEN(Fen::STARTING_FEN);
+    boards.setFenPositionOnly(Fen::STARTING_FEN);
 
     EXPECT_EQ(boards.countPiece(WP), 8);
     EXPECT_EQ(boards.countPiece(WK), 1);
@@ -185,7 +185,7 @@ TEST(BitBoards, CountPieces){
 
 TEST(BitBoards, WeirdBlackRookInWrongPlace){
     auto boards = BitBoards();
-    boards.loadFEN("3K4/3r4/8/8/8/8/8/8");
+    boards.setFenPositionOnly("3K4/3r4/8/8/8/8/8/8");
 
     const auto& blackRookBoard = boards[BR];
     EXPECT_EQ(blackRookBoard, 0x8000000000000);
@@ -197,7 +197,7 @@ TEST(BitBoards, WeirdBlackRookInWrongPlace){
 
 TEST(BitBoards, Occupancy){
     auto boards = BitBoards();
-    boards.loadFEN(Fen::STARTING_FEN);
+    boards.setFenPositionOnly(Fen::STARTING_FEN);
 
     EXPECT_EQ(boards.getOccupancy(), 0xffff00000000ffff);
     EXPECT_EQ(boards.getOccupancy(WHITE), 0xffff);
@@ -210,7 +210,7 @@ TEST(BitBoards, Occupancy){
 
 TEST(BitBoards, PrintBoard){
     auto boards = BitBoards();
-    boards.loadFEN(Fen::STARTING_FEN);
+    boards.setFenPositionOnly(Fen::STARTING_FEN);
 
     const auto all = boards.getOccupancy();
     printBitboard(all);

@@ -77,7 +77,7 @@ std::vector<Move> TestEngine::generateMoveList(){
     return moves;
 }
 
-void TestEngine::setFullFen(const std::string& fen){ internalBoardManager_.setFen(fen); }
+void TestEngine::setFullFen(const std::string& fen){ internalBoardManager_.setFullFen(fen); }
 
 
 float TestEngine::materialScore(){
@@ -114,15 +114,15 @@ float TestEngine::evaluate(){
     score = materialScore_ * Weights::MATERIAL_WEIGHT;
     score += pieceSquareScore_ * Weights::PIECE_SQUARE_SCORE;
     score += attackKingScore;
-    if (wasCheck) {
-        auto move = internalBoardManager_.getMoveHistory().top();
-        internalBoardManager_.undoMove();
-        std::cout << "Check! From position " << internalBoardManager_.getFullFen() << " Move was: " << move.toUCI() <<
-                "Score: " << score << "Mat: " << materialScore_ << " PSQ: " << pieceSquareScore_ << "King: " <<
-                attackKingScore << std::endl;
-
-        internalBoardManager_.forceMove(move);
-    }
+    // if (wasCheck) {
+    //     auto move = internalBoardManager_.getMoveHistory().top();
+    //     internalBoardManager_.undoMove();
+    //     std::cout << "Check! From position " << internalBoardManager_.getFullFen() << " Move was: " << move.toUCI() <<
+    //             "Score: " << score << "Mat: " << materialScore_ << " PSQ: " << pieceSquareScore_ << "King: " <<
+    //             attackKingScore << std::endl;
+    //
+    //     internalBoardManager_.forceMove(move);
+    // }
     return score;
 }
 

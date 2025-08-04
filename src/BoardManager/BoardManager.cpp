@@ -111,12 +111,12 @@ bool BoardManager::tryMove(Move& move){
 
 bool BoardManager::tryMove(const std::string& moveUCI){
     const auto fromSquare = Fen::FenToSquare(moveUCI);
-    const auto pieceatLocation = bitboards.getPiece(fromSquare);
-    if (!pieceatLocation.has_value()) {
+    const auto optionalPiece = bitboards.getPiece(fromSquare);
+    if (!optionalPiece.has_value()) {
         std::cout << "Error: No piece at location " << fromSquare << std::endl;
         return false;
     }
-    const auto piece = pieceatLocation.value();
+    const auto piece = optionalPiece.value();
     auto move = createMove(piece, moveUCI);
     return tryMove(move);
 }
@@ -178,7 +178,7 @@ void BoardManager::makeMove(Move& move){
         currentTurn = WHITE;
 
     moveHistory.emplace(move);
-    if (!repetitionTable.empty()) { repetitionTable.pop_front(); }
+    if (!repetitionTable.empty() && repetitionTable.size() >= 6) { repetitionTable.pop_front(); }
     repetitionTable.push_back(move);
 }
 
@@ -200,7 +200,7 @@ void BoardManager::undoMove(const Move& move){
         bitboards.setOne(opponentPawn, move.rankTo + rankOffset, move.fileTo);
     }
 
-    // if it was a castling, restore the rooks to their original positions
+    // if it was a castling move, restore the rooks to their original positions
     if (move.resultBits & CASTLING) {
         bitboards.setZero(move.rankTo, move.fileTo);
 
@@ -291,7 +291,7 @@ int BoardManager::getGameResult(){
     return resultBits;
 }
 
-void BoardManager::setFen(const std::string& fen){
+void BoardManager::setFullFen(const FenString& fen){
     std::istringstream fenStream(fen);
 
     std::string line;
@@ -305,7 +305,7 @@ void BoardManager::setFen(const std::string& fen){
     fenStream >> fenPiecePlacement >> fenActiveColour >> fenCastling >> fenEnPassant >> fenHalfMoveClock >>
             fenFullMoveNumber;
 
-    bitboards.loadFEN(fenPiecePlacement);
+    bitboards.setFenPositionOnly(fenPiecePlacement);
     setCurrentTurn(fenActiveColour == "w" ? WHITE : BLACK);
 }
 
@@ -429,7 +429,7 @@ bool BoardManager::checkAndHandleEP(Move& move){
     if (move.fileTo != lastMove.fileFrom) { return false; }
 
     const int targetRankOffset = pieceColours[move.piece] == WHITE ? 1 : -1;
-    // The offset is relative to the last pawn's to location. So white has to go north of the last move
+    // The offset is relative to the last pawn's "to location". So white has to go north of the last move
     if (move.rankTo != lastMove.rankTo + targetRankOffset) { return false; }
     move.resultBits |= EN_PASSANT;
     move.resultBits |= CAPTURE;
