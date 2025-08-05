@@ -42,20 +42,16 @@ add_library(
         src/HumanPlayer.cpp
         include/BoardManager/Rules.h
         src/BoardManager/Rules.cpp
-        include/MagicBitboards/MagicBitBoards.h
         src/MagicBitboards/MagicBitBoards.cpp
-        include/MagicBitboards/MagicBitBoardShared.h
         src/MagicBitboards/MagicBitBoardShared.cpp
         src/MatchManager/MatchManager.cpp
-        include/MatchManager/MatchManager.h
         src/MatchManager/ManagerCommandHandler.cpp
-        include/MatchManager/ManagerCommandHandler.h
 )
 
 target_include_directories(chess_lib PUBLIC include)
 target_link_libraries(chess_lib PUBLIC SDL3::SDL3 SDL3_image::SDL3_image)
 
-# === Main Application ===
+# === Main GUI Application ===
 add_executable(Chess src/gameMain.cpp
 )
 target_link_libraries(Chess PRIVATE chess_lib EngineSharedLib)
@@ -68,8 +64,6 @@ add_subdirectory(tests)
 # === Add MBB tests ===
 add_subdirectory(src/MagicBitBoardGen/tests)
 
-# === Add EngineShared lib ===
-add_subdirectory(src/EngineShared)
 
 # === Add MagicBitBoardGenerator Lib ===
 add_library(MagicBitBoardGen STATIC
@@ -81,11 +75,17 @@ add_library(MagicBitBoardGen STATIC
 target_include_directories(MagicBitBoardGen PUBLIC include)
 target_link_libraries(MagicBitBoardGen PRIVATE chess_lib)
 
-# === Add MagicBitBoardGenerator ece ===
+# === Add MagicBitBoardGenerator exe ===
 add_executable(GenerateMagicNumbers
         src/MagicBitBoardGen/mbbMain.cpp
 )
 target_link_libraries(GenerateMagicNumbers PRIVATE MagicBitBoardGen)
 target_include_directories(GenerateMagicNumbers PRIVATE include)
 
+# === Add Standalone Engine exe ===
+add_executable(StandaloneEngine src/CLIEngine/CLIEngine.cpp)
+target_link_libraries(StandaloneEngine chess_lib EngineSharedLib)
+target_include_directories(StandaloneEngine PRIVATE include)
 
+# === Add EngineShared lib ===
+add_subdirectory(src/EngineShared)

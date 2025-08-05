@@ -19,7 +19,7 @@ void runEngineGame(){
     auto blackPlayer = TestEngine();
 
     auto gui = ChessGui(&whitePlayer, &blackPlayer);
-    gui.getMatchManager()->getBitboards()->setFenPositionOnly(Fen::STARTING_FEN);
+    gui.getMatchManager()->setStartingFen("rnbqkbnr/pppp1ppp/8/4p3/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 1");
     gui.loop();
 }
 

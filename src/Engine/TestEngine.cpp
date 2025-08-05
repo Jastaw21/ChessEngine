@@ -167,11 +167,8 @@ float TestEngine::evaluate(){
 
     float attackKingScore = 0.f;
     // Invert the traditional scoring. If it's now white, it must have been black to move last
-    if (wasCheck) { std::cout << "Check" << std::endl; }
-    if (wasCheckmate) {
-        std::cout << "Checkmate" << std::endl;
-        attackKingScore += internalBoardManager_.getCurrentTurn() == WHITE ? -INFINITY : INFINITY;
-    }
+
+    if (wasCheckmate) { attackKingScore += internalBoardManager_.getCurrentTurn() == WHITE ? -INFINITY : INFINITY; }
 
     score = materialScore_ * Weights::MATERIAL_WEIGHT;
     score += pieceSquareScore_ * Weights::PIECE_SQUARE_SCORE;

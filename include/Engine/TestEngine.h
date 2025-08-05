@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "EngineBase.h"
+#include "EngineShared/CommunicatorBase.h"
 
 
 class TestEngine final : public EngineBase {
@@ -18,6 +19,7 @@ public:
     virtual std::vector<Move> generateMoveList() override;
     void setFullFen(const std::string& fen);
     float materialScore();
+    void setCommunicator(TerminalCommunicator* communicator){ communicator_ = communicator; };
 
 private:
 

@@ -24,8 +24,8 @@ public:
 
     MatchManager(ChessPlayer* startingPlayer, ChessPlayer* otherPlayer,
                  const FenString& startingFen) : currentPlayer_(startingPlayer),
-                                                   otherPlayer_(otherPlayer),
-                                                   startingFen_(startingFen){}
+                                                 otherPlayer_(otherPlayer),
+                                                 startingFen_(startingFen){}
 
     MatchManager(ChessPlayer* startingPlayer, ChessPlayer* otherPlayer);
 
@@ -38,6 +38,11 @@ public:
     void receiveCommand(const std::string& command){ messageQueueInbound_.push(command); }
     MessageQueue *getMessageQueueOutbound(){ return &messageQueueOutbound_; }
     MessageQueue *getMessageQueueInbound(){ return &messageQueueInbound_; }
+
+    void setStartingFen(const FenString& fen){
+        boardManager.setFullFen(fen);
+        startingFen_ = fen;
+    }
 
 private:
 

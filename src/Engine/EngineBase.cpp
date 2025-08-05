@@ -22,6 +22,8 @@ void EngineBase::parseUCI(const std::string& uci){
     auto command = parser.parse(uci);
     // Create a visitor lambda that captures 'this' and forwards to the command handler
     auto visitor = [this](const auto& cmd) { this->commandHandler(cmd, this); };
+
+    if (!command.has_value()) { return; } // no command was parsed
     std::visit(visitor, *command);
 }
 

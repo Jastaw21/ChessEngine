@@ -6,6 +6,4 @@
 #include <chrono>
 
 ZobristHash::ZobristHash() : rng(std::chrono::system_clock::now().time_since_epoch().count()){}
-uint64_t ZobristHash::hash(const std::string& fen){
-
-}
+uint64_t ZobristHash::hash(const std::string& fen){ return 0; }
