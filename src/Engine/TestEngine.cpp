@@ -29,6 +29,31 @@ std::unordered_map<Piece, int> pieceValues = {
             {BQ, 90}
         };
 
+constexpr int pawnScores[64] =
+        {
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            2, 2, 2, 2, 2, 2, 2, 2,
+            3, 3, 3, 3, 3, 3, 3, 3,
+            3, 3, 3, 3, 3, 3, 3, 3,
+            2, 2, 2, 2, 2, 2, 2, 2,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+        };
+
+
+constexpr int knightScores[64] =
+        {
+            -1, 0, 0, 0, 0, 0, 0, -1,
+            -1, 0, 4, 4, 4, 4, 0, -1,
+            0, 2, 4, 4, 4, 4, 2, 0,
+            0, 2, 4, 5, 5, 4, 2, 0,
+            0, 3, 4, 5, 5, 4, 3, 0,
+            0, 2, 4, 4, 4, 4, 2, 0,
+            -1, 0, 4, 4, 4, 4, 0, -1,
+            -1, 0, 0, 0, 0, 0, 0, -1,
+        };
+
 namespace Weights {
     float MATERIAL_WEIGHT = 10;
     float PIECE_SQUARE_SCORE = 2;
@@ -99,30 +124,59 @@ float TestEngine::materialScore(){
     return MathUtility::map(whiteScore - blackScore, minScore, maxScore, -1, 1);
 }
 
-float TestEngine::pieceSquareScore(){ return 0; }
+float TestEngine::pieceSquareScore(){
+    float whitePieceSquareScore = 0;
+    float blackPieceSquareScore = 0;
+
+    for (int piece = 0; piece < PIECE_N; ++piece) {
+        auto pieceName = static_cast<Piece>(piece);
+
+        Bitboard pieceSquares = internalBoardManager_.getBitboards()->getBitboard(pieceName);
+        while (pieceSquares) {
+            const int square = std::countr_zero(pieceSquares);
+            pieceSquares &= ~(1ULL << square);
+
+            switch (pieceName) {
+                case BP:
+                    blackPieceSquareScore += pawnScores[square];
+                case WP:
+                    whitePieceSquareScore += pawnScores[square];
+
+                case WN:
+                    whitePieceSquareScore += knightScores[square];
+                case BN:
+                    blackPieceSquareScore += knightScores[square];
+
+                default:
+                    break;
+            }
+        }
+    }
+
+    return MathUtility::map(whitePieceSquareScore - blackPieceSquareScore, -pieceValues[WQ], pieceValues[WQ],
+                            -pieceValues[WP], pieceValues[WP]);
+}
 
 float TestEngine::evaluate(){
     float score = 0;
     const float materialScore_ = materialScore();
     const float pieceSquareScore_ = pieceSquareScore();
-    bool wasCheck = internalBoardManager_.opponentKingInCheck();
+    const auto result = internalBoardManager_.getGameResult();
+    const bool wasCheck = result & CHECK;
+    const bool wasCheckmate = result & CHECKMATE;
 
     float attackKingScore = 0.f;
     // Invert the traditional scoring. If it's now white, it must have been black to move last
-    if (wasCheck) { attackKingScore += internalBoardManager_.getCurrentTurn() == WHITE ? -INFINITY : INFINITY; }
+    if (wasCheck) { std::cout << "Check" << std::endl; }
+    if (wasCheckmate) {
+        std::cout << "Checkmate" << std::endl;
+        attackKingScore += internalBoardManager_.getCurrentTurn() == WHITE ? -INFINITY : INFINITY;
+    }
 
     score = materialScore_ * Weights::MATERIAL_WEIGHT;
     score += pieceSquareScore_ * Weights::PIECE_SQUARE_SCORE;
     score += attackKingScore;
-    // if (wasCheck) {
-    //     auto move = internalBoardManager_.getMoveHistory().top();
-    //     internalBoardManager_.undoMove();
-    //     std::cout << "Check! From position " << internalBoardManager_.getFullFen() << " Move was: " << move.toUCI() <<
-    //             "Score: " << score << "Mat: " << materialScore_ << " PSQ: " << pieceSquareScore_ << "King: " <<
-    //             attackKingScore << std::endl;
-    //
-    //     internalBoardManager_.forceMove(move);
-    // }
+
     return score;
 }
 

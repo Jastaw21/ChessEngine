@@ -178,7 +178,7 @@ void BoardManager::makeMove(Move& move){
         currentTurn = WHITE;
 
     moveHistory.emplace(move);
-    if (!repetitionTable.empty() && repetitionTable.size() >= 6) { repetitionTable.pop_front(); }
+    if (!repetitionTable.empty() && repetitionTable.size() >= 8) { repetitionTable.pop_front(); }
     repetitionTable.push_back(move);
 }
 
@@ -246,16 +246,27 @@ void BoardManager::undoMove(){
     undoMove(moveHistory.top());
 }
 
+bool BoardManager::threefoldRepetition(){
+    if (repetitionTable.size() < 8)
+        return false;
+
+    const bool lastMoverRepeats =
+            repetitionTable.at(7).isInverseOf(repetitionTable.at(5))
+            && repetitionTable.at(5).isInverseOf(repetitionTable.at(3))
+            && repetitionTable.at(3).isInverseOf(repetitionTable.at(1));
+
+    const bool otherMoverRepeats =
+            repetitionTable.at(6).isInverseOf(repetitionTable.at(4))
+            && repetitionTable.at(4).isInverseOf(repetitionTable.at(2))
+            && repetitionTable.at(2).isInverseOf(repetitionTable.at(0));
+
+    return lastMoverRepeats && otherMoverRepeats;
+}
+
 bool BoardManager::isGameOver(){
     if (moveHistory.size() >= 100) { return true; }
     if (isNowCheckMate()) { return true; }
-    if (repetitionTable.size() >= 6) {
-        const bool lastColour = (repetitionTable.at(5) == repetitionTable.at(3) && repetitionTable.at(3) ==
-                                 repetitionTable.at(1));
-
-        if (lastColour)
-            return true;
-    }
+    if (threefoldRepetition()) { return true; }
 
     return false;
 }
@@ -264,22 +275,18 @@ int BoardManager::getGameResult(){
     int resultBits = 0;
 
     if (moveHistory.size() >= 100) {
-        resultBits |= DRAW;
-        resultBits |= MOVE_COUNT;
+        resultBits |= GameResult::DRAW;
+        resultBits |= GameResult::MOVE_COUNT;
         return resultBits;
     }
 
-    if (repetitionTable.size() >= 6) {
-        const bool lastColour = (repetitionTable.at(5) == repetitionTable.at(3) && repetitionTable.at(3) ==
-                                 repetitionTable.at(1));
-        if (lastColour) {
-            resultBits |= DRAW;
-            resultBits |= MOVE_COUNT;
-            return resultBits;
-        }
+    if (threefoldRepetition()) {
+        resultBits |= GameResult::DRAW;
+        resultBits |= GameResult::REPETITION;
+        return resultBits;
     }
-    if (isNowCheckMate()) {
-        resultBits |= CHECK_MATE;
+    if (isNowCheckMate() || moveHistory.top().resultBits & MoveResult::CHECK_MATE) {
+        resultBits |= GameResult::CHECKMATE;
         const auto lastMoveColour = pieceColours[moveHistory.top().piece];
 
         if (lastMoveColour == WHITE)
@@ -351,7 +358,6 @@ bool BoardManager::opponentKingInCheck(){
 
     return false;
 }
-
 
 bool BoardManager::isNowCheckMate(){ return !hasLegalMoveToEscapeCheck(); }
 

@@ -1174,13 +1174,24 @@ TEST(BoardManager, ThreeFoldRepetition){
     auto reverseWhiteMove = createMove(WN, "c3b1");
     auto reverseBlackMove = createMove(BN, "c6b8");
 
-    for (int attempt = 0; attempt < 4; attempt++) {
-        if (attempt == 3) {
-            std::cout << "Attempting to make a move that would cause a 3-fold repetition" << std::endl;
-        }
+    for (int attempt = 0; attempt < 2; attempt++) {
+        EXPECT_NE(manager.getGameResult(), GameResult::REPETITION | GameResult::DRAW);
         ASSERT_TRUE(manager.tryMove(whiteMove));
         ASSERT_TRUE(manager.tryMove(blackMove));
         ASSERT_TRUE(manager.tryMove(reverseWhiteMove));
         ASSERT_TRUE(manager.tryMove(reverseBlackMove));
     }
+
+    EXPECT_EQ(manager.getGameResult(), GameResult::REPETITION | GameResult::DRAW);
+}
+
+TEST(BoardManager, CheckMatesAreFoundGameState){
+    auto manager = BoardManager();
+    manager.setFullFen("rnbqkbnr/pppp1ppp/8/4p3/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 1");
+
+    auto checkMove = createMove(BQ, "d8h4");
+    ASSERT_TRUE(manager.tryMove(checkMove));
+    auto result = manager.getGameResult();
+    EXPECT_TRUE(checkMove.resultBits & CHECK_MATE);
+    EXPECT_TRUE(result & GameResult::CHECKMATE);
 }

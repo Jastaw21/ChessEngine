@@ -3,6 +3,9 @@
 //
 
 #include  <gtest/gtest.h>
+
+#include "BoardManager/BoardManager.h"
+#include "Engine/Piece.h"
 #include "Utility/math.h"
 
 TEST(Math, Utility){
@@ -32,4 +35,16 @@ TEST(Math, Map){
 
     EXPECT_EQ(0.5, MathUtility::map(1.f, 0, 2, 0, 1));
     EXPECT_EQ(0, MathUtility::map(1.f, 0, 2, -1, 1));
+}
+
+TEST(MoveUtility, InverseOf){
+    auto move = createMove(WP, "a1a2");
+    auto move2 = createMove(WP, "a2a1");
+    EXPECT_TRUE(move.isInverseOf(move2));
+
+    auto move3 = createMove(WP, "a1a3");
+    EXPECT_FALSE(move.isInverseOf(move3));
+    EXPECT_FALSE(move2.isInverseOf(move3));
+    EXPECT_FALSE(move3.isInverseOf(move));
+    EXPECT_FALSE(move3.isInverseOf(move2));
 }

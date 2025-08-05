@@ -70,7 +70,15 @@ struct Move {
                rankTo && fileTo == other.fileTo && resultBits == other.resultBits;
     }
 
-    bool operator!=(const Move& other) const{ return !(*this == other); };
+    bool operator!=(const Move& other) const{ return !(*this == other); }
+
+    bool isInverseOf(const Move& move) const{
+        return piece == move.piece
+               && rankFrom == move.rankTo
+               && fileFrom == move.fileTo
+               && rankTo == move.rankFrom
+               && fileTo == move.fileFrom;
+    }
 };
 
 Move createMove(const Piece& piece, const std::string& moveUCI);
@@ -93,6 +101,7 @@ public:
     bool forceMove(Move& move);
     void undoMove(const Move& move);
     void undoMove();
+    bool threefoldRepetition();
     bool isGameOver();
     int getGameResult();
 

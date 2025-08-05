@@ -13,6 +13,8 @@ add_library(EngineSharedLib
         ../../include/EngineShared/CommandHandlerBase.h
         CommunicatorBase.cpp
         ../../include/EngineShared/CommunicatorBase.h
+        ZobristHash.cpp
+        ../../include/EngineShared/ZobristHash.h
 )
 
 
