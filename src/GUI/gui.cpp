@@ -49,7 +49,7 @@ void ChessGui::loop(){
         }
 
         runningTime += 16;
-        if (runningTime >= 1000) {
+        if (runningTime >= 10) {
             matchManager_->tick();
             runningTime = 0;
         }

@@ -16,10 +16,12 @@ void runGame(){
 
 void runEngineGame(){
     auto whitePlayer = TestEngine();
+    whitePlayer.setEvaluator(new GoodEvaluator(whitePlayer.boardManager()));
     auto blackPlayer = TestEngine();
+    blackPlayer.setEvaluator(new BadEvaluator(blackPlayer.boardManager()));
 
     auto gui = ChessGui(&whitePlayer, &blackPlayer);
-    gui.getMatchManager()->setStartingFen("rnbqkbnr/pppp1ppp/8/4p3/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 1");
+    gui.getMatchManager()->setStartingFen(Fen::FULL_STARTING_FEN);
     gui.loop();
 }
 

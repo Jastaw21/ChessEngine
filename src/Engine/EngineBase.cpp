@@ -9,7 +9,22 @@
 #include "EngineShared/CommunicatorBase.h"
 
 
-EngineBase::EngineBase(): ChessPlayer(ENGINE), rng(std::chrono::system_clock::now().time_since_epoch().count()){}
+float EvaluatorBase::evaluateMove(Move& move){
+    const float scoreBefore = evaluate();
+    boardManager_->tryMove(move);
+    const float scoreAfter = evaluate();
+    boardManager_->undoMove();
+
+    const auto result = scoreAfter - scoreBefore;
+    if (boardManager_->getCurrentTurn() == WHITE) { return result; }
+
+    return -result;
+}
+
+EngineBase::EngineBase(): ChessPlayer(ENGINE),
+                          rng(std::chrono::system_clock::now().time_since_epoch().count()){
+    evaluator_ = new EvaluatorBase(&internalBoardManager_);
+}
 
 void EngineBase::go(const int depth){
     const auto rmove = search(depth);
@@ -27,17 +42,6 @@ void EngineBase::parseUCI(const std::string& uci){
     std::visit(visitor, *command);
 }
 
-float EngineBase::evaluateMove(Move& move){
-    const float scoreBefore = evaluate();
-    internalBoardManager_.tryMove(move);
-    const float scoreAfter = evaluate();
-    internalBoardManager_.undoMove();
-
-    const auto result = scoreAfter - scoreBefore;
-    if (internalBoardManager_.getCurrentTurn() == WHITE) { return result; }
-
-    return -result;
-}
 
 Move EngineBase::search(const int depth){
     auto moves = generateMoveList();
@@ -53,7 +57,7 @@ Move EngineBase::search(const int depth){
 
     for (auto& move: moves) {
         internalBoardManager_.forceMove(move);
-        float eval = alphaBeta(depth - 1, !isWhite, -INFINITY, INFINITY);
+        float eval = alphaBeta(depth - 1, isWhite, -INFINITY, INFINITY);
         internalBoardManager_.undoMove();
 
         if (!isWhite) { eval = -eval; }
@@ -91,7 +95,7 @@ void EngineBase::loadFEN(const std::string& fen){
 }
 
 float EngineBase::alphaBeta(const int depth, const bool isMaximising, float alpha, float beta){
-    if (depth == 0 || internalBoardManager_.isGameOver()) { return evaluate(); }
+    if (depth == 0 || internalBoardManager_.isGameOver()) { return evaluator_->evaluate(); }
 
     auto moves = generateMoveList();
     std::ranges::sort(moves.begin(), moves.end(),

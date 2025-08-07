@@ -14,15 +14,40 @@
 
 #include "EngineShared/PerftResults.h"
 
+
+class EvaluatorBase {
+public:
+
+    virtual ~EvaluatorBase() = default;
+    explicit EvaluatorBase(BoardManager* boardManager): pawnScores{}, knightScores{}{ boardManager_ = boardManager; }
+
+    virtual float evaluate(){ return 0; }
+    float evaluateMove(Move& move);
+
+    virtual float materialScore(){ return 0; }
+    virtual float pieceSquareScore(){ return 0; }
+
+protected:
+
+    BoardManager* boardManager_;
+
+    std::unordered_map<Piece, float> pieceValues;
+    int pawnScores[64];
+    int knightScores[64];
+
+    float materialScoreWeight = 10;
+    float pieceSquareScoreWeight = 2;
+};
+
+
 class EngineBase : public ChessPlayer {
 public:
 
     // Constructor
     explicit EngineBase();
+    explicit EngineBase(EvaluatorBase* evaluator) : ChessPlayer(ENGINE), evaluator_(evaluator){};
 
     // Core Engine Interface
-    virtual float evaluate() = 0;
-    virtual float evaluateMove(Move& move);
     virtual Move search(int depth = 5);
 
     // Board State Management
@@ -45,6 +70,9 @@ public:
     virtual std::vector<PerftResults> runDivideTest(const std::string& Fen, int depth);
     virtual std::vector<PerftResults> runDivideTest(int depth);
 
+    void setEvaluator(EvaluatorBase* evaluator){ evaluator_ = evaluator; }
+    EvaluatorBase *getEvaluator() const{ return evaluator_; }
+
 protected:
 
     // Move Generation Interface
@@ -61,6 +89,7 @@ protected:
 
     // Internal State
     BoardManager internalBoardManager_;
+    EvaluatorBase* evaluator_ = nullptr;
 
 private:
 

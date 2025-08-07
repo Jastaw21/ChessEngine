@@ -9,17 +9,35 @@
 #include "EngineBase.h"
 #include "EngineShared/CommunicatorBase.h"
 
+class GoodEvaluator : public EvaluatorBase {
+public:
+
+    explicit GoodEvaluator(BoardManager* manager);
+
+    virtual float evaluate() override;
+    virtual float materialScore() override;
+    virtual float pieceSquareScore() override;
+};
+
+class BadEvaluator : public EvaluatorBase {
+public:
+
+    explicit BadEvaluator(BoardManager* manager);
+
+    virtual float evaluate() override;
+    virtual float materialScore() override;
+    virtual float pieceSquareScore() override;
+};
 
 class TestEngine final : public EngineBase {
 public:
 
-    float pieceSquareScore();
-    virtual float evaluate() override;
+    TestEngine() = default;
+    explicit TestEngine(EvaluatorBase* evaluator) : EngineBase(evaluator){}
 
     virtual std::vector<Move> generateMoveList() override;
     void setFullFen(const std::string& fen);
-    float materialScore();
-    void setCommunicator(TerminalCommunicator* communicator){ communicator_ = communicator; };
+    void setCommunicator(TerminalCommunicator* communicator){ communicator_ = communicator; }
 
 private:
 
