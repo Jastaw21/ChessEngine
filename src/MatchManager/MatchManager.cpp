@@ -25,18 +25,17 @@ void MatchManager::startGame(){
 }
 
 void MatchManager::tick(){
+    if (gamesPlayed == gamesToPlay) { std::cout << "Game count: " << gamesPlayed << std::endl; }
     if (boardManager.isGameOver()) {
         auto result = boardManager.getGameResult();
         std::string gameResult = "";
-        if (result & DRAW) { gameResult = "draw"; }
-        if (result & WHITE_WINS) { gameResult = "1-0"; }
-        if (result & BLACK_WINS) { gameResult = "0-1"; }
+        if (result & DRAW) { draws++; }
+        if (result & WHITE_WINS) { whiteWins++; }
+        if (result & BLACK_WINS) { blackWins++; }
 
-        if (result & REPETITION) { gameResult += " repetition"; }
-        if (result & CHECKMATE) { gameResult += " checkmate"; }
-        if (result & STALEMATE) { gameResult += " stalemate"; }
-        if (result & MOVE_COUNT) { gameResult += " move count"; }
-        std::cout << "Game Over " << gameResult << std::endl;
+        std::cout << "Game Over " << "W: " << whiteWins << "B: " << blackWins << "D: " << draws << std::endl;
+
+        gamesPlayed++;
         restartGame();
         return;
     }

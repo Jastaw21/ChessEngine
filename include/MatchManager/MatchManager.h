@@ -61,6 +61,12 @@ private:
 
     void restartGame();
 
+    int gamesToPlay = 100;
+    int gamesPlayed = 0;
+    int whiteWins = 0;
+    int blackWins = 0;
+    int draws = 0;
+
 public:
 
     [[nodiscard]] FenString startingFen() const{ return startingFen_; }

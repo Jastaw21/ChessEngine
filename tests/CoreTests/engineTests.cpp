@@ -11,11 +11,11 @@ TEST(EngineTests, BasicEvaluation){
     auto engine = TestEngine();
     engine.setFullFen(Fen::FULL_STARTING_FEN);
 
-    auto result = engine.evaluate();
+    auto result = engine.getEvaluator()->evaluate();
     EXPECT_EQ(result, 0);
 
     engine.setFullFen("rn6/2pppp1p/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    EXPECT_GT(engine.evaluate(), 0);
+    EXPECT_GT(engine.getEvaluator()->evaluate(), 0);
 }
 
 
@@ -24,7 +24,7 @@ TEST(EngineTests, LikeForLikeSwapStillGood){
     engine.setFullFen("r3k2r/p1pp1pb1/bn1qpnp1/2QPN3/1p2P3/2N4p/PPPBBPPP/R3K2R w KQkq");
     auto move = createMove(WQ, "c5d6");
 
-    auto eval = engine.evaluateMove(move);
+    auto eval = engine.getEvaluator()->evaluateMove(move);
 
     EXPECT_GT(eval, 0);
 }

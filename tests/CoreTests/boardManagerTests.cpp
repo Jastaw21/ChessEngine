@@ -1195,3 +1195,12 @@ TEST(BoardManager, CheckMatesAreFoundGameState){
     EXPECT_TRUE(checkMove.resultBits & CHECK_MATE);
     EXPECT_TRUE(result & GameResult::CHECKMATE);
 }
+
+TEST(BoardManager, CantCastleIfNoCastle){
+    auto manager = BoardManager();
+    manager.getBitboards()->setFenPositionOnly("rnbqkbnr/pppppppp/8/8/8/1NBQ4/PPPPPPPP/4KBNR");
+
+    auto attemptedCastling = createMove(WK, "e1c1");
+
+    EXPECT_FALSE(manager.checkMove(attemptedCastling));
+}
