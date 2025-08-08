@@ -105,12 +105,18 @@ float GoodEvaluator::evaluate(){
     const float materialScore_ = materialScore();
     const float pieceSquareScore_ = pieceSquareScore();
     const auto result = boardManager_->getGameResult();
-    const bool wasCheckmate = result & CHECKMATE;
+    bool wasCheckmate = result & GameResult::CHECKMATE;
+
+    if (boardManager_->getMoveHistory().size() > 0 && boardManager_->getMoveHistory().top().resultBits &
+        MoveResult::CHECK_MATE) { wasCheckmate = true; }
 
     float attackKingScore = 0.f;
     // Invert the traditional scoring. If it's now white, it must have been black to move last
 
-    if (wasCheckmate) { attackKingScore += boardManager_->getCurrentTurn() == WHITE ? -INFINITY : INFINITY; }
+    if (wasCheckmate) {
+        //std::cout << "Checkmate " << std::endl;
+        attackKingScore += boardManager_->getCurrentTurn() == WHITE ? -INFINITY : INFINITY;
+    }
 
     score = materialScore_ * 10;
     score += pieceSquareScore_ * 2;

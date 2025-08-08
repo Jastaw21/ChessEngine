@@ -8,6 +8,7 @@
 
 int main(){
     auto engine = TestEngine();
+    engine.setEvaluator(new GoodEvaluator(engine.boardManager()));
 
     while (true) {
         char input[1024];

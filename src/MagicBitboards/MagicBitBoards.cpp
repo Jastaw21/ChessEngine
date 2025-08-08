@@ -222,22 +222,37 @@ Bitboard MagicBitBoards::getAllAttacks(const Colours& colourToGetAttacksFor, con
 
 Bitboard MagicBitBoards::getCastling(const int square, const Piece& piece, const BitBoards& boards){
     if (piece != WK && piece != BK)
-        return 0ULL;
+        return 0ULL; // obvs only kings
 
     if (square != 4 && square != 60)
-        return 0ULL;
+        return 0ULL; // the square from must be the king start pos
 
     Bitboard result = 0ULL;
 
     const auto isQueenSide = {false, true};
     for (const auto& queenSide: isQueenSide) {
+        // preset the correct side of the board for the mask
         auto castlingMask = queenSide ? Constants::QUEEN_SIDE_CASTLING : Constants::KING_SIDE_CASTLING;
-        if (pieceColours[piece] == WHITE) { castlingMask &= Constants::RANK_1; } else {
+
+        if (pieceColours[piece] == WHITE) {
+            // set up the mask for the first rank if white
+            castlingMask &= Constants::RANK_1;
+        } else {
+            // and last if black
             castlingMask &= Constants::RANK_8;
         }
 
         if (castlingMask & boards.getOccupancy())
-            continue; // can't castle through an occupied square
+            continue; // can't castle through an occupied square, check all ranks
+
+        Bitboard castleSquare;
+        if (queenSide) { castleSquare = pieceColours[piece] == WHITE ? 0 : 56; } else {
+            castleSquare = pieceColours[piece] == WHITE ? 7 : 63;
+        }
+
+        if (!boards.getPiece(castleSquare).has_value()) { continue ; } // has to be a piece there
+        // has to be a castle/rook
+        if (boards.getPiece(castleSquare).value() != WR && boards.getPiece(castleSquare).value() != BR) { continue; }
 
         // now take file c out of the equation, as it doesn't matter if that's attacked
         castlingMask &= ~Constants::FILE_B;

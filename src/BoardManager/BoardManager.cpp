@@ -285,7 +285,7 @@ int BoardManager::getGameResult(){
         resultBits |= GameResult::REPETITION;
         return resultBits;
     }
-    if (isNowCheckMate() || moveHistory.top().resultBits & MoveResult::CHECK_MATE) {
+    if (isNowCheckMate()) {
         resultBits |= GameResult::CHECKMATE;
         const auto lastMoveColour = pieceColours[moveHistory.top().piece];
 

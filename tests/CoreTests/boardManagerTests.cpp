@@ -1122,6 +1122,11 @@ TEST(BoardManagerAdvancedRules, CheckMateWorks){
     EXPECT_TRUE(manager.isNowCheckMate());
     EXPECT_TRUE(checkMateMove3.resultBits & CHECK_MATE);
     EXPECT_TRUE(checkMateMove3.resultBits & CHECK);
+
+    manager.setFullFen("rnbqkbnr/pppp1ppp/4p3/8/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 1");
+    auto checkMateMove4 = createMove(BQ, "d8h4");
+    ASSERT_TRUE(manager.tryMove(checkMateMove4));
+    EXPECT_TRUE(manager.isNowCheckMate());
 }
 
 TEST(BoardManagerAdvancedRules, EnPassantMustBeAttackingLastMovedPiece){

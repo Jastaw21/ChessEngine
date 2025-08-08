@@ -33,7 +33,7 @@ void MatchManager::tick(){
         if (result & WHITE_WINS) { whiteWins++; }
         if (result & BLACK_WINS) { blackWins++; }
 
-        std::cout << "Game Over " << "W: " << whiteWins << "B: " << blackWins << "D: " << draws << std::endl;
+        std::cout << "Game Over " << "W: " << whiteWins << " B: " << blackWins << " D: " << draws << std::endl;
 
         gamesPlayed++;
         restartGame();

@@ -21,7 +21,8 @@ void runEngineGame(){
     blackPlayer.setEvaluator(new BadEvaluator(blackPlayer.boardManager()));
 
     auto gui = ChessGui(&whitePlayer, &blackPlayer);
-    gui.getMatchManager()->setStartingFen(Fen::FULL_STARTING_FEN);
+    //gui.getMatchManager()->setStartingFen("rnbqkbnr/pppp1ppp/4p3/8/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 1");
+    gui.getMatchManager()->setStartingFen("rnbqkbnr/ppppp2p/5pp1/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1");
     gui.loop();
 }
 
