@@ -21,9 +21,9 @@ float EvaluatorBase::evaluateMove(Move& move){
     return -result;
 }
 
-EngineBase::EngineBase(): ChessPlayer(ENGINE),
-                          rng(std::chrono::system_clock::now().time_since_epoch().count()){
-    evaluator_ = new EvaluatorBase(&internalBoardManager_);
+EngineBase::EngineBase() : ChessPlayer(ENGINE),
+                           rng(std::chrono::system_clock::now().time_since_epoch().count()){
+    evaluator_ = std::make_shared<EvaluatorBase>(&internalBoardManager_);
 }
 
 void EngineBase::go(const int depth){
@@ -31,7 +31,12 @@ void EngineBase::go(const int depth){
     communicator_->send("bestmove " + rmove.toUCI());
 }
 
-void EngineBase::makeReady(){}
+Move EngineBase::getBestMove(const int depth){
+    const auto rmove = search(depth);
+    return rmove;
+}
+
+void EngineBase::makeReady(){ return; }
 
 void EngineBase::parseUCI(const std::string& uci){
     auto command = parser.parse(uci);
@@ -98,8 +103,9 @@ float EngineBase::alphaBeta(const int depth, const bool isMaximising, float alph
     if (depth == 0 || internalBoardManager_.isGameOver()) { return evaluator_->evaluate(); }
 
     auto moves = generateMoveList();
-    std::ranges::sort(moves.begin(), moves.end(),
-                      [&](const Move& a, const Move& b) { return a.resultBits & CAPTURE > b.resultBits & CAPTURE; });
+    std::ranges::sort(moves, [&](const Move& a, const Move& b) {
+        return (a.resultBits & CAPTURE) > (b.resultBits & CAPTURE);
+    });
     if (isMaximising) {
         float maxEval = -INFINITY;
         for (auto& move: moves) {
@@ -182,4 +188,3 @@ std::vector<PerftResults> EngineBase::perftDivide(const int depth){
 
     return results;
 }
-

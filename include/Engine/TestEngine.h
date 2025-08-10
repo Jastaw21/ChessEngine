@@ -33,7 +33,7 @@ class TestEngine final : public EngineBase {
 public:
 
     TestEngine() = default;
-    explicit TestEngine(EvaluatorBase* evaluator) : EngineBase(evaluator){}
+    explicit TestEngine(const std::shared_ptr<EvaluatorBase>& evaluator) : EngineBase(evaluator){}
 
     virtual std::vector<Move> generateMoveList() override;
     void setFullFen(const std::string& fen);

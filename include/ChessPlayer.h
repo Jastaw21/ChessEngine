@@ -6,7 +6,6 @@
 #define CHESSPLAYER_H
 
 
-#include "Engine/Piece.h"
 #include "EngineShared/CommandHandlerBase.h"
 
 class CommunicatorBase;
@@ -24,19 +23,14 @@ public:
 
     virtual void parseUCI(const std::string& uci) = 0;
 
-    bool setReady(const bool isReady){
-        bIsReady = isReady;
-        return bIsReady;
-    };
-    bool isReady() const{ return bIsReady; }
+    bool setReady(const bool isReady){ return true; };
+    bool isReady() const{ return true; }
     CommunicatorBase *getCommunicator() const{ return communicator_; }
     void setCommunicator(CommunicatorBase* communicator){ communicator_ = communicator; }
 
     PlayerType playerType;
 
 protected:
-
-    bool bIsReady = false;
 
     UCIParser parser;
     CommandHandlerBase commandHandler;

@@ -31,7 +31,7 @@ public:
     [[nodiscard]] bool wasInit() const;
 
     [[nodiscard]] SDL_Renderer *getRenderer() const;
-    MatchManager *getMatchManager(){ return matchManager_; }
+    std::shared_ptr<MatchManager> getMatchManager(){ return matchManager_; }
     void registerEntity(DrawableEntity* entity);
 
     void loop();
@@ -55,7 +55,7 @@ private:
     VisualBoard* visualBoard;
 
 
-    MatchManager* matchManager_ = nullptr;
+    std::shared_ptr<MatchManager> matchManager_;
 
     // event handling
     void handleMouseDown(Uint8 button);

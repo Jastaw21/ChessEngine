@@ -260,7 +260,7 @@ float BadEvaluator::materialScore(){
     // lerp the score between + 2Q - 2Q
     const float minScore = -2 * pieceValues[WQ];
     const float maxScore = 2 * pieceValues[WQ];
-    return MathUtility::map(whiteScore - blackScore, minScore, maxScore, -1, 1);
+    return -MathUtility::map(whiteScore - blackScore, minScore, maxScore, -1, 1);
 }
 
 float BadEvaluator::pieceSquareScore(){
@@ -295,6 +295,3 @@ float BadEvaluator::pieceSquareScore(){
     return MathUtility::map(whitePieceSquareScore - blackPieceSquareScore, -pieceValues[WQ], pieceValues[WQ],
                             -pieceValues[WP], pieceValues[WP]);
 }
-
-
-

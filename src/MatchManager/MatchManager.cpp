@@ -3,6 +3,9 @@
 //
 
 #include "../../include/MatchManager/MatchManager.h"
+
+#include <filesystem>
+#include <fstream>
 #include "EngineShared/CommunicatorBase.h"
 
 MatchManager::MatchManager(ChessPlayer* startingPlayer, ChessPlayer* otherPlayer){
@@ -59,6 +62,7 @@ void MatchManager::parseUCI(const std::string& uci){
 }
 
 void MatchManager::restartGame(){
+    dumpGameLog();
     boardManager.resetGame(startingFen()); // reset our internal state
 
     // tell both players it's a new game
@@ -69,6 +73,32 @@ void MatchManager::restartGame(){
     startGame();
 
     std::swap(currentPlayer_, otherPlayer_);
+}
+
+void MatchManager::dumpGameLog(){
+    auto path = std::filesystem::current_path();
+    path += "/gameLog.txt";
+    std::ofstream file(path, gamesPlayed == 1 ? std::ios::trunc : std::ios::app);
+
+    BoardManager localBoardManager = boardManager;
+    localBoardManager.setFullFen(startingFen());
+
+    file << "New Game:" << gamesPlayed << " startpos " << startingFen() << std::endl;
+    auto staticMoveHistory = boardManager.getMoveHistory();
+    std::vector<Move> moves;
+    while (!staticMoveHistory.empty()) {
+        moves.push_back(staticMoveHistory.top());
+        staticMoveHistory.pop();
+    }
+    int i = moves.size() - 1;
+    while (i >= 0) {
+        std::string moveOutput;
+        moveOutput += "G:" + std::to_string(gamesPlayed);
+        moveOutput += " " + localBoardManager.getFullFen() + " " + moves[i].toUCI();
+        localBoardManager.forceMove(moves[i]);
+        file << moveOutput << std::endl;
+        i--;
+    }
 }
 
 

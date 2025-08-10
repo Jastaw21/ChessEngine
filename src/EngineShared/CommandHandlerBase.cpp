@@ -26,6 +26,4 @@ void CommandHandlerBase::operator()(const PositionCommand& cmd, EngineBase* engi
 
 void CommandHandlerBase::operator()(const BestMoveCommand& cmd, EngineBase* engine){}
 
-void CommandHandlerBase::operator()(const NewGameCommand& cmd, EngineBase* engine){
-    engine->boardManager()->resetGame();
-}
+void CommandHandlerBase::operator()(const NewGameCommand& cmd, EngineBase* engine){ engine->reset(); }

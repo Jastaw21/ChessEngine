@@ -37,7 +37,16 @@ TEST(EngineTests, ObviousChecksWork){
 
     engine.setFullFen("rnbqkbnr/pppp1ppp/4p3/8/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 1");
 
-    auto move = createMove(BQ, "d8h4");
-    auto result = engine.getEvaluator()->evaluateMove(move);
-    EXPECT_EQ(result, -INFINITY);
+    auto bestMove = engine.getBestMove(3);
+    EXPECT_EQ(bestMove.toUCI(), "d8h4");
+
+    engine.reset();
+    engine.setFullFen("rnbqkbnr/ppppp2p/8/5pp1/4P3/2N5/PPPP1PPP/R1BQKBNR w KQkq - 0 3");
+    auto bestMove2 = engine.getBestMove(3);
+    EXPECT_EQ(bestMove2.toUCI(), "d1h5");
+
+    engine.setEvaluator(new BadEvaluator(engine.boardManager()));
+    auto bestMove3 = engine.getBestMove(3);
+    std::cout << bestMove3.toUCI() << std::endl;
+    EXPECT_NE(bestMove3.toUCI(), "d1h5");
 }

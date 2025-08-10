@@ -19,7 +19,7 @@ class EvaluatorBase {
 public:
 
     virtual ~EvaluatorBase() = default;
-    explicit EvaluatorBase(BoardManager* boardManager): pawnScores{}, knightScores{}{ boardManager_ = boardManager; }
+    explicit EvaluatorBase(BoardManager* boardManager) : boardManager_(boardManager), pawnScores{}, knightScores{}{}
 
     virtual float evaluate(){ return 0; }
     float evaluateMove(Move& move);
@@ -45,7 +45,9 @@ public:
 
     // Constructor
     explicit EngineBase();
-    explicit EngineBase(EvaluatorBase* evaluator) : ChessPlayer(ENGINE), evaluator_(evaluator){};
+
+    explicit EngineBase(std::shared_ptr<EvaluatorBase> evaluator) : ChessPlayer(ENGINE),
+                                                                    evaluator_(std::move(evaluator)){};
 
     // Core Engine Interface
     virtual Move search(int depth = 5);
@@ -61,17 +63,19 @@ public:
     // UCI Protocol Interface
     virtual void parseUCI(const std::string& uci) override;
     void go(int depth);
+    Move getBestMove(int depth);
     void stop(){ shouldStop = true; }
     void quit(){ shouldQuit = true; }
     static void makeReady();
+    void reset(){ internalBoardManager_.resetGame(); }
 
     // Performance Testing Interface
     virtual PerftResults runPerftTest(const std::string& Fen, int depth);
     virtual std::vector<PerftResults> runDivideTest(const std::string& Fen, int depth);
     virtual std::vector<PerftResults> runDivideTest(int depth);
 
-    void setEvaluator(EvaluatorBase* evaluator){ evaluator_ = evaluator; }
-    EvaluatorBase *getEvaluator() const{ return evaluator_; }
+    void setEvaluator(std::shared_ptr<EvaluatorBase> evaluator){ evaluator_ = evaluator; }
+    std::shared_ptr<EvaluatorBase> getEvaluator() const{ return evaluator_; }
 
 protected:
 
@@ -89,7 +93,7 @@ protected:
 
     // Internal State
     BoardManager internalBoardManager_;
-    EvaluatorBase* evaluator_ = nullptr;
+    std::shared_ptr<EvaluatorBase> evaluator_;
 
 private:
 

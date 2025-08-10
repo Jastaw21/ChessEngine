@@ -60,6 +60,7 @@ private:
     MessageQueue messageQueueInbound_;
 
     void restartGame();
+    void dumpGameLog();
 
     int gamesToPlay = 100;
     int gamesPlayed = 0;

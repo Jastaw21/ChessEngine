@@ -10,7 +10,7 @@
 
 ChessGui::ChessGui(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer){
     initSDLStuff();
-    matchManager_ = new MatchManager(whitePlayer, blackPlayer);
+    matchManager_ = std::make_shared<MatchManager>(whitePlayer, blackPlayer);
 }
 
 void ChessGui::initSDLStuff(){
@@ -24,7 +24,7 @@ void ChessGui::initSDLStuff(){
 
 ChessGui::ChessGui(){
     initSDLStuff();
-    matchManager_ = new MatchManager();
+    matchManager_ = std::make_shared<MatchManager>();
 }
 
 bool ChessGui::wasInit() const{ return window != nullptr && renderer != nullptr; }
@@ -49,7 +49,7 @@ void ChessGui::loop(){
         }
 
         runningTime += 16;
-        if (runningTime >= 10) {
+        if (runningTime >= 20) {
             matchManager_->tick();
             runningTime = 0;
         }
@@ -192,4 +192,3 @@ void ChessGui::addMouseRelease(const int x, const int y) const{
             selectDestination(rankAndFileToSquare(rank, file), &matchManager_->getBoardManager());
     matchManager_->receiveCommand("bestmove " + move.toUCI());
 }
-
