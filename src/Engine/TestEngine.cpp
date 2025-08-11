@@ -53,26 +53,25 @@ std::vector<Move> TestEngine::generateMoveList(){
 
 void TestEngine::setFullFen(const std::string& fen){ internalBoardManager_.setFullFen(fen); }
 
-
 GoodEvaluator::GoodEvaluator(BoardManager* manager) : EvaluatorBase(manager){
     pieceValues = {
-                {WP, 10},
-                {BP, 10},
+                {WP, 100},
+                {BP, 100},
 
-                {WR, 55},
-                {BR, 55},
+                {WR, 500},
+                {BR, 500},
 
-                {WN, 30},
-                {BN, 30},
+                {WN, 310},
+                {BN, 310},
 
-                {WB, 32},
-                {BB, 32},
+                {WB, 320},
+                {BB, 320},
 
-                {WK, 990},
-                {BK, 990},
+                {WK, 1000},
+                {BK, 1000},
 
-                {WQ, 90},
-                {BQ, 90}
+                {WQ, 900},
+                {BQ, 900}
             };
 
     std::copy(std::begin({
@@ -99,7 +98,6 @@ GoodEvaluator::GoodEvaluator(BoardManager* manager) : EvaluatorBase(manager){
                   }), std::end({0}), knightScores);
 }
 
-
 float GoodEvaluator::evaluate(){
     float score = 0;
     const float materialScore_ = materialScore();
@@ -113,69 +111,16 @@ float GoodEvaluator::evaluate(){
     float attackKingScore = 0.f;
     // Invert the traditional scoring. If it's now white, it must have been black to move last
 
-    if (wasCheckmate) {
-        //std::cout << "Checkmate " << std::endl;
-        attackKingScore += boardManager_->getCurrentTurn() == WHITE ? -INFINITY : INFINITY;
-    }
+    if (wasCheckmate) { attackKingScore += boardManager_->getCurrentTurn() == WHITE ? -INFINITY : INFINITY; }
 
-    score = materialScore_ * 10;
-    score += pieceSquareScore_ * 2;
+    score = materialScore_;
+    score += pieceSquareScore_;
     score += attackKingScore;
 
     return score;
 }
 
-float GoodEvaluator::materialScore(){
-    int whiteScore = 0;
-    int blackScore = 0;
-
-    for (int piece = 0; piece < PIECE_N; ++piece) {
-        auto pieceName = static_cast<Piece>(piece);
-        const int pieceCount = boardManager_->getBitboards()->countPiece(pieceName);
-        const int pieceValue = pieceValues[pieceName];
-
-        if (pieceColours[pieceName] == WHITE) { whiteScore += pieceValue * pieceCount; } else {
-            blackScore += pieceValue * pieceCount;
-        }
-    }
-    // lerp the score between + 2Q - 2Q
-    const float minScore = -2 * pieceValues[WQ];
-    const float maxScore = 2 * pieceValues[WQ];
-    return MathUtility::map(whiteScore - blackScore, minScore, maxScore, -1, 1);
-}
-
-float GoodEvaluator::pieceSquareScore(){
-    float whitePieceSquareScore = 0;
-    float blackPieceSquareScore = 0;
-
-    for (int piece = 0; piece < PIECE_N; ++piece) {
-        auto pieceName = static_cast<Piece>(piece);
-
-        Bitboard pieceSquares = boardManager_->getBitboards()->getBitboard(pieceName);
-        while (pieceSquares) {
-            const int square = std::countr_zero(pieceSquares);
-            pieceSquares &= ~(1ULL << square);
-
-            switch (pieceName) {
-                case BP:
-                    blackPieceSquareScore += pawnScores[square];
-                case WP:
-                    whitePieceSquareScore += pawnScores[square];
-
-                case WN:
-                    whitePieceSquareScore += knightScores[square];
-                case BN:
-                    blackPieceSquareScore += knightScores[square];
-
-                default:
-                    break;
-            }
-        }
-    }
-
-    return MathUtility::map(whitePieceSquareScore - blackPieceSquareScore, -pieceValues[WQ], pieceValues[WQ],
-                            -pieceValues[WP], pieceValues[WP]);
-}
+float GoodEvaluator::kingSafety(){ return EvaluatorBase::kingSafety(); }
 
 BadEvaluator::BadEvaluator(BoardManager* manager) : EvaluatorBase(manager){
     pieceValues = {
@@ -199,24 +144,24 @@ BadEvaluator::BadEvaluator(BoardManager* manager) : EvaluatorBase(manager){
             };
 
     std::copy(std::begin({
-                      90, 0, 0, 0, 0, 0, 0, 0,
-                      0, 0, 0, 0, 0, 0, 0, 0,
+                      90, 0, 0, 10, 0, 0, 0, 0,
+                      0, 0, 10, 0, 0, 10, 0, 0,
                       2, 2, 2, 2, 2, 2, 2, 2,
                       3, 3, 3, 3, 3, 3, 3, 3,
                       3, 3, 3, 3, 3, 3, 3, 3,
                       2, 2, 2, 2, 2, 2, 2, 2,
-                      0, 0, 0, 0, 0, 0, 0, 0,
-                      0, 0, 0, 0, 0, 0, 0, 0
+                      0, 10, 0, 0, 0, 0, 0, 0,
+                      0, 0, 0, 90, 0, 0, 0, 0
                   }), std::end({0}), pawnScores);
 
     // Initialize knightScores array
     std::copy(std::begin({
                       -1, 0, 0, 0, 0, 0, 0, -1,
                       -1, 0, 4, 4, 4, 4, 0, -1,
-                      0, 2, 4, 4, 4, 4, 2, 0,
-                      0, 2, 4, 5, 5, 4, 2, 0,
-                      0, 3, 4, 5, 5, 4, 3, 0,
-                      0, 2, 4, 4, 4, 4, 2, 0,
+                      90, 2, 4, 4, 4, 4, 2, 90,
+                      90, 2, 4, 5, 5, 4, 2, 90,
+                      90, 3, 4, 5, 5, 4, 3, 90,
+                      90, 2, 4, 4, 4, 4, 2, 90,
                       -1, 0, 4, 4, 4, 4, 0, -1,
                       -1, 0, 0, 0, 0, 0, 0, -1
                   }), std::end({0}), knightScores);
@@ -227,71 +172,19 @@ float BadEvaluator::evaluate(){
     const float materialScore_ = materialScore();
     const float pieceSquareScore_ = pieceSquareScore();
     const auto result = boardManager_->getGameResult();
-    const bool wasCheckmate = result & CHECKMATE;
+    bool wasCheckmate = result & GameResult::CHECKMATE;
+
+    if (boardManager_->getMoveHistory().size() > 0 && boardManager_->getMoveHistory().top().resultBits &
+        MoveResult::CHECK_MATE) { wasCheckmate = true; }
 
     float attackKingScore = 0.f;
-
     // Invert the traditional scoring. If it's now white, it must have been black to move last
-    if (wasCheckmate) {
-        // check
-        attackKingScore += boardManager_->getCurrentTurn() == BLACK ? -INFINITY : INFINITY;
-    }
 
-    score = materialScore_ * 10;
-    score += pieceSquareScore_ * 2;
+    if (wasCheckmate) { attackKingScore += boardManager_->getCurrentTurn() == WHITE ? -INFINITY : INFINITY; }
+
+    score = materialScore_;
+    score += pieceSquareScore_;
     score += attackKingScore;
 
     return score;
-}
-
-float BadEvaluator::materialScore(){
-    int whiteScore = 0;
-    int blackScore = 0;
-
-    for (int piece = 0; piece < PIECE_N; ++piece) {
-        auto pieceName = static_cast<Piece>(piece);
-        const int pieceCount = boardManager_->getBitboards()->countPiece(pieceName);
-        const int pieceValue = pieceValues[pieceName];
-
-        if (pieceColours[pieceName] == WHITE) { whiteScore += pieceValue * pieceCount; } else {
-            blackScore += pieceValue * pieceCount;
-        }
-    }
-    // lerp the score between + 2Q - 2Q
-    const float minScore = -2 * pieceValues[WQ];
-    const float maxScore = 2 * pieceValues[WQ];
-    return -MathUtility::map(whiteScore - blackScore, minScore, maxScore, -1, 1);
-}
-
-float BadEvaluator::pieceSquareScore(){
-    float whitePieceSquareScore = 0;
-    float blackPieceSquareScore = 0;
-
-    for (int piece = 0; piece < PIECE_N; ++piece) {
-        auto pieceName = static_cast<Piece>(piece);
-
-        Bitboard pieceSquares = boardManager_->getBitboards()->getBitboard(pieceName);
-        while (pieceSquares) {
-            const int square = std::countr_zero(pieceSquares);
-            pieceSquares &= ~(1ULL << square);
-
-            switch (pieceName) {
-                case BP:
-                    blackPieceSquareScore += pawnScores[square];
-                case WP:
-                    whitePieceSquareScore += pawnScores[square];
-
-                case WN:
-                    whitePieceSquareScore += knightScores[square];
-                case BN:
-                    blackPieceSquareScore += knightScores[square];
-
-                default:
-                    break;
-            }
-        }
-    }
-
-    return MathUtility::map(whitePieceSquareScore - blackPieceSquareScore, -pieceValues[WQ], pieceValues[WQ],
-                            -pieceValues[WP], pieceValues[WP]);
 }

@@ -24,8 +24,9 @@ public:
     virtual float evaluate(){ return 0; }
     float evaluateMove(Move& move);
 
-    virtual float materialScore(){ return 0; }
-    virtual float pieceSquareScore(){ return 0; }
+    virtual float materialScore();
+    virtual float pieceSquareScore();
+    virtual float kingSafety(){ return 0; }
 
 protected:
 

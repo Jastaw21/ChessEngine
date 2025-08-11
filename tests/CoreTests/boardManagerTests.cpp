@@ -1209,3 +1209,4 @@ TEST(BoardManager, CantCastleIfNoCastle){
 
     EXPECT_FALSE(manager.checkMove(attemptedCastling));
 }
+

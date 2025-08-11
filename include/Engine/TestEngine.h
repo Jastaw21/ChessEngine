@@ -15,8 +15,7 @@ public:
     explicit GoodEvaluator(BoardManager* manager);
 
     virtual float evaluate() override;
-    virtual float materialScore() override;
-    virtual float pieceSquareScore() override;
+    virtual float kingSafety() override;
 };
 
 class BadEvaluator : public EvaluatorBase {
@@ -25,8 +24,6 @@ public:
     explicit BadEvaluator(BoardManager* manager);
 
     virtual float evaluate() override;
-    virtual float materialScore() override;
-    virtual float pieceSquareScore() override;
 };
 
 class TestEngine final : public EngineBase {
