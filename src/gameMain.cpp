@@ -16,8 +16,11 @@ void runGame(){
 
 void runEngineGame(){
     auto whitePlayer = TestEngine();
+    whitePlayer.setEngineID("Good Eval");
     whitePlayer.setEvaluator(std::make_shared<GoodEvaluator>(whitePlayer.boardManager()));
+
     auto blackPlayer = TestEngine();
+    blackPlayer.setEngineID("Bad Eval");
     blackPlayer.setEvaluator(std::make_shared<BadEvaluator>(blackPlayer.boardManager()));
 
     auto gui = ChessGui(&whitePlayer, &blackPlayer);

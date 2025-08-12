@@ -16,6 +16,9 @@ public:
 
     virtual float evaluate() override;
     virtual float kingSafety() override;
+
+    float simpleEvaluate();
+    float simpleMaterialScore();
 };
 
 class BadEvaluator : public EvaluatorBase {

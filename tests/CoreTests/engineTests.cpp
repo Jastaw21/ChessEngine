@@ -60,6 +60,6 @@ TEST(EngineTests, FindsMateInOneStep){
     engine.setEvaluator(std::make_shared<GoodEvaluator>(engine.boardManager()));
     engine.setFullFen("5k2/4pp1p/p5pN/1p1q4/4b3/P1Q4P/1PP3P1/7K w - - 0 1");
 
-    const auto bestMove = engine.getBestMove(2);
+    const auto bestMove = engine.getBestMove(1);
     EXPECT_EQ(bestMove.toUCI(), "c3h8");
 }

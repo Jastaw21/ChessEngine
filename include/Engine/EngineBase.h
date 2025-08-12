@@ -56,6 +56,7 @@ public:
     // Board State Management
     [[nodiscard]] BoardManager *boardManager(){ return &internalBoardManager_; }
     void loadFEN(const std::string& fen);
+    float minmax(int depth, bool isMaximising);
 
     // Search Configuration
     virtual int getSearchDepth() const{ return searchDepth_; }
@@ -67,6 +68,7 @@ public:
     Move getBestMove(int depth);
     void stop(){ shouldStop = true; }
     void quit(){ shouldQuit = true; }
+    Move simpleSearch();
     static void makeReady();
     void reset(){ internalBoardManager_.resetGame(); }
 

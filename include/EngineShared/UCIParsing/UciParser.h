@@ -35,6 +35,10 @@ struct BestMoveCommand {
     std::string move;
 };
 
+struct IDCommand {
+    std::string name;
+};
+
 struct NewGameCommand {};
 
 using Command = std::variant<
@@ -45,7 +49,8 @@ using Command = std::variant<
     IsReadyCommand,
     PositionCommand,
     BestMoveCommand,
-    NewGameCommand
+    NewGameCommand,
+    IDCommand
 >;
 
 class UCIParser {

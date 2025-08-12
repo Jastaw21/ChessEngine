@@ -30,11 +30,16 @@ public:
 
     PlayerType playerType;
 
+    [[nodiscard]] std::string &engineID(){ return engineID_; }
+    void setEngineID(const std::string& engineID){ engineID_ = engineID; }
+
 protected:
 
     UCIParser parser;
     CommandHandlerBase commandHandler;
     CommunicatorBase* communicator_;
+
+    std::string engineID_ = "default";
 };
 
 

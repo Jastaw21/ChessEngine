@@ -80,3 +80,4 @@ void ManagerCommandHandler::operator()(const BestMoveCommand& cmd, MatchManager*
 }
 
 void ManagerCommandHandler::operator()(const NewGameCommand& cmd, MatchManager* matchManager){}
+void ManagerCommandHandler::operator()(const IDCommand& cmd, MatchManager* matchManager){ return; }

@@ -106,18 +106,15 @@ Move EngineBase::search(const int depth){
 
     int randomIndex = rng() % moves.size();
 
-    Move bestMove = moves[randomIndex]; // shuffle the preselected move, so if all are equal it'll pick a random one
-    float bestEval = -INFINITY;
+    Move bestMove = moves[randomIndex]; // shuffle the preselected move, so if all are equal, it'll pick a random one
 
-    const Colours thisTurn = internalBoardManager_.getCurrentTurn();
-    const bool isWhite = thisTurn == WHITE;
+    float bestEval = -INFINITY;
 
     for (auto& move: moves) {
         internalBoardManager_.forceMove(move);
-        float eval = alphaBeta(depth - 1, !isWhite, -INFINITY, INFINITY);
-        internalBoardManager_.undoMove();
 
-        if (!isWhite) { eval = -eval; }
+        float eval = minmax(depth - 1, false);
+        internalBoardManager_.undoMove();
 
         if (eval > bestEval) {
             bestEval = eval;
@@ -141,14 +138,33 @@ std::vector<PerftResults> EngineBase::runDivideTest(const int depth){ return per
 
 std::vector<Move> EngineBase::generateMoveList(){ return std::vector<Move>(); }
 
-void EngineBase::loadFEN(const std::string& fen){
-    // std::string firstPartOfFen;
-    // for (int i = 0; i < fen.size(); i++) {
-    //     if (fen[i] == ' ') { break; }
-    //     firstPartOfFen += fen[i];
-    // }
-    // internalBoardManager_.getBitboards()->loadFEN(firstPartOfFen);
-    boardManager()->setFullFen(fen);
+void EngineBase::loadFEN(const std::string& fen){ boardManager()->setFullFen(fen); }
+
+float EngineBase::minmax(const int depth, const bool isMaximising){
+    // Base case: leaf node
+    if (depth == 0 || internalBoardManager_.isGameOver()) { return evaluator_->evaluate(); }
+
+    auto moves = generateMoveList();
+
+    if (isMaximising) {
+        float bestScore = -INFINITY;
+        for (auto& move: moves) {
+            internalBoardManager_.forceMove(move);
+            float score = minmax(depth - 1, false);
+            internalBoardManager_.undoMove();
+            bestScore = std::max(bestScore, score);
+        }
+        return bestScore;
+    } else {
+        float bestScore = INFINITY;
+        for (auto& move: moves) {
+            internalBoardManager_.forceMove(move);
+            float score = minmax(depth - 1, true);
+            internalBoardManager_.undoMove();
+            bestScore = std::min(bestScore, score);
+        }
+        return bestScore;
+    }
 }
 
 float EngineBase::alphaBeta(const int depth, const bool isMaximising, float alpha, float beta){
