@@ -56,7 +56,6 @@ public:
     // Board State Management
     [[nodiscard]] BoardManager *boardManager(){ return &internalBoardManager_; }
     void loadFEN(const std::string& fen);
-    float minmax(int depth, bool isMaximising);
 
     // Search Configuration
     virtual int getSearchDepth() const{ return searchDepth_; }
@@ -68,7 +67,6 @@ public:
     Move getBestMove(int depth);
     void stop(){ shouldStop = true; }
     void quit(){ shouldQuit = true; }
-    Move simpleSearch();
     static void makeReady();
     void reset(){ internalBoardManager_.resetGame(); }
 
@@ -87,12 +85,12 @@ protected:
     virtual std::vector<Move> generateValidMovesFromPosition(
         const Piece& piece, int startSquare) = 0;
     virtual std::vector<Move> generateMovesForPiece(const Piece& piece) = 0;
-    float alphaBeta(int depth, bool isMaximising, float alpha, float beta);
 
     // Performance Testing Implementation
     virtual PerftResults perft(int depth);
     virtual int simplePerft(int depth);
     virtual std::vector<PerftResults> perftDivide(int depth);
+    float negamax(int depth, int ply);
 
     // Internal State
     BoardManager internalBoardManager_;

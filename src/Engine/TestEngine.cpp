@@ -107,7 +107,7 @@ float GoodEvaluator::evaluate(){
 
     if (wasCheckmate) {
         // std::cout << "Checkmate" << std::endl;
-        return boardManager_->getCurrentTurn() == WHITE ? -INFINITY : INFINITY;
+        return -INFINITY;
     }
 
     return 0;
@@ -161,31 +161,16 @@ BadEvaluator::BadEvaluator(BoardManager* manager) : EvaluatorBase(manager){
 }
 
 float BadEvaluator::evaluate(){
-    float score = 0;
-    const float materialScore_ = materialScore();
-    const float pieceSquareScore_ = pieceSquareScore();
     const auto result = boardManager_->getGameResult();
     bool wasCheckmate = result & GameResult::CHECKMATE;
 
     if (boardManager_->getMoveHistory().size() > 0 && boardManager_->getMoveHistory().top().resultBits &
         MoveResult::CHECK_MATE) { wasCheckmate = true; }
 
-    float attackKingScore = 0.f;
-    // Invert the traditional scoring. If it's now white, it must have been black to move last
+    if (wasCheckmate) {
+        // std::cout << "Checkmate" << std::endl;
+        return -INFINITY;
+    }
 
-    if (wasCheckmate) { attackKingScore += boardManager_->getCurrentTurn() == WHITE ? -INFINITY : INFINITY; }
-
-    score = materialScore_;
-    score += pieceSquareScore_;
-    score += attackKingScore;
-
-    return score;
-}
-
-Move EngineBase::simpleSearch(){
-    auto moves = generateMoveList();
-    if (moves.empty()) { return Move(); }
-
-    int randomIndex = rng() % moves.size();
-    return Move(moves[randomIndex]);
+    return 0;
 }

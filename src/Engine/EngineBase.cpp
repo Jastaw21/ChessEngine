@@ -99,21 +99,17 @@ void EngineBase::parseUCI(const std::string& uci){
     std::visit(visitor, *command);
 }
 
-
 Move EngineBase::search(const int depth){
     auto moves = generateMoveList();
     if (moves.empty()) { return Move(); }
 
     int randomIndex = rng() % moves.size();
-
-    Move bestMove = moves[randomIndex]; // shuffle the preselected move, so if all are equal, it'll pick a random one
+    Move bestMove = moves[randomIndex];
 
     float bestEval = -INFINITY;
-
     for (auto& move: moves) {
         internalBoardManager_.forceMove(move);
-
-        float eval = minmax(depth - 1, false);
+        float eval = -negamax(depth - 1, 1);
         internalBoardManager_.undoMove();
 
         if (eval > bestEval) {
@@ -140,63 +136,6 @@ std::vector<Move> EngineBase::generateMoveList(){ return std::vector<Move>(); }
 
 void EngineBase::loadFEN(const std::string& fen){ boardManager()->setFullFen(fen); }
 
-float EngineBase::minmax(const int depth, const bool isMaximising){
-    // Base case: leaf node
-    if (depth == 0 || internalBoardManager_.isGameOver()) { return evaluator_->evaluate(); }
-
-    auto moves = generateMoveList();
-
-    if (isMaximising) {
-        float bestScore = -INFINITY;
-        for (auto& move: moves) {
-            internalBoardManager_.forceMove(move);
-            float score = minmax(depth - 1, false);
-            internalBoardManager_.undoMove();
-            bestScore = std::max(bestScore, score);
-        }
-        return bestScore;
-    } else {
-        float bestScore = INFINITY;
-        for (auto& move: moves) {
-            internalBoardManager_.forceMove(move);
-            float score = minmax(depth - 1, true);
-            internalBoardManager_.undoMove();
-            bestScore = std::min(bestScore, score);
-        }
-        return bestScore;
-    }
-}
-
-float EngineBase::alphaBeta(const int depth, const bool isMaximising, float alpha, float beta){
-    if (depth == 0 || internalBoardManager_.isGameOver()) { return evaluator_->evaluate(); }
-
-    auto moves = generateMoveList();
-    std::ranges::sort(moves, [&](const Move& a, const Move& b) {
-        return (a.resultBits & CAPTURE) > (b.resultBits & CAPTURE);
-    });
-    if (isMaximising) {
-        float maxEval = -INFINITY;
-        for (auto& move: moves) {
-            internalBoardManager_.forceMove(move);
-            float eval = alphaBeta(depth - 1, !isMaximising, alpha, beta);
-            internalBoardManager_.undoMove();
-            maxEval = std::max(maxEval, eval);
-            alpha = std::max(alpha, eval);
-            if (beta <= alpha) { break; }
-        }
-        return maxEval;
-    }
-    float minEval = INFINITY;
-    for (auto& move: moves) {
-        internalBoardManager_.forceMove(move);
-        float eval = alphaBeta(depth - 1, !isMaximising, alpha, beta);
-        internalBoardManager_.undoMove();
-        minEval = std::min(minEval, eval);
-        beta = std::min(beta, eval);
-        if (beta <= alpha) { break; }
-    }
-    return minEval;
-}
 
 PerftResults EngineBase::perft(const int depth){
     if (depth == 0) return PerftResults{1, 0, 0, 0, 0, 0};
@@ -255,4 +194,25 @@ std::vector<PerftResults> EngineBase::perftDivide(const int depth){
     }
 
     return results;
+}
+
+// Negamax implementation replaces Minimax logic
+float EngineBase::negamax(const int depth, const int ply){
+    // Base case: leaf node or game over
+    if (depth == 0 || internalBoardManager_.isGameOver()) { return evaluator_->evaluate(); }
+
+    auto moves = generateMoveList();
+    if (moves.empty()) {
+        return evaluator_->evaluate(); // includes stalemate or mate
+    }
+
+    float bestScore = -INFINITY;
+    for (auto& move: moves) {
+        internalBoardManager_.forceMove(move);
+        float score = -negamax(depth - 1, ply + 1);
+        internalBoardManager_.undoMove();
+
+        bestScore = std::max(bestScore, score);
+    }
+    return bestScore;
 }
