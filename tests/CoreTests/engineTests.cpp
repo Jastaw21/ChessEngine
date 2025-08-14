@@ -5,6 +5,7 @@
 
 #include <gtest/gtest.h>
 #include "Engine/TestEngine.h"
+#include "Engine/Evaluation.h"
 #include "Utility/Fen.h"
 
 TEST(EngineTests, BasicEvaluation){

@@ -9,36 +9,11 @@
 #include <random>
 
 #include "ChessPlayer.h"
+#include "Evaluation.h"
 #include "BoardManager/BoardManager.h"
 
 
 #include "EngineShared/PerftResults.h"
-
-
-class EvaluatorBase {
-public:
-
-    virtual ~EvaluatorBase() = default;
-    explicit EvaluatorBase(BoardManager* boardManager) : boardManager_(boardManager), pawnScores{}, knightScores{}{}
-
-    virtual float evaluate(){ return 0; }
-    float evaluateMove(Move& move);
-
-    virtual float materialScore();
-    virtual float pieceSquareScore();
-    virtual float kingSafety(){ return 0; }
-
-protected:
-
-    BoardManager* boardManager_;
-
-    std::unordered_map<Piece, float> pieceValues;
-    int pawnScores[64];
-    int knightScores[64];
-
-    float materialScoreWeight = 10;
-    float pieceSquareScoreWeight = 2;
-};
 
 
 class EngineBase : public ChessPlayer {

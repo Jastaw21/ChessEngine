@@ -7,27 +7,9 @@
 #include <vector>
 
 #include "EngineBase.h"
+#include "Evaluation.h"
 #include "EngineShared/CommunicatorBase.h"
 
-class GoodEvaluator : public EvaluatorBase {
-public:
-
-    explicit GoodEvaluator(BoardManager* manager);
-
-    virtual float evaluate() override;
-    virtual float kingSafety() override;
-
-    float simpleEvaluate();
-    float simpleMaterialScore();
-};
-
-class BadEvaluator : public EvaluatorBase {
-public:
-
-    explicit BadEvaluator(BoardManager* manager);
-
-    virtual float evaluate() override;
-};
 
 class TestEngine final : public EngineBase {
 public:

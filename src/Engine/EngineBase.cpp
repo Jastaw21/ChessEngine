@@ -6,72 +6,9 @@
 
 #include <cmath>
 
+#include "Engine/Evaluation.h"
 #include "EngineShared/CommunicatorBase.h"
 
-
-float EvaluatorBase::evaluateMove(Move& move){
-    const float scoreBefore = evaluate();
-    boardManager_->tryMove(move);
-    const float scoreAfter = evaluate();
-    boardManager_->undoMove();
-
-    const auto result = scoreAfter - scoreBefore;
-    if (boardManager_->getCurrentTurn() == WHITE) { return result; }
-
-    return -result;
-}
-
-float EvaluatorBase::materialScore(){
-    int whiteScore = 0;
-    int blackScore = 0;
-
-    for (int piece = 0; piece < PIECE_N; ++piece) {
-        auto pieceName = static_cast<Piece>(piece);
-        const int pieceCount = boardManager_->getBitboards()->countPiece(pieceName);
-        const int pieceValue = pieceValues[pieceName];
-
-        if (pieceColours[pieceName] == WHITE) { whiteScore += pieceValue * pieceCount; } else {
-            blackScore += pieceValue * pieceCount;
-        }
-    }
-    // lerp the score between + 2Q - 2Q
-    const float minScore = -2 * pieceValues[WQ];
-    const float maxScore = 2 * pieceValues[WQ];
-    return MathUtility::map(whiteScore - blackScore, minScore, maxScore, -1, 1);
-}
-
-float EvaluatorBase::pieceSquareScore(){
-    float whitePieceSquareScore = 0;
-    float blackPieceSquareScore = 0;
-
-    for (int piece = 0; piece < PIECE_N; ++piece) {
-        auto pieceName = static_cast<Piece>(piece);
-
-        Bitboard pieceSquares = boardManager_->getBitboards()->getBitboard(pieceName);
-        while (pieceSquares) {
-            const int square = std::countr_zero(pieceSquares);
-            pieceSquares &= ~(1ULL << square);
-
-            switch (pieceName) {
-                case BP:
-                    blackPieceSquareScore += pawnScores[square];
-                case WP:
-                    whitePieceSquareScore += pawnScores[square];
-
-                case WN:
-                    whitePieceSquareScore += knightScores[square];
-                case BN:
-                    blackPieceSquareScore += knightScores[square];
-
-                default:
-                    break;
-            }
-        }
-    }
-
-    return MathUtility::map(whitePieceSquareScore - blackPieceSquareScore, -pieceValues[WQ], pieceValues[WQ],
-                            -1, 1);
-}
 
 EngineBase::EngineBase() : ChessPlayer(ENGINE),
                            rng(std::chrono::system_clock::now().time_since_epoch().count()){

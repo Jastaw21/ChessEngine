@@ -50,6 +50,8 @@ add_library(
         include/EngineShared/ChessPlayerAdapter.h
         src/CLIEngine/StandaloneUciPlayer.cpp
         include/CLIEngine/StandaloneUciPlayer.h
+        include/Engine/Evaluation.h
+        src/Engine/Evaluation.cpp
 )
 
 target_include_directories(chess_lib PUBLIC include)
