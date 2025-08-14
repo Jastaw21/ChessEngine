@@ -8,22 +8,19 @@
 
 #include "MatchManager/MatchManager.h"
 
-void TerminalCommunicator::send(const std::string& command){ std::cout << command << std::endl; }
+void TerminalCommunicator::sendToEngine(const std::string& command){ std::cout << command << std::endl; }
 
-std::string TerminalCommunicator::receive(){
+std::string TerminalCommunicator::receiveFromEngine(){
     std::string input;
     std::getline(std::cin, input);
     return input;
 }
 
-void MatchManagerCommunicator::send(const std::string& command){
+void MatchManagerCommunicator::sendToEngine(const std::string& command){
     if (manager_ == nullptr)
         return;
 
     manager_->receiveCommand(command);
 }
 
-std::string MatchManagerCommunicator::receive()
-{
-    return std::string();
-}
+std::string MatchManagerCommunicator::receiveFromEngine(){ return std::string(); }

@@ -51,8 +51,17 @@ void MatchManager::tick(){
         parseUCI(messageQueueInbound_.front());
         messageQueueInbound_.pop();
     }
+    // while (!messageQueueOutbound_.empty()) {
+    //     currentPlayer()->parseUCI(messageQueueOutbound_.front());
+    //     messageQueueOutbound_.pop();
+    // }
+    //
+    // while (!currentPlayer_->getCommunicator()->messageQueueFromEngine.empty()) {
+    //     parseUCI(currentPlayer_->getCommunicator()->messageQueueFromEngine.front());
+    //     if (!currentPlayer_->getCommunicator()->messageQueueFromEngine.empty())
+    //         currentPlayer_->getCommunicator()->messageQueueFromEngine.pop();
+    // }
 }
-
 
 void MatchManager::parseUCI(const std::string& uci){
     auto command = parser.parse(uci);

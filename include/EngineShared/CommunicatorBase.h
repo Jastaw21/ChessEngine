@@ -9,22 +9,27 @@
 
 #include "MatchManager/MatchManager.h"
 class MatchManager;
+using MessageQueue = std::queue<std::string>;
+
 
 class CommunicatorBase {
 public:
 
     virtual ~CommunicatorBase() = default;
 
-    virtual void send(const std::string& command) = 0;
+    virtual void sendToEngine(const std::string& command) = 0;
 
-    virtual std::string receive() = 0;
+    virtual std::string receiveFromEngine() = 0;
+
+    MessageQueue messageQueueToEngine;
+    MessageQueue messageQueueFromEngine;
 };
 
 class TerminalCommunicator : public CommunicatorBase {
 public:
 
-    virtual void send(const std::string& command) override;
-    virtual std::string receive() override;
+    virtual void sendToEngine(const std::string& command) override;
+    virtual std::string receiveFromEngine() override;
 };
 
 class MatchManagerCommunicator : public CommunicatorBase {
@@ -32,8 +37,8 @@ public:
 
     explicit MatchManagerCommunicator(MatchManager* match_manager) : manager_(match_manager){}
 
-    virtual void send(const std::string& command) override;
-    virtual std::string receive() override;
+    virtual void sendToEngine(const std::string& command) override;
+    virtual std::string receiveFromEngine() override;
 
 private:
 

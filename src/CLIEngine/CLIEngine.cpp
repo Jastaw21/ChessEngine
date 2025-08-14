@@ -8,13 +8,13 @@
 
 int main(){
     auto engine = TestEngine();
-    engine.setEvaluator(new GoodEvaluator(engine.boardManager()));
+    engine.setEvaluator(std::make_shared<GoodEvaluator>(engine.boardManager()));
+    engine.setCommunicator(new TerminalCommunicator());
 
     while (true) {
         char input[1024];
 
         std::cin.getline(input, 1024);
         engine.parseUCI(input);
-        engine.setCommunicator(new TerminalCommunicator());
     }
 }
