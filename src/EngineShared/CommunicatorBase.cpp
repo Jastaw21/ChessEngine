@@ -4,23 +4,16 @@
 
 #include "../../include/EngineShared/CommunicatorBase.h"
 
-#include <iostream>
+#include "CLIEngine/StandaloneUciPlayer.h"
 
-#include "MatchManager/MatchManager.h"
+std::optional<std::string> TerminalCommunicator::consumeEngineMessage(){
+    auto playerAsStandaloneEngine = static_cast<StandaloneUCIPlayer *>(getPlayer());
 
-void TerminalCommunicator::sendToEngine(const std::string& command){ std::cout << command << std::endl; }
+    playerAsStandaloneEngine->getWrapper()->read_line();
 
-std::string TerminalCommunicator::receiveFromEngine(){
-    std::string input;
-    std::getline(std::cin, input);
-    return input;
+    if (playerAsStandaloneEngine->getWrapper()->last_line == "") return {};
+
+    auto returnValue = playerAsStandaloneEngine->getWrapper()->last_line;
+    playerAsStandaloneEngine->getWrapper()->last_line = "";
+    return playerAsStandaloneEngine->getWrapper()->last_line;
 }
-
-void MatchManagerCommunicator::sendToEngine(const std::string& command){
-    if (manager_ == nullptr)
-        return;
-
-    manager_->receiveCommand(command);
-}
-
-std::string MatchManagerCommunicator::receiveFromEngine(){ return std::string(); }

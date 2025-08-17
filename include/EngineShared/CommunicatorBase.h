@@ -16,34 +16,46 @@ class CommunicatorBase {
 public:
 
     virtual ~CommunicatorBase() = default;
+    void resetQueues(){ while (!messageQueueFromEngine.empty()) { messageQueueFromEngine.pop(); } };
 
-    virtual void sendToEngine(const std::string& command) = 0;
+    CommunicatorBase(MatchManager* manager, ChessPlayer* player){
+        manager_ = manager;
+        player_ = player;
+    }
 
-    virtual std::string receiveFromEngine() = 0;
+    virtual void sendFromEngine(const std::string& command){ messageQueueFromEngine.push(command); }
 
-    MessageQueue messageQueueToEngine;
-    MessageQueue messageQueueFromEngine;
+    virtual void sendToEngine(const std::string& command){
+        if (player_ == nullptr) return;
+        player_->parseUCI(command);
+    }
+
+    virtual std::optional<std::string> consumeEngineMessage(){
+        if (messageQueueFromEngine.empty()) return {};
+        auto returnValue = messageQueueFromEngine.front();
+        messageQueueFromEngine.pop();
+        return returnValue;
+    }
+
+
+    MessageQueue getMessageQueueFromEngine() const{ return messageQueueFromEngine; }
+    MatchManager *getManager() const{ return manager_; }
+    void setManager(MatchManager* manager){ this->manager_ = manager; }
+    ChessPlayer *getPlayer() const{ return player_; }
+    void setPlayer(ChessPlayer* player){ this->player_ = player; }
+
+private:
+
+    MessageQueue messageQueueFromEngine{};
+
+    MatchManager* manager_ = nullptr;
+    ChessPlayer* player_ = nullptr;
 };
 
 class TerminalCommunicator : public CommunicatorBase {
 public:
 
-    virtual void sendToEngine(const std::string& command) override;
-    virtual std::string receiveFromEngine() override;
-};
-
-class MatchManagerCommunicator : public CommunicatorBase {
-public:
-
-    explicit MatchManagerCommunicator(MatchManager* match_manager) : manager_(match_manager){}
-
-    virtual void sendToEngine(const std::string& command) override;
-    virtual std::string receiveFromEngine() override;
-
-private:
-
-    MatchManager* manager_ = nullptr;
-    MatchManagerCommunicator() = default;
+    virtual std::optional<std::string> consumeEngineMessage() override;
 };
 
 

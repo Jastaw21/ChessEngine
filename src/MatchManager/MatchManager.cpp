@@ -11,9 +11,13 @@
 MatchManager::MatchManager(ChessPlayer* startingPlayer, ChessPlayer* otherPlayer){
     currentPlayer_ = startingPlayer;
     otherPlayer_ = otherPlayer;
-    const auto currentCommunicator = new MatchManagerCommunicator(this);
+
+    whitePlayer = startingPlayer;
+    blackPlayer = otherPlayer;
+
+    const auto currentCommunicator = std::make_shared<CommunicatorBase>(this, currentPlayer_);
     currentPlayer_->setCommunicator(currentCommunicator);
-    const auto otherCommunicator = new MatchManagerCommunicator(this);
+    const auto otherCommunicator = std::make_shared<CommunicatorBase>(this, otherPlayer_);
     otherPlayer_->setCommunicator(otherCommunicator);
 }
 
@@ -27,40 +31,30 @@ void MatchManager::startGame(){
     currentPlayer()->parseUCI("go");
 }
 
+void MatchManager::processGameResult(){
+    auto result = boardManager.getGameResult();
+    std::string gameResult = "";
+    if (result & DRAW) { draws++; }
+    if (result & WHITE_WINS) { whiteWins++; }
+    if (result & BLACK_WINS) { blackWins++; }
+
+    std::cout << "Game Over " << "W: " << whiteWins << " B: " << blackWins << " D: " << draws << std::endl;
+
+    gamesPlayed++;
+    restartGame();
+}
+
 void MatchManager::tick(){
     if (gamesPlayed == gamesToPlay) { std::cout << "Game count: " << gamesPlayed << std::endl; }
     if (boardManager.isGameOver()) {
-        auto result = boardManager.getGameResult();
-        std::string gameResult = "";
-        if (result & DRAW) { draws++; }
-        if (result & WHITE_WINS) { whiteWins++; }
-        if (result & BLACK_WINS) { blackWins++; }
-
-        std::cout << "Game Over " << "W: " << whiteWins << " B: " << blackWins << " D: " << draws << std::endl;
-
-        gamesPlayed++;
-        restartGame();
+        processGameResult();
         return;
     }
-    while (!messageQueueOutbound_.empty()) {
-        currentPlayer()->parseUCI(messageQueueOutbound_.front());
-        messageQueueOutbound_.pop();
+    if (const auto message = currentPlayer_->consumeMessage(); message.has_value()) {
+        std::cout << message.value() << std::endl;
+        // handle the inbound command
+        parseUCI(message.value());
     }
-
-    while (!messageQueueInbound_.empty()) {
-        parseUCI(messageQueueInbound_.front());
-        messageQueueInbound_.pop();
-    }
-    // while (!messageQueueOutbound_.empty()) {
-    //     currentPlayer()->parseUCI(messageQueueOutbound_.front());
-    //     messageQueueOutbound_.pop();
-    // }
-    //
-    // while (!currentPlayer_->getCommunicator()->messageQueueFromEngine.empty()) {
-    //     parseUCI(currentPlayer_->getCommunicator()->messageQueueFromEngine.front());
-    //     if (!currentPlayer_->getCommunicator()->messageQueueFromEngine.empty())
-    //         currentPlayer_->getCommunicator()->messageQueueFromEngine.pop();
-    // }
 }
 
 void MatchManager::parseUCI(const std::string& uci){
@@ -74,14 +68,14 @@ void MatchManager::restartGame(){
     dumpGameLog();
     boardManager.resetGame(startingFen()); // reset our internal state
 
+    currentPlayer_ = whitePlayer;
+    otherPlayer_ = blackPlayer;
     // tell both players it's a new game
     currentPlayer()->parseUCI("ucinewgame");
+    currentPlayer()->getCommunicator()->resetQueues();
     otherPlayer()->parseUCI("ucinewgame");
-    while (!messageQueueOutbound_.empty()) { messageQueueOutbound_.pop(); }
-    while (!messageQueueInbound_.empty()) { messageQueueInbound_.pop(); }
+    otherPlayer()->getCommunicator()->resetQueues();
     startGame();
-
-    std::swap(currentPlayer_, otherPlayer_);
 }
 
 void MatchManager::dumpGameLog(){

@@ -16,9 +16,8 @@ EngineBase::EngineBase() : ChessPlayer(ENGINE),
 }
 
 void EngineBase::go(const int depth){
-    const auto rmove = search(depth);
-    // communicator_->messageQueueFromEngine.push("bestmove " + rmove.toUCI());
-    communicator_->sendToEngine("bestmove " + rmove.toUCI());
+    const auto bestMove = search(depth);
+    communicator_->sendFromEngine("bestmove " + bestMove.toUCI());
 }
 
 Move EngineBase::getBestMove(const int depth){

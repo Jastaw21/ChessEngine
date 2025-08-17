@@ -8,8 +8,6 @@
 
 #include "EngineBase.h"
 #include "Evaluation.h"
-#include "EngineShared/CommunicatorBase.h"
-
 
 class TestEngine final : public EngineBase {
 public:
@@ -19,7 +17,6 @@ public:
 
     virtual std::vector<Move> generateMoveList() override;
     void setFullFen(const std::string& fen);
-    void setCommunicator(TerminalCommunicator* communicator){ communicator_ = communicator; }
 
 private:
 

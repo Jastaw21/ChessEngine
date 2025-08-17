@@ -6,6 +6,7 @@
 #define CHESSPLAYER_H
 
 
+#include <memory>
 #include "EngineShared/CommandHandlerBase.h"
 
 class CommunicatorBase;
@@ -25,8 +26,10 @@ public:
 
     bool setReady(const bool isReady){ return true; };
     bool isReady() const{ return true; }
-    CommunicatorBase *getCommunicator() const{ return communicator_; }
-    void setCommunicator(CommunicatorBase* communicator){ communicator_ = communicator; }
+    std::shared_ptr<CommunicatorBase> getCommunicator() const{ return communicator_; }
+    void setCommunicator(const std::shared_ptr<CommunicatorBase>& communicator){ communicator_ = communicator; }
+
+    std::optional<std::string> consumeMessage() const;
 
     PlayerType playerType;
 
@@ -37,7 +40,7 @@ protected:
 
     UCIParser parser;
     CommandHandlerBase commandHandler;
-    CommunicatorBase* communicator_;
+    std::shared_ptr<CommunicatorBase> communicator_;
 
     std::string engineID_ = "default";
 };

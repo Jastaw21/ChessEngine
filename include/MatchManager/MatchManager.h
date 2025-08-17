@@ -25,15 +25,19 @@ public:
     MatchManager(ChessPlayer* startingPlayer, ChessPlayer* otherPlayer,
                  const FenString& startingFen) : currentPlayer_(startingPlayer),
                                                  otherPlayer_(otherPlayer),
+                                                 whitePlayer(startingPlayer),
+                                                 blackPlayer(otherPlayer),
                                                  startingFen_(startingFen){}
 
     MatchManager(ChessPlayer* startingPlayer, ChessPlayer* otherPlayer);
 
     void startGame();
+    void processGameResult();
     void tick();
 
     std::stack<Move> &getMoveHistory();
-    void swapPlayers(){ std::swap(currentPlayer_, otherPlayer_); };
+    void swapPlayers(){ std::swap(currentPlayer_, otherPlayer_); }
+    void setCommunicator(CommunicatorBase* communicator_base){ communicator_ = communicator_base; }
     void addMove(const std::string& moveUCI);
     void receiveCommand(const std::string& command){ messageQueueInbound_.push(command); }
     MessageQueue *getMessageQueueOutbound(){ return &messageQueueOutbound_; }
@@ -50,9 +54,12 @@ private:
 
     ChessPlayer* currentPlayer_ = nullptr;
     ChessPlayer* otherPlayer_ = nullptr;
+    ChessPlayer* whitePlayer = nullptr;
+    ChessPlayer* blackPlayer = nullptr;
     UCIParser parser;
     ManagerCommandHandler commandHandler;
     BoardManager boardManager;
+    CommunicatorBase* communicator_ = nullptr;
 
     FenString startingFen_ = Fen::FULL_STARTING_FEN;
 

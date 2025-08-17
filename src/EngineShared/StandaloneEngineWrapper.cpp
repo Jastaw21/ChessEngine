@@ -2,7 +2,7 @@
 // Created by jacks on 14/08/2025.
 //
 
-#include "../../include/EngineShared/ChessPlayerAdapter.h"
+#include "../../include/EngineShared/StandaloneEngineWrapper.h"
 
 #include <iostream>
 

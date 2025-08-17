@@ -9,7 +9,6 @@
 int main(){
     auto engine = TestEngine();
     engine.setEvaluator(std::make_shared<GoodEvaluator>(engine.boardManager()));
-    engine.setCommunicator(new TerminalCommunicator());
 
     while (true) {
         char input[1024];

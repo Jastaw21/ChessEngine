@@ -3,61 +3,16 @@
 //
 
 // ReSharper disable CppMemberFunctionMayBeConst
-#include "../../include/MatchManager/ManagerCommandHandler.h"
-
-#include "../../include/MatchManager/MatchManager.h"
+#include "MatchManager/ManagerCommandHandler.h"
+#include "MatchManager/MatchManager.h"
 #include "Engine/EngineBase.h"
+#include "EngineShared/CommunicatorBase.h"
 
-void ManagerCommandHandler::operator()(const UCICommand& cmd, MatchManager* matchManager){
-    matchManager->getMessageQueueOutbound()->push("uci");
-    matchManager->swapPlayers();
-}
 
-void ManagerCommandHandler::operator()(const StopCommand& cmd, MatchManager* matchManager){
-    matchManager->getMessageQueueOutbound()->push("stop");
-    matchManager->swapPlayers();
-}
-
-void ManagerCommandHandler::operator()(const IsReadyCommand& cmd, MatchManager* matchManager){
-    matchManager->getMessageQueueOutbound()->push("isready");
-    matchManager->swapPlayers();
-}
-
-void ManagerCommandHandler::operator()(const QuitCommand& cmd, MatchManager* matchManager){
-    matchManager->getMessageQueueOutbound()->push("quit");
-    matchManager->swapPlayers();
-}
-
-void ManagerCommandHandler::operator()(const GoCommand& cmd, MatchManager* matchManager){
-    // std::string fullGoCommand = "go";
-    // if (cmd.depth.has_value()) { fullGoCommand += " depth " + std::to_string(*cmd.depth); }
-    // matchManager->otherPlayer->parseUCI(fullGoCommand);
-    // matchManager->swapPlayers();
-}
-
-void ManagerCommandHandler::operator()(const PositionCommand& cmd, MatchManager* matchManager){
-    std::string fullPositionCommand;
-    if (cmd.isStartPos) { fullPositionCommand = "position startpos"; } else {
-        fullPositionCommand = "position fen " + cmd.fen;
-    }
-
-    if (!cmd.moves.empty()) {
-        fullPositionCommand += " moves ";
-        for (auto& move: cmd.moves) {
-            fullPositionCommand += move;
-            fullPositionCommand += " ";
-        }
-    }
-    matchManager->getMessageQueueOutbound()->push(fullPositionCommand);
-    matchManager->swapPlayers();
-}
-
-void ManagerCommandHandler::operator()(const BestMoveCommand& cmd, MatchManager* matchManager){
-    matchManager->addMove(cmd.move);
-    matchManager->swapPlayers();
+void ManagerCommandHandler::generateFullPositionCommand(MatchManager* matchManager, std::string& fullPositionCommand){
     std::vector<std::string> movesString;
 
-    std::string fullPositionCommand = "position " + matchManager->startingFen();
+    fullPositionCommand = "position " + matchManager->startingFen();
 
     auto& moveHistory = matchManager->getMoveHistory();
 
@@ -73,10 +28,63 @@ void ManagerCommandHandler::operator()(const BestMoveCommand& cmd, MatchManager*
 
         for (auto it = moves.rbegin(); it != moves.rend(); ++it) { fullPositionCommand += *it + " "; }
     }
-    matchManager->getMessageQueueOutbound()->push(fullPositionCommand);
-    const auto engine = static_cast<EngineBase *>(matchManager->currentPlayer());
-    const auto depth = matchManager->currentPlayer()->playerType == HUMAN ? 2 : engine->getSearchDepth();
-    matchManager->getMessageQueueOutbound()->push("go depth " + std::to_string(depth));
+}
+
+void ManagerCommandHandler::operator()(const UCICommand& cmd, MatchManager* matchManager){
+    matchManager->getMessageQueueOutbound()->push("uci");
+    //matchManager->swapPlayers();
+}
+
+void ManagerCommandHandler::operator()(const StopCommand& cmd, MatchManager* matchManager){
+    matchManager->getMessageQueueOutbound()->push("stop");
+    //matchManager->swapPlayers();
+}
+
+void ManagerCommandHandler::operator()(const IsReadyCommand& cmd, MatchManager* matchManager){
+    matchManager->getMessageQueueOutbound()->push("isready");
+    //matchManager->swapPlayers();
+}
+
+void ManagerCommandHandler::operator()(const QuitCommand& cmd, MatchManager* matchManager){
+    matchManager->getMessageQueueOutbound()->push("quit");
+    //matchManager->swapPlayers();
+}
+
+void ManagerCommandHandler::operator()(const GoCommand& cmd, MatchManager* matchManager){
+    return;
+    // not implemented
+}
+
+void ManagerCommandHandler::operator()(const PositionCommand& cmd, MatchManager* matchManager){
+    std::string fullPositionCommand;
+    if (cmd.isStartPos) { fullPositionCommand = "position startpos"; } else {
+        fullPositionCommand = "position fen " + cmd.fen;
+    }
+
+    if (!cmd.moves.empty()) {
+        fullPositionCommand += " moves ";
+        for (auto& move: cmd.moves) {
+            fullPositionCommand += move;
+            fullPositionCommand += " ";
+        }
+    }
+    matchManager->currentPlayer()->getCommunicator()->sendToEngine(fullPositionCommand);
+    matchManager->swapPlayers();
+}
+
+
+void ManagerCommandHandler::operator()(const BestMoveCommand& cmd, MatchManager* matchManager){
+    matchManager->addMove(cmd.move); // add our history
+
+    // generate the command with move history from our internal state
+    std::string fullPositionCommand;
+    generateFullPositionCommand(matchManager, fullPositionCommand);
+
+    // we've done receiving from the current player and need to swap to forward the command
+    matchManager->swapPlayers();
+
+    matchManager->currentPlayer()->getCommunicator()->sendToEngine(fullPositionCommand); // send to engine
+    matchManager->currentPlayer()->getCommunicator()->sendToEngine("go");
 }
 
 void ManagerCommandHandler::operator()(const NewGameCommand& cmd, MatchManager* matchManager){}

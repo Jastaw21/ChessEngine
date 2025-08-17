@@ -46,11 +46,8 @@ add_library(
         src/MagicBitboards/MagicBitBoardShared.cpp
         src/MatchManager/MatchManager.cpp
         src/MatchManager/ManagerCommandHandler.cpp
-        src/EngineShared/ChessPlayerAdapter.cpp
-        include/EngineShared/ChessPlayerAdapter.h
+        src/EngineShared/StandaloneEngineWrapper.cpp
         src/CLIEngine/StandaloneUciPlayer.cpp
-        include/CLIEngine/StandaloneUciPlayer.h
-        include/Engine/Evaluation.h
         src/Engine/Evaluation.cpp
 )
 

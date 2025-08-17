@@ -8,7 +8,7 @@
 #include <atomic>
 #include <thread>
 #include "ChessPlayer.h"
-#include "EngineShared/ChessPlayerAdapter.h"
+#include "EngineShared/StandaloneEngineWrapper.h"
 
 class StandaloneUCIPlayer : public ChessPlayer {
 public:
@@ -17,6 +17,7 @@ public:
     ~StandaloneUCIPlayer() override;
 
     void parseUCI(const std::string& uci) override;
+    StandaloneEngineWrapper *getWrapper(){ return &wrapper; }
 
 private:
 

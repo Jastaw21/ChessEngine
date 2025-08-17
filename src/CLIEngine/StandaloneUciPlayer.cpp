@@ -32,6 +32,6 @@ void StandaloneUCIPlayer::readerLoop(){
         wrapper.read_line();
         const std::string& line = wrapper.last_line;
 
-        if (!line.empty() && communicator_) { communicator_->sendToEngine(line); }
+        if (!line.empty() && communicator_) { communicator_->sendFromEngine(line); }
     }
 }

@@ -5,7 +5,6 @@
 #ifndef CHESS_CHESSPLAYERADAPTER_H
 #define CHESS_CHESSPLAYERADAPTER_H
 
-#include "ChessPlayer.h"
 #include <memory>
 #include <windows.h>
 
@@ -18,7 +17,7 @@ public:
     void send(const std::string& cmd);
     void read_line();
 
-    std::string last_line;
+    std::string last_line = "";
 
 private:
 
