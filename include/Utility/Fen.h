@@ -6,6 +6,7 @@
 #define FEN_H
 #include <string>
 
+
 using FenString = std::string;
 
 namespace Fen {
@@ -13,7 +14,9 @@ namespace Fen {
     inline const FenString FULL_STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     inline const FenString STARTING_FEN_TEST = "r7/8/8/8/8/8/8/8";
     inline const FenString KIWI_PETE_FEN = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R";
+    inline const FenString FULL_KIWI_PETE_FEN = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
     inline const FenString POSITION_3_FEN = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8";
+    inline const FenString FULL_POSITION_3_FEN = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1";
 
     inline FenString rankAndFileToFen(const int rank, const int file){
         FenString returnString;
@@ -34,6 +37,18 @@ namespace Fen {
 
         const int startingSquareOfRank = (rank - 1) * 8;
         return startingSquareOfRank + (file - 1);
+    }
+
+    inline std::string squareToFen(const int square){
+        std::string returnString;
+        const int file = square % 8 + 1;
+        const int rank = square / 8 + 1;
+
+        const char fileString = 'a' - 1 + file;
+        const char rankString = '1' - 1 + rank;
+        returnString += fileString;
+        returnString += rankString;
+        return returnString;
     }
 }
 #endif //FEN_H

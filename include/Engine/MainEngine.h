@@ -9,17 +9,19 @@
 #include "EngineBase.h"
 #include "Evaluation.h"
 
-class TestEngine final : public EngineBase {
+class MainEngine final : public EngineBase {
 public:
 
-    TestEngine() = default;
-    explicit TestEngine(const std::shared_ptr<EvaluatorBase>& evaluator) : EngineBase(evaluator){}
+    MainEngine() = default;
+    explicit MainEngine(const std::shared_ptr<EvaluatorBase>& evaluator) : EngineBase(evaluator){}
 
     virtual std::vector<Move> generateMoveList() override;
     void setFullFen(const std::string& fen);
 
 private:
 
+    void addPromotionMoves(const Move& move);
+    void processPawnPromotion(std::vector<Move>& validMoves, Move& baseMove);
     virtual std::vector<Move> generateValidMovesFromPosition(const Piece& piece, int startSquare) override;
     virtual std::vector<Move> generateMovesForPiece(const Piece& piece) override;
 

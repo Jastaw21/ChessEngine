@@ -27,7 +27,7 @@ enum MoveResult {
 
     // failures
     ILLEGAL_MOVE = 1 << 5, // 0010 0000 - 32
-    KING_IN_CHECK = 1 << 6, // 0100 0000 - 64
+    PROMOTION = 1 << 6, // 0100 0000 - 64
     CHECK_MATE = 1 << 7, // 1000 0000 - 128
 };
 
@@ -62,6 +62,7 @@ struct Move {
 
     int resultBits = 0ULL;
     Piece capturedPiece = PIECE_N;
+    Piece promotedPiece = PIECE_N;
 
     std::string toUCI() const;
 
@@ -99,6 +100,8 @@ public:
     bool tryMove(Move& move);
     bool tryMove(const std::string& moveUCI);
     bool forceMove(Move& move);
+    void swapTurns();
+    void applyCastlingMove(Move& move);
     void undoMove(const Move& move);
     void undoMove();
     bool threefoldRepetition();
@@ -129,13 +132,14 @@ public:
 private:
 
     bool handleCapture(Move& move) const;
-    bool checkAndHandleEP(Move& move);
+    void handleEnPassant(Move& move);
     bool prelimCheckMove(Move& move);
 
     bool friendlyKingInCheck(const Move& move);
 
     // do the move
     void makeMove(Move& move);
+    void undoCastling(const Move& move);
 
     bool hasLegalMoveToEscapeCheck();
     bool canPieceEscapeCheck(const Piece& pieceName);
@@ -152,6 +156,9 @@ private:
 
     Rules rules;
     MagicBitBoards magicBitBoards;
+
+    int enPassantSquare = -1;
+    int previousEnPassantSquare = -1;
 };
 
 

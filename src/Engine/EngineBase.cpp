@@ -81,8 +81,8 @@ PerftResults EngineBase::perft(const int depth){
     auto moves = generateMoveList();
 
     for (auto& move: moves) {
-        internalBoardManager_.forceMove(move);
         // moves should be checked for legality already at this point so don't even worry
+        internalBoardManager_.forceMove(move);
         const PerftResults child = perft(depth - 1);
 
         if (depth == 1) {
@@ -93,11 +93,41 @@ PerftResults EngineBase::perft(const int depth){
             if (move.resultBits & CAPTURE) { result.captures++; }
             if (move.resultBits & CASTLING) { result.castling++; }
             if (move.resultBits & CHECK_MATE) { result.checkMate++; }
+            if (move.resultBits & PROMOTION) { result.promotions++; }
         } else { result += child; }
 
         internalBoardManager_.undoMove();
     }
     return result;
+}
+
+std::vector<PerftResults> EngineBase::perftDivide(const int depth){
+    auto moves = generateMoveList();
+    std::vector<PerftResults> results;
+
+    for (auto& move: moves) {
+        auto result = PerftResults();
+        result.fen = move.toUCI();
+        internalBoardManager_.forceMove(move);
+
+        if (depth == 1) {
+            result.nodes = 1;
+            if (move.resultBits & CHECK) { result.checks++; }
+            if (move.resultBits & EN_PASSANT) { result.enPassant++; }
+            if (move.resultBits & CAPTURE) {
+                std::cout << move.toUCI() << std::endl;
+                result.captures++;
+            }
+            if (move.resultBits & CASTLING) { result.castling++; }
+            if (move.resultBits & CHECK_MATE) { result.checkMate++; }
+            if (move.resultBits & PROMOTION) { result.promotions++; }
+        } else { result += perft(depth - 1); }
+
+        internalBoardManager_.undoMove();
+        results.push_back(result);
+    }
+
+    return results;
 }
 
 int EngineBase::simplePerft(const int depth){
@@ -113,24 +143,6 @@ int EngineBase::simplePerft(const int depth){
     }
 
     return nodes;
-}
-
-std::vector<PerftResults> EngineBase::perftDivide(const int depth){
-    auto moves = generateMoveList();
-    std::vector<PerftResults> results;
-
-    for (auto& move: moves) {
-        auto result = PerftResults();
-        result.nodes = 0;
-        result.fen = move.toUCI();
-        internalBoardManager_.forceMove(move);
-        result += perft(depth - 1);
-        internalBoardManager_.undoMove();
-
-        results.push_back(result);
-    }
-
-    return results;
 }
 
 // Negamax implementation replaces Minimax logic

@@ -58,6 +58,7 @@ def perft_complex(board, depth):
         is_check = board.gives_check(move)
         board.push(move)
         is_checkmate = board.is_checkmate()
+        is_promote = len(move.uci()) == 5
 
         if depth == 1:
             perft_result.nodes += 1
@@ -67,11 +68,12 @@ def perft_complex(board, depth):
                 perft_result.checkmate += 1
             if is_ep:
                 perft_result.en_passant += 1
+            if is_cap:
                 perft_result.captures += 1
-            elif is_cap:
-                perft_result.captures += 1
-            elif is_castle:
+            if is_castle:
                 perft_result.castling += 1
+            if is_promote:
+                perft_result.promotion += 1
 
 
         else:
@@ -86,9 +88,36 @@ def divide_perft(board, depth):
 
     for move in board.legal_moves:
         count = PerftResult()
-        board.push(move)
-        count += perft_complex(board, depth - 1)
-        board.pop()
+
+        if depth == 1:
+            is_cap = board.is_capture(move)
+            is_ep = board.is_en_passant(move)
+
+            is_castle = board.is_castling(move)
+            is_check = board.gives_check(move)
+            board.push(move)
+            is_checkmate = board.is_checkmate()
+            is_promote = len(move.uci()) == 5
+
+            count.nodes += 1
+            if is_check:
+                count.check += 1
+            if is_checkmate:
+                count.checkmate += 1
+            if is_ep:
+                count.en_passant += 1
+            if is_cap:
+                count.captures += 1
+            if is_castle:
+                count.castling += 1
+            if is_promote:
+                count.promotion += 1
+            board.pop()
+        else:
+            board.push(move)
+            count += perft_complex(board, depth - 1)
+            board.pop()
+
         result[move.uci()] = count
     return result
 

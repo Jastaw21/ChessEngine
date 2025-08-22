@@ -3,11 +3,11 @@
 //
 
 
-#include "../../include/Engine/TestEngine.h"
+#include "../../include/Engine/MainEngine.h"
 #include "EngineShared/CommunicatorBase.h"
 
 int main(){
-    auto engine = TestEngine();
+    auto engine = MainEngine();
     engine.setEvaluator(std::make_shared<GoodEvaluator>(engine.boardManager()));
 
     while (true) {

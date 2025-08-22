@@ -2,19 +2,19 @@
 // Created by jacks on 14/07/2025.
 //
 
-#ifndef PERFTTESTUTILITY_H
-#define PERFTTESTUTILITY_H
+#ifndef PERFT_TEST_UTILITY_H
+#define PERFT_TEST_UTILITY_H
 
 #include <algorithm>
 #include <fstream>
 #include <ranges>
-#include "Engine/TestEngine.h"
+#include "Engine/MainEngine.h"
 #include "Utility/Fen.h"
 #include "EngineShared/PerftResults.h"
 
 inline const std::string fileRoot = R"(C:\Users\jacks\source\repos\Chess\tests\output\)";
 inline const std::string divideCmd =
-        R"(C:\Users\jacks\source\repos\Chess\.venv\Scripts\python.exe C:\Users\jacks\source\repos\Chess\tests\Python\moveGetterSF.py)";
+        R"(C:\Users\jacks\source\repos\Chess\.venv\Scripts\python.exe C:\Users\jacks\source\repos\Chess\tests\Python\ExternalEnginePerftDivide.py)";
 
 inline const std::string moveCmd =
         R"(C:\Users\jacks\source\repos\Chess\.venv\Scripts\python.exe C:\Users\jacks\source\repos\Chess\tests\Python\getMovesFromPosition.py)";
@@ -28,15 +28,17 @@ inline std::vector<PerftResults> getDivideResults(const std::string& filename){
     std::string line;
     while (std::getline(file, line)) {
         std::string rootMoveUCI;
-        int nodes;
-        int captures;
-        int enPassant;
-        int castling;
-        int checks;
-        int checkMate;
+        int nodes = 0;
+        int captures = 0;
+        int enPassant = 0;
+        int castling = 0;
+        int checks = 0;
+        int checkMate = 0;
+        int promotions = 0;
         std::istringstream iss(line);
-        iss >> rootMoveUCI >> nodes >> captures >> enPassant >> castling >> checks >> checkMate;
-        results.push_back(PerftResults{nodes, captures, enPassant, castling, checks, checkMate, rootMoveUCI});
+        iss >> rootMoveUCI >> nodes >> captures >> enPassant >> castling >> checks >> checkMate >> promotions;
+        results.push_back(
+            PerftResults{nodes, captures, enPassant, castling, checks, checkMate, promotions, rootMoveUCI});
     }
 
     return results;
@@ -80,7 +82,7 @@ inline bool generateExternalEngineMoves(const std::string& fen, const std::strin
     const std::string finalCommand =
             divideCmd + " \"" + fen + "\" \"" + file + "\"" + " " + std::to_string(depth);
 
-    //std::cout << "Executing command: " << finalCommand << std::endl;
+    std::cout << "Executing command: " << finalCommand << std::endl;
 
     [[maybe_unused]] const int result = system(finalCommand.c_str());
 
@@ -112,124 +114,162 @@ inline bool runGetMoveResults(const std::string& fen, const std::string& outputF
 }
 
 
-void printMoveResults(const PerftResults& totalPy, const PerftResults& totalEngine, const std::string& printInset){
-    std::cout << printInset << "Type\tNodes\tCaptures\tCastles\tEP\tChecks\tCheckMates" << std::endl;
+inline void printMoveResults(const PerftResults& totalPy, const PerftResults& totalEngine,
+                             const std::string& printInset){
+    std::cout << printInset << "Type\tNodes\tCaptures\tCastles\tEP\tChecks\tCheckMates\tPromotions" << std::endl;
 
     // Print Python results
-    std::cout << printInset << "Python\t" << totalPy.nodes << "\t" << totalPy.captures << "\t"
-            << totalPy.castling << "\t" << totalPy.enPassant << "\t" << totalPy.checks << "\t" << totalPy.checkMate <<
-            std::endl;
+    std::cout << printInset << "Python\t"
+            << totalPy.nodes << "\t" << totalPy.captures << "\t"
+            << totalPy.castling << "\t" << totalPy.enPassant << "\t"
+            << totalPy.checks << "\t" << totalPy.checkMate << "\t"
+            << totalPy.promotions << std::endl;
 
     // Print Engine results
-    std::cout << printInset << "Engine\t" << totalEngine.nodes << "\t" << totalEngine.captures << "\t"
-            << totalEngine.castling << "\t" << totalEngine.enPassant << "\t" << totalEngine.checks << "\t" <<
-            totalEngine.checkMate << std::endl;
+    std::cout << printInset << "Engine\t"
+            << totalEngine.nodes << "\t" << totalEngine.captures << "\t"
+            << totalEngine.castling << "\t" << totalEngine.enPassant << "\t"
+            << totalEngine.checks << "\t" << totalEngine.checkMate << "\t"
+            << totalEngine.promotions << std::endl;
 }
 
-inline bool divideTest(const std::string& desiredFen, const std::string& outputFile, const int depth,
-                       const Colours& colourToMove = WHITE){
-    if (depth == 0)
-        return true;
-    bool passing = true;
-    const std::string fenAppendage = colourToMove == WHITE ? " w KQkq -" : " b KQkq -";
-    const std::string fen = desiredFen + fenAppendage;
-
-    generateExternalEngineMoves(fen, outputFile, depth);
-    auto pyMoves = getDivideResults(outputFile); // get our own starting moves
-    TestEngine whiteEngine;
-    whiteEngine.loadFEN(desiredFen);
-    whiteEngine.setFullFen(fen);
-
-    std::vector<PerftResults> engineResults = whiteEngine.runDivideTest(depth);
-
+inline void printHeadLineResults(const int depth, const std::vector<PerftResults>& pyMoves,
+                                 const std::vector<PerftResults>& engineResults, const std::string& printInset){
     PerftResults totalPy;
     for (const auto& move: pyMoves) { totalPy += move; }
     PerftResults totalEngine;
     for (const auto& move: engineResults) { totalEngine += move; }
+    printMoveResults(totalPy, totalEngine, printInset);
+}
+
+inline void getMovesInOurEngineNotExternal(bool& passing, std::vector<PerftResults>& externalEngineMoves,
+                                           const std::vector<PerftResults>& engineResults,
+                                           std::vector<PerftResults>& inOurEngineNotExternal){
+    // loop through each move in our engine result
+    for (const auto& ourMove: engineResults) {
+        auto correspondingMove = std::ranges::find_if(externalEngineMoves, [&](const auto& move) {
+            return move.fen == ourMove.fen;
+        });
+        if (correspondingMove == externalEngineMoves.end()) {
+            passing = false; // this move doesn't exist at all
+        }
+        if (ourMove != *correspondingMove) {
+            // this move exists but doesn't have the same results
+            passing = false;
+            std::cout << "Move: " << ourMove.fen << "Our: " << ourMove.toString() << std::endl << "External: " <<
+                    correspondingMove->toString() << std::endl;
+            inOurEngineNotExternal.push_back(ourMove);
+        }
+    }
+}
+
+inline void getMovesInExternalEngineNotOurs(bool& passing, const std::vector<PerftResults>& externalEngineMoves,
+                                            std::vector<PerftResults>& engineResults,
+                                            std::vector<PerftResults>& inExternalEngineNotOurs){
+    for (const auto& externalEngineMove: externalEngineMoves) {
+        auto matching = std::ranges::find_if(engineResults, [&](const auto& move) {
+            return move.fen == externalEngineMove.fen;
+        });
+        if (matching == engineResults.end()) {
+            passing = false; // this move doesn't exist at all
+        }
+        if (externalEngineMove != *matching) {
+            // this move exists but doesn't have the same results
+            passing = false;
+            inExternalEngineNotOurs.push_back(externalEngineMove);
+        }
+    }
+}
+
+inline std::vector<PerftResults> getErrors(bool passing, std::vector<PerftResults> externalEngineMoves,
+                                           std::vector<PerftResults> engineResults,
+                                           std::vector<PerftResults>& inOurEngineNotExternal,
+                                           std::vector<PerftResults>& inExternalEngineNotOurs){
+    std::vector<PerftResults> erroringMoves;
+
+    getMovesInOurEngineNotExternal(passing, externalEngineMoves, engineResults, inOurEngineNotExternal);
+    getMovesInExternalEngineNotOurs(passing, externalEngineMoves, engineResults, inExternalEngineNotOurs);
+
+    // now zip them into one vector
+    erroringMoves.insert(erroringMoves.end(), inOurEngineNotExternal.begin(), inOurEngineNotExternal.end());
+
+    for (const auto& move: inExternalEngineNotOurs) {
+        if (std::ranges::any_of(erroringMoves, [&](const auto& errorMove) { return errorMove.fen != move.fen; })) {
+            erroringMoves.push_back(move);
+        }
+    }
+
+    return erroringMoves;
+}
+
+inline bool divideTest(const FenString& desiredFen, const std::string& outputFile, const int depth){
+    if (depth == 0)
+        return true;
+    bool passing = true;
+
+    // generate and read the external engine's moves
+    generateExternalEngineMoves(desiredFen, outputFile, depth);
+    auto externalEngineMoves = getDivideResults(outputFile);
+
+    // get our own starting moves
+    MainEngine whiteEngine;
+    whiteEngine.setFullFen(desiredFen);
+    std::vector<PerftResults> engineResults = whiteEngine.runDivideTest(depth);
 
     std::string printInset = insets[depth];
+    printHeadLineResults(depth, externalEngineMoves, engineResults, printInset);
 
-    printMoveResults(totalPy, totalEngine, printInset);
+    std::vector<PerftResults> inOurEngineNotExternal;
+    std::vector<PerftResults> inExternalEngineNotOurs;
+    auto errorResults = getErrors(passing, externalEngineMoves, engineResults, inOurEngineNotExternal,
+                                  inExternalEngineNotOurs);
 
-    // gather errors in both directions for printing
-    std::vector<PerftResults> inEngineNotInPy;
-    for (const auto& ourMove: engineResults) {
-        auto matching = std::ranges::find_if(pyMoves, [&](const auto& move) { return move.fen == ourMove.fen; });
-        if (matching == pyMoves.end())
-            passing = false;
-        if (*matching != ourMove)
-            passing = false;
-        if (ourMove != *matching) { inEngineNotInPy.push_back(ourMove); }
-    }
-    std::vector<PerftResults> inPyNotInEngine;
-    for (const auto& pyMove: pyMoves) {
-        auto matching = std::ranges::find_if(engineResults, [&](const auto& move) { return move.fen == pyMove.fen; });
-        if (matching == engineResults.end())
-            passing = false;
-        if (*matching != pyMove)
-            passing = false;
-        if (pyMove != *matching) { inPyNotInEngine.push_back(pyMove); }
-    }
+    if (errorResults.empty()) { passing = true; } else { passing = false; }
 
-    if (!inEngineNotInPy.empty()) { std::cout << printInset << "Our Engine Believes: " << std::endl; }
-    for (const auto& move: inEngineNotInPy) {
-        auto pyResult = std::ranges::find_if(pyMoves, [&](const auto& pymove) { return pymove.fen == move.fen; });
+    // we can divide further
+    if (depth > 1) {
+        for (const auto& errorMove: errorResults) {
+            int iRank, iFile;
+            Fen::FenToRankAndFile(errorMove.fen, iRank, iFile);
+            auto pieceAtLocation = whiteEngine.boardManager()->getBitboards()->getPiece(iRank, iFile);
+            auto engineReadableErrorMove = createMove(pieceAtLocation.value(), errorMove.fen);
+            whiteEngine.boardManager()->tryMove(engineReadableErrorMove);
+            std::cout << "Move: " << errorMove.fen << " Dividing Further" << std::endl;
 
-        std::cout << printInset << move.fen << std::endl << printInset << "Py: " << pyResult->toString() << std::endl <<
-                printInset << "En: " <<
-                move.toString() <<
-                std::endl;
-
-        // divide further
-        std::cout << printInset << "============Dividing further=========== " << move.fen << " " << std::endl;
-        int iRank, iFile;
-        Fen::FenToRankAndFile(move.fen, iRank, iFile);
-        auto inferredPiece = whiteEngine.boardManager()->getBitboards()->getPiece(iRank, iFile);
-        if (inferredPiece.has_value()) {
-            auto subMove = createMove(inferredPiece.value(), move.fen);
-            whiteEngine.boardManager()->tryMove(subMove);
-            divideTest(whiteEngine.boardManager()->getBitboards()->toFEN(), outputFile, depth - 1,
-                       colourToMove == WHITE ? BLACK : WHITE);
-        } else { std::cout << printInset << "No inferred piece found for " << move.fen << std::endl; }
+            divideTest(whiteEngine.boardManager()->getFullFen(), outputFile, depth - 1);
+            whiteEngine.boardManager()->undoMove();
+        }
     }
 
-    if (!inPyNotInEngine.empty()) { std::cout << printInset << "External Engine Believes: " << std::endl; }
-    for (const auto& move: inPyNotInEngine) {
-        auto engineResult = std::ranges::find_if(engineResults, [&](const auto& engineMove) {
-            return engineMove.fen == move.fen;
-        });
+    // otherwise just get the moves
+    else {
+        runGetMoveResults(whiteEngine.boardManager()->getFullFen(), "movesOutput.txt");
+        auto externalMoveResults = readMovesResults("movesOutput.txt");
+        auto ourMoveResults = whiteEngine.generateMoveList();
 
-        std::cout << printInset << move.fen << std::endl << printInset << "Py: " << move.toString() << std::endl <<
-                printInset << "En: " <<
-                engineResult->toString() <<
-                std::endl;
+        for (const auto& externalMoveResult: externalMoveResults) {
+            auto correspondingMove = std::ranges::find_if(ourMoveResults, [&](const auto ourMove) {
+                return ourMove.toUCI() == externalMoveResult.first;
+            });
 
-        // divide further
-        std::cout << printInset << "============Dividing further=========== " << move.fen << " " << std::endl;
-        int iRank, iFile;
-        Fen::FenToRankAndFile(move.fen, iRank, iFile);
-        auto inferredPiece = whiteEngine.boardManager()->getBitboards()->getPiece(iRank, iFile);
-        if (inferredPiece.has_value()) {
-            auto subMove = createMove(inferredPiece.value(), move.fen);
-            whiteEngine.boardManager()->tryMove(subMove);
-            divideTest(whiteEngine.boardManager()->getBitboards()->toFEN(), outputFile, depth - 1,
-                       colourToMove == WHITE ? BLACK : WHITE);
-        } else { std::cout << printInset << "No inferred piece found for " << move.fen << std::endl; }
+            if (std::to_string(correspondingMove->resultBits) != externalMoveResult.second) {
+                passing = false;
+                std::cout << "Move: " << externalMoveResult.first << " Our: " << correspondingMove->resultBits <<
+                        " External: " << externalMoveResult.second << std::endl;
+            }
+        }
     }
 
-    std::cout << printInset << "==========================================" << std::endl << std::endl << std::endl <<
-            std::endl << std::endl;
     return passing;
 }
 
-inline bool compareMoveList(const std::string& startingFen, const Colours& colourtoMove, const std::string& outputFile){
-    auto engine = TestEngine();
-    engine.loadFEN(startingFen);
+inline bool compareMoveList(const FenString& startingFen, const Colours& colourtoMove, const std::string& outputFile){
+    auto engine = MainEngine();
+    engine.setFullFen(startingFen);
 
     auto ourMoves = engine.generateMoveList();
 
-    auto fenAppendage = colourtoMove == WHITE ? " w KQkq -" : " b KQkq -";
-    generateExternalEngineMoves(engine.boardManager()->getBitboards()->toFEN() + fenAppendage, outputFile, 1);
+    generateExternalEngineMoves(engine.boardManager()->getFullFen(), outputFile, 1);
     auto pyMoves = readMoves(outputFile);
 
     std::vector<std::string> ourMovesToTest;
@@ -261,4 +301,4 @@ inline bool compareMoveList(const std::string& startingFen, const Colours& colou
     return inEngineNotInOurs.empty() && inOursNotInEngine.empty();
 }
 
-#endif //PERFTTESTUTILITY_H
+#endif //PERFT_TEST_UTILITY_H

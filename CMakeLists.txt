@@ -33,7 +33,7 @@ add_library(
         src/GUI/VisualPiece.cpp
         src/Utility/Vec2D.cpp
         src/Engine/EngineBase.cpp
-        src/Engine/TestEngine.cpp
+        src/Engine/MainEngine.cpp
         src/BoardManager/BitBoards.cpp
         src/BoardManager/BoardManager.cpp
         src/Engine/Piece.cpp

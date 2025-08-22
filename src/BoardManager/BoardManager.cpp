@@ -1,4 +1,5 @@
-// ReSharper disable CppTooWideScopeInitStatement
+//ReSharper disable CppTooWideScopeInitStatement
+
 #include "BoardManager/BoardManager.h"
 
 #include <bitset>
@@ -11,8 +12,14 @@
 #include "Utility/Fen.h"
 
 std::string Move::toUCI() const{
-    return std::string{static_cast<char>('a' + fileFrom - 1)} + std::to_string(rankFrom) + static_cast<char>(
-               'a' + fileTo - 1) + std::to_string(rankTo);
+    auto coreMoveString = std::string{static_cast<char>('a' + fileFrom - 1)} + std::to_string(rankFrom) + static_cast<
+                              char>(
+                              'a' + fileTo - 1) + std::to_string(rankTo);
+
+    if (promotedPiece == PIECE_N) { return coreMoveString; }
+
+    const auto promotionString = reversePieceMap[promotedPiece];
+    return coreMoveString + promotionString;
 }
 
 
@@ -21,8 +28,46 @@ Move createMove(const Piece& piece, const std::string& moveUCI){
     const int rankFrom = moveUCI[1] - '1' + 1;
     const int fileTo = moveUCI[2] - 'a' + 1;
     const int rankTo = moveUCI[3] - '1' + 1;
+    auto returnMove = Move(piece, rankAndFileToSquare(rankFrom, fileFrom), rankAndFileToSquare(rankTo, fileTo));
 
-    return Move(piece, rankAndFileToSquare(rankFrom, fileFrom), rankAndFileToSquare(rankTo, fileTo));
+    // check if there's a requested promotion
+    if (moveUCI.size() == 5) {
+        const auto promotionPiece = moveUCI[4];
+
+        Piece promotionPieceEnum;
+        switch (promotionPiece) {
+            case 'Q':
+                promotionPieceEnum = WQ;
+                break;
+            case 'q':
+                promotionPieceEnum = BQ;
+                break;
+            case 'R':
+                promotionPieceEnum = WR;
+                break;
+            case 'r':
+                promotionPieceEnum = BR;
+                break;
+            case 'N':
+                promotionPieceEnum = WN;
+                break;
+            case 'n':
+                promotionPieceEnum = BN;
+                break;
+            case 'B':
+                promotionPieceEnum = WB;
+                break;
+            case 'b':
+                promotionPieceEnum = BB;
+                break;
+            default:
+                std::cout << "Error: Invalid promotion piece " << promotionPiece << std::endl;
+                return returnMove;
+        }
+        returnMove.promotedPiece = promotionPieceEnum;
+    }
+
+    return returnMove;
 }
 
 BoardManager::BoardManager() = default;
@@ -36,9 +81,10 @@ bool BoardManager::prelimCheckMove(Move& move){
     const auto friendlyPieces = bitboards.getOccupancy(pieceColours[move.piece]);
     const auto enemyPieces = bitboards.getOccupancy() & ~friendlyPieces;
 
+    // just get all of the possible moves
     const auto allMoves = magicBitBoards.getMoves(fromSquare, move.piece, bitboards);
 
-    // move not any form of legal
+    // if the to square doesn't appear in all, the move is therefore not any form of legal
     if (!(allMoves & toSquareBitboard)) {
         move.resultBits |= ILLEGAL_MOVE;
         return false;
@@ -60,11 +106,11 @@ bool BoardManager::prelimCheckMove(Move& move){
 
     // ep
     if (move.piece == WP || move.piece == BP) {
-        const auto enPassantMoves = RulesCheck::getEnPassantVulnerableSquares(&bitboards, pieceColours[move.piece]);
-        if (enPassantMoves & toSquareBitboard) {
-            if (checkAndHandleEP(move))
-                return true;
+        if (enPassantSquare == toSquare) {
+            handleEnPassant(move);
+            return true;
         }
+
         if (move.fileTo != move.fileFrom) {
             // if not EP or capture (handled above), going diagonal must be an illegal move
             move.resultBits = 0; // reset the move result tracker
@@ -81,6 +127,20 @@ bool BoardManager::prelimCheckMove(Move& move){
     }
 
     // promotion
+    if (move.promotedPiece != PIECE_N) {
+        if (pieceColours[move.piece] != pieceColours[move.promotedPiece]) {
+            move.resultBits |= ILLEGAL_MOVE;
+            return false;
+        }
+
+        if (move.promotedPiece != WQ && move.promotedPiece != BQ && move.promotedPiece != WR &&
+            move.promotedPiece != BR && move.promotedPiece != WN && move.promotedPiece != BN && move.promotedPiece != WB
+            && move.promotedPiece != BB) {
+            move.resultBits |= ILLEGAL_MOVE;
+            return false;
+        }
+        move.resultBits |= PROMOTION;
+    }
 
     // push
     move.resultBits |= PUSH;
@@ -92,7 +152,7 @@ bool BoardManager::checkMove(Move& move){
     makeMove(move);
     if (friendlyKingInCheck(move)) {
         undoMove(move);
-        move.resultBits |= KING_IN_CHECK;
+        move.resultBits |= ILLEGAL_MOVE;
         return false;
     }
     if (opponentKingInCheck(move)) {
@@ -126,31 +186,48 @@ bool BoardManager::forceMove(Move& move){
     return true;
 }
 
-void BoardManager::makeMove(Move& move){
-    // set the "from" square of the moving piece to zero
+void BoardManager::swapTurns(){
+    if (currentTurn == WHITE)
+        currentTurn = BLACK;
+    else
+        currentTurn = WHITE;
+}
 
-    bitboards.setZero(move.rankFrom, move.fileFrom);
-    if (move.resultBits & CASTLING) {
-        const auto relevantRook = move.piece == WK ? WR : BR; // what is the rook we also need to move?
+void BoardManager::applyCastlingMove(Move& move){
+    const auto relevantRook = move.piece == WK ? WR : BR; // what is the rook we also need to move?
 
-        int movedRookFileTo = 0;
-        int movedRookFileFrom = 0;
-        // queen side
-        if (move.fileTo == 3) {
-            movedRookFileTo = move.fileTo + 1; // needs to move one inside the king
-            movedRookFileFrom = 1; //... from file 1
-        }
-        // king side
-        else if (move.fileTo == 7) {
-            movedRookFileTo = move.fileTo - 1; // needs to move one inside the king
-            movedRookFileFrom = 8; //... from file 8
-        }
-
-        // ReSharper disable once CppLocalVariableMightNotBeInitialized
-        bitboards.setOne(relevantRook, move.rankTo, movedRookFileTo);
-        // ReSharper disable once CppLocalVariableMightNotBeInitialized
-        bitboards.setZero(move.rankTo, movedRookFileFrom);
+    int movedRookFileTo = 0;
+    int movedRookFileFrom = 0;
+    // queen side
+    if (move.fileTo == 3) {
+        movedRookFileTo = move.fileTo + 1; // needs to move one inside the king
+        movedRookFileFrom = 1; //... from file 1
     }
+    // king side
+    else if (move.fileTo == 7) {
+        movedRookFileTo = move.fileTo - 1; // needs to move one inside the king
+        movedRookFileFrom = 8; //... from file 8
+    }
+
+    // ReSharper disable once CppLocalVariableMightNotBeInitialized
+    bitboards.setOne(relevantRook, move.rankTo, movedRookFileTo);
+    // ReSharper disable once CppLocalVariableMightNotBeInitialized
+    bitboards.setZero(move.rankTo, movedRookFileFrom);
+}
+
+void BoardManager::makeMove(Move& move){
+    previousEnPassantSquare = enPassantSquare;
+    // handle the EP square
+    if ((move.piece == WP || move.piece == BP) && move.fileTo == move.fileFrom && abs(move.rankTo - move.rankFrom) ==
+        2) {
+        auto targetRank = move.piece == WP ? move.rankTo - 1 : move.rankTo + 1;
+        enPassantSquare = rankAndFileToSquare(targetRank, move.fileFrom);
+    } else { enPassantSquare = -1; }
+
+    // set the "from" square of the moving piece to zero
+    bitboards.setZero(move.rankFrom, move.fileFrom);
+
+    if (move.resultBits & CASTLING) { applyCastlingMove(move); }
 
     // check to see if discovered capture
     if (const auto discoveredPiece = bitboards.getPiece(move.rankTo, move.fileTo);
@@ -169,20 +246,50 @@ void BoardManager::makeMove(Move& move){
         bitboards.setZero(move.rankTo + rankOffset, move.fileTo);
     }
 
-    // set the to square of the moving piece to one
-    bitboards.setOne(move.piece, move.rankTo, move.fileTo);
+    // if it's not a promotion, set the to square of the moving piece to one
+    if (!(move.resultBits & PROMOTION))
+        bitboards.setOne(move.piece, move.rankTo, move.fileTo);
 
-    if (currentTurn == WHITE)
-        currentTurn = BLACK;
+        // otherwise, need to toggle on the bit for the piece it chose
     else
-        currentTurn = WHITE;
+        bitboards.setOne(move.promotedPiece, move.rankTo, move.fileTo);
+
+    swapTurns();
 
     moveHistory.emplace(move);
     if (!repetitionTable.empty() && repetitionTable.size() >= 8) { repetitionTable.pop_front(); }
     repetitionTable.push_back(move);
 }
 
+void BoardManager::undoCastling(const Move& move){
+    bitboards.setZero(move.rankTo, move.fileTo);
+
+    const auto relevantRook = move.piece == WK ? WR : BR;
+
+    int movedRookFileTo;
+    int movedRookFileFrom;
+    // queen side
+    if (move.fileTo == 3) {
+        // set the new rook location
+        movedRookFileTo = move.fileTo + 1;
+        movedRookFileFrom = 1;
+    }
+    // king side
+    else if (move.fileTo == 7) {
+        movedRookFileTo = move.fileTo - 1;
+        movedRookFileFrom = 8;
+    }
+
+    // ReSharper disable once CppLocalVariableMightNotBeInitialized
+    bitboards.setOne(relevantRook, move.rankFrom, movedRookFileFrom);
+    // ReSharper disable once CppLocalVariableMightNotBeInitialized
+    bitboards.setZero(move.rankTo, movedRookFileTo);
+}
+
 void BoardManager::undoMove(const Move& move){
+    // reset en passant
+    enPassantSquare = previousEnPassantSquare;
+
     // set the "from" bit back to one
     const auto squareFrom = rankAndFileToSquare(move.rankFrom, move.fileFrom);
     bitboards[move.piece] |= 1ULL << squareFrom;
@@ -201,43 +308,21 @@ void BoardManager::undoMove(const Move& move){
     }
 
     // if it was a castling move, restore the rooks to their original positions
-    if (move.resultBits & CASTLING) {
-        bitboards.setZero(move.rankTo, move.fileTo);
-
-        const auto relevantRook = move.piece == WK ? WR : BR;
-
-        int movedRookFileTo;
-        int movedRookFileFrom;
-        // queen side
-        if (move.fileTo == 3) {
-            // set the new rook location
-            movedRookFileTo = move.fileTo + 1;
-            movedRookFileFrom = 1;
-        }
-        // king side
-        else if (move.fileTo == 7) {
-            movedRookFileTo = move.fileTo - 1;
-            movedRookFileFrom = 8;
-        }
-
-        // ReSharper disable once CppLocalVariableMightNotBeInitialized
-        bitboards.setOne(relevantRook, move.rankFrom, movedRookFileFrom);
-        // ReSharper disable once CppLocalVariableMightNotBeInitialized
-        bitboards.setZero(move.rankTo, movedRookFileTo);
-    }
+    if (move.resultBits & CASTLING) { undoCastling(move); }
 
     // set the "to" bit back to zero for this piece
     const auto squareTo = rankAndFileToSquare(move.rankTo, move.fileTo);
+    if (move.resultBits & PROMOTION) {
+        bitboards[move.promotedPiece] &= ~(1ULL << squareTo); // what ever we promoted to is gone
+    }
+
     bitboards[move.piece] &= ~(1ULL << squareTo);
 
     moveHistory.pop();
     if (!repetitionTable.empty())
         repetitionTable.pop_back();
 
-    if (currentTurn == WHITE)
-        currentTurn = BLACK;
-    else
-        currentTurn = WHITE;
+    swapTurns();
 }
 
 void BoardManager::undoMove(){
@@ -311,6 +396,8 @@ void BoardManager::setFullFen(const FenString& fen){
 
     fenStream >> fenPiecePlacement >> fenActiveColour >> fenCastling >> fenEnPassant >> fenHalfMoveClock >>
             fenFullMoveNumber;
+
+    enPassantSquare = fenEnPassant == "-" ? -1 : Fen::FenToSquare(fenEnPassant);
 
     bitboards.setFenPositionOnly(fenPiecePlacement);
     setCurrentTurn(fenActiveColour == "w" ? WHITE : BLACK);
@@ -427,23 +514,12 @@ bool BoardManager::handleCapture(Move& move) const{
     return true;
 }
 
-bool BoardManager::checkAndHandleEP(Move& move){
-    if (moveHistory.empty()) { return false; }
-    const auto lastMove = moveHistory.top();
-    if (lastMove.piece != WP && lastMove.piece != BP) { return false; } // must be a pawn that's moved
-    if (abs(lastMove.rankTo - lastMove.rankFrom) != 2) { return false; } // must be a pawn that has moved two squares
-    if (move.fileTo != lastMove.fileFrom) { return false; }
-
-    const int targetRankOffset = pieceColours[move.piece] == WHITE ? 1 : -1;
-    // The offset is relative to the last pawn's "to location". So white has to go north of the last move
-    if (move.rankTo != lastMove.rankTo + targetRankOffset) { return false; }
+void BoardManager::handleEnPassant(Move& move){
     move.resultBits |= EN_PASSANT;
     move.resultBits |= CAPTURE;
     const auto relevantFile = move.fileTo;
     const auto rankOffset = pieceColours[move.piece] == WHITE ? -1 : 1;
     move.capturedPiece = bitboards.getPiece(move.rankTo + rankOffset, relevantFile).value();
-
-    return true;
 }
 
 
@@ -496,6 +572,7 @@ std::vector<int> BoardManager::getStartingSquaresOfPiece(const Piece& piece){
 
 std::string BoardManager::getFullFen(){
     auto baseFen = bitboards.toFEN();
-    auto resultFen = baseFen + (currentTurn == WHITE ? " w" : " b") + " - - 0 1";
+    auto enPassantSquareString = (enPassantSquare == -1) ? "-" : Fen::squareToFen(enPassantSquare);
+    auto resultFen = baseFen + (currentTurn == WHITE ? " w" : " b") + " KQkq " + enPassantSquareString + " 0 1";
     return resultFen;
 }

@@ -4,21 +4,33 @@ import chess
 
 
 def get_move_result(board, move):
-    results = set()  # Using a set to avoid duplicates
+    resultBits = 0
+    is_cap = board.is_capture(move)
+    is_ep = board.is_en_passant(move)
+    is_castle = board.is_castling(move)
+    is_check = board.gives_check(move)
+    board.push(move)
+    is_checkmate = board.is_checkmate()
+    is_promote = len(move.uci()) == 5
+    board.pop()
 
-    if board.is_capture(move):
-        results.add("capture")
-    elif board.is_castling(move):
-        results.add("castling")
-    elif board.is_en_passant(move):
-        results.add("en_passant")
-    else:
-        results.add("push")
+    if is_check:
+        resultBits |= 1 << 4
+    if is_cap:
+        resultBits |= 1 << 1
+    if is_ep:
+        resultBits |= 1 << 2
+    if is_promote:
+        resultBits |= 1 << 6
+    if is_castle:
+        resultBits |= 1 << 3
+    if is_checkmate:
+        resultBits |= 1 << 7
 
-    if board.gives_check(move):
-        results.add("check")
+    if not (is_checkmate or is_check or is_castle or is_ep or is_promote or is_cap):
+        resultBits |= 1
 
-    return "+".join(sorted(results))  # Sort for consistent output
+    return resultBits
 
 
 def get_moves(fen):
@@ -51,7 +63,7 @@ def main(argv):
 
     with open(dest_file, "w+") as f:
         for move in moves:
-            f.write(move[0] + ' ' + move[1] + "\n")
+            f.write(move[0] + ' ' + str(move[1]) + "\n")
 
 
 if __name__ == "__main__":
