@@ -13,9 +13,10 @@ float EvaluatorBase::evaluateMove(Move& move){
     boardManager_->undoMove();
 
     const auto result = scoreAfter - scoreBefore;
-    if (boardManager_->getCurrentTurn() == WHITE) { return result; }
+    // flip the logical scoring to reflect who took the original move
+    if (boardManager_->getCurrentTurn() == WHITE) { return -result; }
 
-    return -result;
+    return result;
 }
 
 float EvaluatorBase::materialScore(){

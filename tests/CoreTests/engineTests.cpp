@@ -24,7 +24,7 @@ TEST(EngineTests, BasicEvaluation){
 TEST(EngineTests, LikeForLikeSwapStillGood){
     auto engine = MainEngine();
     engine.setEvaluator(std::make_shared<GoodEvaluator>(engine.boardManager()));
-    engine.setFullFen("r3k2r/p1pp1pb1/bn1qpnp1/2QPN3/1p2P3/2N4p/PPPBBPPP/R3K2R w KQkq");
+    engine.setFullFen("r3k2r/p1pp1pb1/bn1qpnp1/2QPN3/1p2P3/2N4p/PPPBBPPP/R3K2R w KQkq - 0 1");
     auto move = createMove(WQ, "c5d6");
 
     auto eval = engine.getEvaluator()->evaluateMove(move);
