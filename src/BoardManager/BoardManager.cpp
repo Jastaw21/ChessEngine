@@ -157,6 +157,7 @@ bool BoardManager::checkMove(Move& move){
     }
     if (opponentKingInCheck(move)) {
         move.resultBits |= CHECK;
+        move.resultBits &= ~PUSH; // undo the push bit
         if (isNowCheckMate()) { move.resultBits |= CHECK_MATE; }
     }
     undoMove(move);
@@ -416,6 +417,7 @@ bool BoardManager::opponentKingInCheck(Move& move){
 
     if ((attacks & opponentKingLocation) != 0) {
         move.resultBits |= CHECK;
+        move.resultBits &= ~PUSH; // undo the push bit
         return true;
     }
 
