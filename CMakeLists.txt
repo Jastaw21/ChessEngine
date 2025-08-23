@@ -49,6 +49,8 @@ add_library(
         src/EngineShared/StandaloneEngineWrapper.cpp
         src/CLIEngine/StandaloneUciPlayer.cpp
         src/Engine/Evaluation.cpp
+        include/GUI/EvaluationBar.cpp
+        include/GUI/EvaluationBar.h
 )
 
 target_include_directories(chess_lib PUBLIC include)

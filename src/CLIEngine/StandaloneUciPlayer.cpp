@@ -25,7 +25,10 @@ StandaloneUCIPlayer::~StandaloneUCIPlayer(){
         readerThread.join();
 }
 
-void StandaloneUCIPlayer::parseUCI(const std::string& uci){ wrapper.send(uci); }
+void StandaloneUCIPlayer::parseUCI(const std::string& uci){
+    std::cout << uci << std::endl;
+    wrapper.send(uci);
+}
 
 void StandaloneUCIPlayer::readerLoop(){
     while (running) {

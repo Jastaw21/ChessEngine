@@ -40,9 +40,28 @@ StandaloneEngineWrapper::StandaloneEngineWrapper(const std::string& enginePath) 
 StandaloneEngineWrapper::~StandaloneEngineWrapper(){
     CloseHandle(hRead);
     CloseHandle(hWrite);
-    WaitForSingleObject(pi.hProcess, INFINITE);
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
+    // Attempt to close the child process gracefully
+    if (pi.hProcess) {
+        // Send a terminate signal to the child process (if applicable)
+        DWORD exitCode;
+        GetExitCodeProcess(pi.hProcess, &exitCode);
+
+        // Check if the process is still running
+        if (exitCode == STILL_ACTIVE) {
+            // Optionally, you may send a "quit" or termination command here
+            // depending on your protocol (e.g., wrapper.send("quit");)
+
+            // Wait for child process to exit (non-blocking with timeout)
+            if (WaitForSingleObject(pi.hProcess, 5000) == WAIT_TIMEOUT) {
+                std::cerr << "Process did not terminate, forcing termination..." << std::endl;
+                TerminateProcess(pi.hProcess, 1); // Force terminate
+            }
+        }
+    }
+
+    // Clean up process and thread handles
+    if (pi.hProcess) CloseHandle(pi.hProcess);
+    if (pi.hThread) CloseHandle(pi.hThread);
 }
 
 void StandaloneEngineWrapper::send(const std::string& cmd){

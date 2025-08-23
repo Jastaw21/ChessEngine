@@ -29,7 +29,7 @@ public:
     std::shared_ptr<CommunicatorBase> getCommunicator() const{ return communicator_; }
     void setCommunicator(const std::shared_ptr<CommunicatorBase>& communicator){ communicator_ = communicator; }
 
-    std::optional<std::string> consumeMessage() const;
+    virtual std::optional<std::string> consumeMessage();
 
     PlayerType playerType;
 

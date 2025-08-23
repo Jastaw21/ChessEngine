@@ -42,8 +42,10 @@ class VisualBoard final : public DrawableEntity {
 public:
 
     ~VisualBoard() override;
+    void drawPieces(SDL_Renderer* renderer);
 
     VisualBoard(const Vec2D& boardSizePixels, ChessGui* gui);
+    VisualBoard(const Vec2D& boardSizePixels, ChessGui* gui, const Vec2D& parentOffset);
     void build_background(const Vec2D& square_size);
 
 
@@ -67,6 +69,7 @@ private:
     Vec2D boardSize_;
 
     ChessGui* parent_;
+    Vec2D parentOffset_;
 
     bool boardDirty = true;
 

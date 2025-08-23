@@ -5,8 +5,8 @@
 #include "../include/HumanPlayer.h"
 #include "BoardManager/BoardManager.h"
 
-HumanPlayer::HumanPlayer(const Colours colour): ChessPlayer(HUMAN),
-                                                clickedSquare_(-1){ colour_ = colour; }
+HumanPlayer::HumanPlayer(const Colours colour) : ChessPlayer(HUMAN),
+                                                 clickedSquare_(-1){ colour_ = colour; }
 
 
 Move HumanPlayer::selectDestination(const int destSquare, BoardManager* manager){
@@ -23,3 +23,10 @@ Move HumanPlayer::selectDestination(const int destSquare, BoardManager* manager)
 }
 
 void HumanPlayer::parseUCI(const std::string& uci){}
+
+std::optional<std::string> HumanPlayer::consumeMessage(){
+    if (getMessage().empty()) return {};
+    auto returnValue = getMessage();
+    message_ = "";
+    return returnValue;
+}

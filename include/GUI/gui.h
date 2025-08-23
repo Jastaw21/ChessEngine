@@ -5,6 +5,7 @@
 #include <vector>
 #include <SDL3/SDL.h>
 
+#include "EvaluationBar.h"
 #include "HumanPlayer.h"
 #include "BoardManager/BoardManager.h"
 #include "MatchManager/MatchManager.h"
@@ -32,7 +33,8 @@ public:
 
     [[nodiscard]] SDL_Renderer *getRenderer() const;
     std::shared_ptr<MatchManager> getMatchManager(){ return matchManager_; }
-    void registerEntity(DrawableEntity* entity);
+    void registerEntity(const std::shared_ptr<DrawableEntity>& entity);
+    void updateGame(int deltaTime);
 
     void loop();
 
@@ -51,15 +53,18 @@ private:
     // drawing
     SDL_Window* window;
     SDL_Renderer* renderer;
-    std::vector<DrawableEntity *> drawables;
-    VisualBoard* visualBoard;
+    std::vector<std::shared_ptr<DrawableEntity> > drawables;
+    std::shared_ptr<VisualBoard> visualBoard;
+    std::shared_ptr<EvaluationBar> evaluationBar_;
 
-
+    // chess game
     std::shared_ptr<MatchManager> matchManager_;
+    int runningTime = 0;
+    bool gameStarted = false;
 
     // event handling
     void handleMouseDown(Uint8 button);
-    void handleMouseUp(Uint8 button);
+    void handleMouseUp(Uint8 button) const;
     void handleKeyDown(SDL_Keycode keycode);
     static void handleKeyUp(SDL_Keycode key);
     std::shared_ptr<VisualPiece> heldPiece;

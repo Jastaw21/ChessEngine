@@ -20,12 +20,17 @@ public:
     void dropPiece(){ clickedSquare_ = -1; }
     Move selectDestination(int destSquare, BoardManager* manager);
 
+    void addMessage(const std::string& message){ message_ = message; }
+    [[nodiscard]] std::string getMessage() const{ return message_; }
+
     virtual void parseUCI(const std::string& uci) override;
+    virtual std::optional<std::string> consumeMessage() override;
 
 private:
 
     int clickedSquare_;
     Colours colour_;
+    std::string message_ = "";
 };
 
 

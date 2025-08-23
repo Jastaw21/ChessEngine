@@ -55,6 +55,7 @@ private:
 class TerminalCommunicator : public CommunicatorBase {
 public:
 
+    TerminalCommunicator(MatchManager* manager, ChessPlayer* player) : CommunicatorBase(manager, player){}
     virtual std::optional<std::string> consumeEngineMessage() override;
 };
 

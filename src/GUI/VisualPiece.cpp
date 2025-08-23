@@ -44,8 +44,8 @@ void VisualPiece::draw(SDL_Renderer* renderer){
 }
 
 void VisualPiece::draw(SDL_Renderer* renderer, const SDL_FRect& destRect) const{
-    const auto text = texture_.get();
-    SDL_RenderTexture(renderer, text, &SRC_RECT_128_128, &destRect);
+    const auto texture = texture_.get();
+    SDL_RenderTexture(renderer, texture, &SRC_RECT_128_128, &destRect);
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
@@ -56,8 +56,8 @@ void VisualPiece::setLocation(const int rank, const int file){
 
 Vec2D VisualPiece::getLocation() const{
     return Vec2D{
-                .x = static_cast<float>(concretePiece_->file) * static_cast<float>(squareSize_.x),
-                .y = static_cast<float>(8 - concretePiece_->rank) * static_cast<float>(squareSize_.y)
+                .x = static_cast<float>(concretePiece_->file) * squareSize_.x,
+                .y = static_cast<float>(8 - concretePiece_->rank) * squareSize_.y
             };
 }
 
@@ -99,7 +99,7 @@ std::vector<std::shared_ptr<VisualPiece> > VisualPieceBuilder::FromFEN(const std
             auto uniqueTexture = std::shared_ptr<SDL_Texture>(rawPieceTexture, SDL_DestroyTexture);
 
             // construct the piece
-            auto piece = std::make_shared<VisualPiece>(uniqueTexture, squareSize, concretePiece);
+            auto piece = std::make_shared < VisualPiece > (uniqueTexture, squareSize, concretePiece);
 
             // add it and move on
             pieces.push_back(piece);
@@ -129,7 +129,7 @@ std::vector<std::shared_ptr<VisualPiece> > VisualPieceBuilder::buildInstances(){
         auto uniqueTexture = std::shared_ptr<SDL_Texture>(rawPieceTexture, SDL_DestroyTexture);
 
         // construct the piece
-        auto visualPiece = std::make_shared<VisualPiece>(uniqueTexture, squareSize, concretePiece);
+        auto visualPiece = std::make_shared < VisualPiece > (uniqueTexture, squareSize, concretePiece);
 
         // add it and move on
         pieces.push_back(visualPiece);

@@ -114,10 +114,7 @@ std::vector<PerftResults> EngineBase::perftDivide(const int depth){
             result.nodes = 1;
             if (move.resultBits & CHECK) { result.checks++; }
             if (move.resultBits & EN_PASSANT) { result.enPassant++; }
-            if (move.resultBits & CAPTURE) {
-                std::cout << move.toUCI() << std::endl;
-                result.captures++;
-            }
+            if (move.resultBits & CAPTURE) { result.captures++; }
             if (move.resultBits & CASTLING) { result.castling++; }
             if (move.resultBits & CHECK_MATE) { result.checkMate++; }
             if (move.resultBits & PROMOTION) { result.promotions++; }

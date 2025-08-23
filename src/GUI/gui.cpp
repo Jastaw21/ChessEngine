@@ -7,6 +7,8 @@
 #include "GUI/DrawableEntity.h"
 #include "GUI/VisualBoard.h"
 
+constexpr int deltaTime = 16;
+
 
 ChessGui::ChessGui(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer){
     initSDLStuff();
@@ -14,12 +16,17 @@ ChessGui::ChessGui(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer){
 }
 
 void ChessGui::initSDLStuff(){
-    window = SDL_CreateWindow("Chess", 800, 800, 0);
+    window = SDL_CreateWindow("Chess", 800, 900, 0);
     renderer = SDL_CreateRenderer(window, nullptr);
     running = true;
-    visualBoard = new VisualBoard(Vec2D(800, 800), this);
+
+    visualBoard = std::make_shared<VisualBoard>(Vec2D(800, 800), this, Vec2D(0, 20));
     registerEntity(visualBoard);
-    SDL_Init(SDL_INIT_VIDEO);
+
+    evaluationBar_ = std::make_shared<EvaluationBar>(Vec2D(0, 0), Vec2D(800, 20));
+    registerEntity(evaluationBar_);
+
+    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO);
 }
 
 ChessGui::ChessGui(){
@@ -31,28 +38,29 @@ bool ChessGui::wasInit() const{ return window != nullptr && renderer != nullptr;
 
 SDL_Renderer *ChessGui::getRenderer() const{ return renderer; }
 
-void ChessGui::registerEntity(DrawableEntity* entity){ drawables.push_back(entity); }
+void ChessGui::registerEntity(const std::shared_ptr<DrawableEntity>& entity){ drawables.push_back(entity); }
+
+void ChessGui::updateGame(int deltaTime){
+    if (!gameStarted) {
+        matchManager_->startGame();
+        gameStarted = true;
+    }
+
+    runningTime += deltaTime;
+    if (runningTime >= 100) {
+        matchManager_->tick();
+        runningTime = 0;
+    }
+}
 
 void ChessGui::loop(){
     if (!wasInit()) { return; }
 
-    int runningTime = 0;
-
-    bool gameStarted = false;
     while (running) {
         pollEvents();
         render();
-        SDL_Delay(16); // Simulate ~60 FPS
-        if (!gameStarted) {
-            matchManager_->startGame();
-            gameStarted = true;
-        }
-
-        runningTime += 16;
-        if (runningTime >= 20) {
-            matchManager_->tick();
-            runningTime = 0;
-        }
+        SDL_Delay(deltaTime); // Simulate ~60 FPS
+        updateGame(deltaTime);
     }
 
     SDL_DestroyWindow(window);
@@ -145,10 +153,11 @@ void ChessGui::handleMouseDown(const Uint8 button){
     }
 }
 
-void ChessGui::handleMouseUp(const Uint8 button){
+void ChessGui::handleMouseUp(const Uint8 button) const{
     switch (button) {
         case SDL_BUTTON_LEFT: {
-            float x, y;
+            float x;
+            float y;
             SDL_GetMouseState(&x, &y);
             addMouseRelease(x, y);
             break;
@@ -160,8 +169,11 @@ void ChessGui::handleMouseUp(const Uint8 button){
 
 void ChessGui::addMouseClick(const int x, const int y){
     // where on the screen did we click?
-    const int file = 1 + static_cast<int>(x / (visualBoard->boardSize().x / 8.f));
-    const int rank = 1 + static_cast<int>(8 - y / (visualBoard->boardSize().y / 8.f));
+    int adjustedX, adjustedY;
+    adjustedX = x - visualBoard->get_parent_offset().x;
+    adjustedY = y - visualBoard->get_parent_offset().y;
+    const int file = 1 + static_cast<int>(adjustedX / (visualBoard->boardSize().x / 8.f));
+    const int rank = 1 + static_cast<int>(8 - adjustedY / (visualBoard->boardSize().y / 8.f));
     if (file < 1 || file > 8 || rank < 1 || rank > 8) { return; }
     const int candidateClickedSquare = rankAndFileToSquare(rank, file);
 
@@ -179,8 +191,10 @@ void ChessGui::addMouseClick(const int x, const int y){
 
 void ChessGui::addMouseRelease(const int x, const int y) const{
     // need to effectively round down to the nearest rank/file
-    const int rank = 1 + static_cast<int>(8 - y / (visualBoard->boardSize().y / 8.f));
-    const int file = 1 + static_cast<int>(x / (visualBoard->boardSize().x / 8.f));
+    const int adjustedX = x - visualBoard->get_parent_offset().x;
+    const int adjustedY = y - visualBoard->get_parent_offset().y;
+    const int rank = 1 + static_cast<int>(8 - adjustedY / (visualBoard->boardSize().y / 8.f));
+    const int file = 1 + static_cast<int>(adjustedX / (visualBoard->boardSize().x / 8.f));
 
     if (matchManager_->currentPlayer()->playerType != HUMAN) { return; }
 
@@ -190,5 +204,5 @@ void ChessGui::addMouseRelease(const int x, const int y) const{
         return;
     const auto move = humanPlayer->
             selectDestination(rankAndFileToSquare(rank, file), &matchManager_->getBoardManager());
-    matchManager_->receiveCommand("bestmove " + move.toUCI());
+    humanPlayer->addMessage("bestmove " + move.toUCI());
 }
