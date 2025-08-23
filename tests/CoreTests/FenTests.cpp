@@ -21,7 +21,8 @@ TEST(Fen, rankAndFileToFen){
 
 TEST(Fen, fenToRankAndFile){
     // bottom left
-    int rank, file;
+    int rank;
+    int file;
     Fen::FenToRankAndFile("a1", rank, file);
     ASSERT_EQ(1, rank);
     ASSERT_EQ(1, file);

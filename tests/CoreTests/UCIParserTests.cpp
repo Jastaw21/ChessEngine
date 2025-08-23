@@ -3,7 +3,7 @@
 //
 
 #include <gtest/gtest.h>
-#include "../include/EngineShared/UCIParsing/Tokeniser.h"
+#include "../../include/EngineShared/UCIParsing/Tokeniser.h"
 #include "EngineShared/UCIParsing/UciParser.h"
 
 

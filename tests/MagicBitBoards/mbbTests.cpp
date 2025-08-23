@@ -6,7 +6,6 @@
 #include  <gtest/gtest.h>
 
 #include "MagicBitboards/MagicBitBoards.h"
-#include "Utility/Fen.h"
 
 
 TEST(MagicBitboards, BasicTest){
@@ -21,7 +20,6 @@ TEST(MagicBitboards, BasicTest){
     EXPECT_EQ(mbb.getRookAttacks(44,occupancy), 0x10ec1010101000);
     EXPECT_EQ(mbb.getBishopAttacks(43,occupancy), 0x214001422418000);
 }
-
 
 TEST(MagicBitboards, PawnAttackGeneration){
     MagicBitBoards mbb;

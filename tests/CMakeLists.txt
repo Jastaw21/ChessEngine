@@ -1,4 +1,13 @@
-# tests/CMakeLists.txt
+include(FetchContent)
+
+# Fetch GoogleTest from GitHub
+FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/refs/heads/main.zip
+)
+# Prevent GTest from using dynamic CRT on Windows
+set(gtest_force_shared_crt OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
 
 # Define the test executable
 add_executable(chess_tests
@@ -11,20 +20,17 @@ add_executable(chess_tests
         MagicBitBoards/mbbTests.cpp
         CoreTests/perftTestUtility.h
         CoreTests/Perft.cpp
-        UCIParserTests.cpp
+        CoreTests/UCIParserTests.cpp
         CoreTests/utilityTests.cpp
-        # Add more test files here
 )
 
-# Link against core chess logic and Google Test
+set_target_properties(chess_tests PROPERTIES CXX_STANDARD 20)
+
 target_link_libraries(chess_tests
         PRIVATE
         chess_lib
         gtest_main
-        EngineSharedLib
 )
 
-# Enable test discovery
-include(googletest)
-
+include(GoogleTest)
 gtest_discover_tests(chess_tests)
