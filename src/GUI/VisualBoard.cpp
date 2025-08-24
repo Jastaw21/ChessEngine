@@ -36,6 +36,7 @@ VisualBoard::~VisualBoard(){
 }
 
 void VisualBoard::drawPieces(SDL_Renderer* renderer) const{
+    // uses the managers bitboards as the source of truth.
     const auto& boards = parent_->getMatchManager()->getBitboards();
     for (int pieceIndex = 0; pieceIndex < PIECE_N; pieceIndex++) {
         auto board = boards->getBitboard(static_cast<Piece>(pieceIndex));
@@ -66,7 +67,7 @@ VisualBoard::VisualBoard(const Vec2D& boardSizePixels, ChessGui* gui) : boardSiz
                 boardSizePixels.x / 8.f, boardSizePixels.y / 8.f
             };
 
-    build_background(square_size);
+    buildBackground(square_size);
 
     auto builder = VisualPieceBuilder(square_size, gui);
     const auto created_pieces = builder.buildInstances();
@@ -79,14 +80,14 @@ VisualBoard::VisualBoard(const Vec2D& boardSizePixels, ChessGui* gui,
     // set the builder up
     const auto square_size = Vec2D{boardSizePixels.x / 8.f, boardSizePixels.y / 8.f};
 
-    build_background(square_size);
+    buildBackground(square_size);
 
     auto builder = VisualPieceBuilder(square_size, gui);
     const auto created_pieces = builder.buildInstances();
     for (auto& piece: created_pieces) { pieces_.push_back(piece); }
 }
 
-void VisualBoard::build_background(const Vec2D& square_size){
+void VisualBoard::buildBackground(const Vec2D& square_size){
     bool isWhite = true;
 
     for (int rank = 0; rank < 8; rank++) {
@@ -106,7 +107,7 @@ void VisualBoard::build_background(const Vec2D& square_size){
     }
 }
 
-void VisualBoard::highlight_square(RankAndFile rankAndFile){
+void VisualBoard::highlightSquare(RankAndFile rankAndFile){
     auto highlightedSquare = std::ranges::find_if(squares_, [&](auto& square) {
         return square.getRankFile().file + 1 == rankAndFile.file && square.getRankFile().rank + 1 == rankAndFile.rank;
     });
@@ -114,7 +115,7 @@ void VisualBoard::highlight_square(RankAndFile rankAndFile){
     highlightedSquare->setHighlighted(true);
 }
 
-void VisualBoard::clear_highlights(){ for (auto& square: squares_) { square.setHighlighted(false); } }
+void VisualBoard::clearHighlights(){ for (auto& square: squares_) { square.setHighlighted(false); } }
 
 void VisualBoard::draw(SDL_Renderer* renderer){
     // draw squares
@@ -128,45 +129,6 @@ Vec2D VisualBoard::squareSize() const{
     return local_size;
 }
 
-std::shared_ptr<VisualPiece> VisualBoard::pieceAtLocation(const int rank, const int file) const{
-    for (const auto& piece: pieces_) {
-        const bool fileMatch = piece->getFile() == file;
-        const bool rankMatch = piece->getRank() == rank;
-        if (fileMatch && rankMatch) { return piece; }
-    }
-    return nullptr;
-}
-
-
-// ReSharper disable once CppMemberFunctionMayBeConst
-void VisualBoard::updatePieceLocation(const Piece piece, const size_t index){
-    const int rank = 1 + index / 8;
-    const int file = index % 8;
-    const auto relevantPiece = getFirstPieceOfType(piece);
-    if (relevantPiece.has_value()) { relevantPiece->get()->setLocation(rank, file); }
-}
-
-void VisualBoard::updatePieceLocations(){
-    const auto bb = parent_->getMatchManager()->getBitboards();
-    for (int pieceIndex = 0; pieceIndex < PIECE_N; pieceIndex++) {
-        const auto piece = static_cast<Piece>(pieceIndex);
-        auto bits = std::bitset<64>(bb->getBitboard(piece));
-
-        for (size_t index = 0; index < bits.size(); ++index) {
-            if (bits.test(index)) { updatePieceLocation(piece, index); }
-        }
-    }
-
-    boardDirty = false;
-}
-
-std::optional<std::shared_ptr<VisualPiece> > VisualBoard::getFirstPieceOfType(const Piece piece_) const{
-    for (const auto& piece: pieces_) {
-        if (piece->getPiece() == piece_)
-            return piece;
-    }
-    return {};
-}
 
 
 

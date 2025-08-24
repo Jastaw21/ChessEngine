@@ -11,6 +11,7 @@
 #include "MatchManager/MatchManager.h"
 
 
+class GoodEvaluator;
 class VisualPiece;
 class DrawableEntity;
 class VisualBoard;
@@ -27,6 +28,7 @@ public:
 
     explicit ChessGui(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer);
     void initSDLStuff();
+    void initChessStuff(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer);
     ChessGui();
 
     [[nodiscard]] bool wasInit() const;
@@ -71,6 +73,8 @@ private:
     std::shared_ptr<VisualPiece> heldPiece;
 
     int clickedSquare = -1;
+
+    std::shared_ptr<GoodEvaluator> evaluator_;
 };
 
 

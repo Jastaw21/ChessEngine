@@ -26,26 +26,22 @@ public:
     [[nodiscard]] Piece &getPiece() const;
 
     VisualPiece(std::shared_ptr<SDL_Texture> texture,
-                const Vec2D& squareSize,
-                std::shared_ptr<ConcretePiece> piece);
+                const Vec2D& squareSize);
+    virtual void draw(SDL_Renderer* renderer) override{ return; }
 
-    virtual void draw(SDL_Renderer* renderer) override;
     void draw(SDL_Renderer* renderer, const SDL_FRect& destRect) const;
 
-    void setLocation(int rank, int file);
-
-    [[nodiscard]] Vec2D getLocation() const;
-
-    [[nodiscard]] int getRank() const{ return concretePiece_->rank; }
-    [[nodiscard]] int getFile() const{ return concretePiece_->file; }
+    void setLatched(const bool latched){ isLatched_ = latched; }
+    bool isLatched() const{ return isLatched_; }
 
 private:
 
     std::shared_ptr<SDL_Texture> texture_;
     Vec2D squareSize_{};
-    std::shared_ptr<ConcretePiece> concretePiece_;
+
 
     const Piece &getPieceType() const;
+    bool isLatched_ = false;
 };
 
 
@@ -64,6 +60,24 @@ private:
 
     std::string source_path = "C:/Users/jacks/source/repos/Chess/resources/pieces/pieces-basic-png/";
     ChessGui* gui;
+};
+
+class VisualPieceSet {
+public:
+
+    explicit VisualPieceSet(const Vec2D& squareSize, ChessGui* gui_);
+    ~VisualPieceSet();
+
+private:
+
+    void buildPieces();
+
+
+    std::vector<std::shared_ptr<VisualPiece> > pieces_;
+    std::string source_path = "C:/Users/jacks/source/repos/Chess/resources/pieces/pieces-basic-png/";
+
+    ChessGui* gui_;
+    Vec2D squareSize_;
 };
 
 

@@ -51,9 +51,9 @@ public:
 
     VisualBoard(const Vec2D& boardSizePixels, ChessGui* gui);
     VisualBoard(const Vec2D& boardSizePixels, ChessGui* gui, const Vec2D& parentOffset);
-    void build_background(const Vec2D& square_size);
-    void highlight_square(RankAndFile rankAndFile);
-    void clear_highlights();
+    void buildBackground(const Vec2D& square_size);
+    void highlightSquare(RankAndFile rankAndFile);
+    void clearHighlights();
 
 
     virtual void draw(SDL_Renderer* renderer) override;
@@ -61,7 +61,6 @@ public:
     Vec2D squareSize() const;
     [[nodiscard]] const Vec2D &boardSize() const{ return boardSize_; }
 
-    std::shared_ptr<VisualPiece> pieceAtLocation(int rank, int file) const;
     void updatePieceLocation(Piece piece, size_t index);
 
     bool board_dirty() const{ return boardDirty; }

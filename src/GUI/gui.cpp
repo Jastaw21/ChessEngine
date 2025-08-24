@@ -13,7 +13,7 @@ constexpr int deltaTime = 16;
 
 ChessGui::ChessGui(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer){
     initSDLStuff();
-    matchManager_ = std::make_shared<MatchManager>(whitePlayer, blackPlayer);
+    initChessStuff(whitePlayer, blackPlayer);
 }
 
 void ChessGui::initSDLStuff(){
@@ -30,9 +30,14 @@ void ChessGui::initSDLStuff(){
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO);
 }
 
+void ChessGui::initChessStuff(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer){
+    matchManager_ = std::make_shared<MatchManager>(whitePlayer, blackPlayer);
+    evaluator_ = std::make_shared<GoodEvaluator>(&matchManager_.get()->getBoardManager());
+}
+
 ChessGui::ChessGui(){
     initSDLStuff();
-    matchManager_ = std::make_shared<MatchManager>();
+    initChessStuff(nullptr, nullptr);
 }
 
 bool ChessGui::wasInit() const{ return window != nullptr && renderer != nullptr; }
@@ -62,6 +67,8 @@ void ChessGui::loop(){
         render();
         SDL_Delay(deltaTime); // Simulate ~60 FPS
         updateGame(deltaTime);
+        auto eval = evaluator_->evaluate();
+        evaluationBar_->set_evaluation(eval);
     }
 
     SDL_DestroyWindow(window);
@@ -180,7 +187,7 @@ RankAndFile ChessGui::getRankAndFile(const int x, const int y) const{
 void ChessGui::addMouseClick(const int x, const int y){
     if (matchManager_->currentPlayer()->playerType != HUMAN) { return; }
 
-    visualBoard->clear_highlights();
+    visualBoard->clearHighlights();
     // where on the screen did we click?
     const auto rankAndFile = getRankAndFile(x, y);
     if (rankAndFile.file < 1 || rankAndFile.file > 8 || rankAndFile.rank < 1 || rankAndFile.rank > 8) { return; }
@@ -190,12 +197,12 @@ void ChessGui::addMouseClick(const int x, const int y){
     const auto clickedPiece = matchManager_->getBoardManager().getBitboards()->getPiece(
         rankAndFile.rank, rankAndFile.file);
 
-    if (clickedPiece.has_value()) {
-        // now do something with the human player, check this though
-        clickedSquare = candidateClickedSquare;
-    }
+    if (!clickedPiece.has_value()) { return; }
+    if (pieceColours[clickedPiece.value()] != matchManager_->getBoardManager().getCurrentTurn()) { return; }
 
-    visualBoard->highlight_square(rankAndFile);
+    clickedSquare = candidateClickedSquare;
+
+    visualBoard->highlightSquare(rankAndFile);
 }
 
 void ChessGui::addMouseRelease(const int x, const int y){
@@ -209,7 +216,7 @@ void ChessGui::addMouseRelease(const int x, const int y){
     const auto candidateMovePiece = matchManager_->getBoardManager().getBitboards()->getPiece(clickedSquare);
     // do we need this? In theory there's deffo a piece there
     if (!candidateMovePiece.has_value()) {
-        visualBoard->clear_highlights();
+        visualBoard->clearHighlights();
         clickedSquare = -1;
         return;
     }
@@ -219,11 +226,11 @@ void ChessGui::addMouseRelease(const int x, const int y){
 
     // move isn't valid
     if (!matchManager_->getBoardManager().checkMove(candidateMove)) {
-        visualBoard->clear_highlights();
+        visualBoard->clearHighlights();
         clickedSquare = -1;
         return;
     }
     const auto humanPlayer = static_cast<HumanPlayer *>(matchManager_->currentPlayer());
     humanPlayer->addMessage("bestmove " + candidateMove.toUCI());
-    visualBoard->highlight_square(rankAndFile);
+    visualBoard->highlightSquare(rankAndFile);
 }

@@ -7,6 +7,8 @@
 
 
 #include <memory>
+
+#include "Engine/Piece.h"
 #include "EngineShared/CommandHandlerBase.h"
 
 class CommunicatorBase;
