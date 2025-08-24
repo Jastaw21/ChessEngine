@@ -6,7 +6,7 @@
 #include <SDL3/SDL.h>
 
 #include "EvaluationBar.h"
-#include "HumanPlayer.h"
+
 #include "BoardManager/BoardManager.h"
 #include "MatchManager/MatchManager.h"
 
@@ -34,12 +34,12 @@ public:
     [[nodiscard]] SDL_Renderer *getRenderer() const;
     std::shared_ptr<MatchManager> getMatchManager(){ return matchManager_; }
     void registerEntity(const std::shared_ptr<DrawableEntity>& entity);
-    void updateGame(int deltaTime);
+    void updateGame(int deltaTime_);
 
     void loop();
 
     void addMouseClick(int x, int y);
-    void addMouseRelease(int x, int y) const;
+    void addMouseRelease(int x, int y);
 
     [[nodiscard]] int clicked_square(){ return clickedSquare; }
 
@@ -64,7 +64,8 @@ private:
 
     // event handling
     void handleMouseDown(Uint8 button);
-    void handleMouseUp(Uint8 button) const;
+    void handleMouseUp(Uint8 button);
+    RankAndFile getRankAndFile(int x, int y) const;
     void handleKeyDown(SDL_Keycode keycode);
     static void handleKeyUp(SDL_Keycode key);
     std::shared_ptr<VisualPiece> heldPiece;

@@ -1,7 +1,7 @@
 external/
 cmake-build-debug/
 .idea/
-pieces/
+resources/pieces/
 /tests/output/
 /.run/
 /.vs
@@ -11,3 +11,5 @@ pieces/
 /out/build/x64-Release
 /out/build/Mingw64-Release
 /sounds/
+/pieces/
+/resources/

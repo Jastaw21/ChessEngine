@@ -12,6 +12,7 @@
 #include "VisualPiece.h"
 #include "Utility/Vec2D.h"
 
+struct RankAndFile;
 class BitBoards;
 class Gui;
 
@@ -25,7 +26,11 @@ public:
     void draw(SDL_Renderer* renderTarget) override;
 
     bool isDrawn() const{ return bIsDrawn; };
-    void setIsDrawn(const bool value){ bIsDrawn = value; };
+    void setIsDrawn(const bool value){ bIsDrawn = value; }
+    void setHighlighted(const bool value){ isHiglighted = value; }
+    bool isHighlighted() const{ return isHiglighted; }
+
+    RankAndFile getRankFile() const;
 
 private:
 
@@ -33,7 +38,7 @@ private:
     int file;
     SDL_FRect rect_;
 
-
+    bool isHiglighted = false;
     bool bIsDrawn = true;
 };
 
@@ -42,11 +47,13 @@ class VisualBoard final : public DrawableEntity {
 public:
 
     ~VisualBoard() override;
-    void drawPieces(SDL_Renderer* renderer);
+    void drawPieces(SDL_Renderer* renderer) const;
 
     VisualBoard(const Vec2D& boardSizePixels, ChessGui* gui);
     VisualBoard(const Vec2D& boardSizePixels, ChessGui* gui, const Vec2D& parentOffset);
     void build_background(const Vec2D& square_size);
+    void highlight_square(RankAndFile rankAndFile);
+    void clear_highlights();
 
 
     virtual void draw(SDL_Renderer* renderer) override;

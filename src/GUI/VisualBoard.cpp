@@ -20,20 +20,22 @@ BoardSquare::BoardSquare(const bool isWhite_p, const int rank_p, const int file_
     : isWhite(isWhite_p),
       rank(rank_p),
       file(file_p),
-      rect_(rect){ renderInfo.color = isWhite ? SDL_Color(255, 242, 204, 255) : SDL_Color(71, 98, 90, 255); }
+      rect_(rect){ renderInfo.color = isWhite ? SDL_Color{255, 242, 204, 255} : SDL_Color{71, 98, 90, 255}; }
 
 void BoardSquare::draw(SDL_Renderer* renderTarget){
-    const SDL_Color& color = renderInfo.color;
+    const SDL_Color& color = isHighlighted() ? SDL_Color{210, 245, 127, 1} : renderInfo.color;
     SDL_SetRenderDrawColor(renderTarget, color.r, color.g, color.b, color.a);
     SDL_RenderFillRect(renderTarget, &rect_);
 }
+
+RankAndFile BoardSquare::getRankFile() const{ return {rank, file}; }
 
 VisualBoard::~VisualBoard(){
     while (!pieces_.empty()) { pieces_.pop_back(); }
     while (!squares_.empty()) { squares_.pop_back(); }
 }
 
-void VisualBoard::drawPieces(SDL_Renderer* renderer){
+void VisualBoard::drawPieces(SDL_Renderer* renderer) const{
     const auto& boards = parent_->getMatchManager()->getBitboards();
     for (int pieceIndex = 0; pieceIndex < PIECE_N; pieceIndex++) {
         auto board = boards->getBitboard(static_cast<Piece>(pieceIndex));
@@ -60,7 +62,9 @@ void VisualBoard::drawPieces(SDL_Renderer* renderer){
 VisualBoard::VisualBoard(const Vec2D& boardSizePixels, ChessGui* gui) : boardSize_(boardSizePixels),
                                                                         parent_(gui){
     // set the builder up
-    const auto square_size = Vec2D(boardSizePixels.x / 8.f, boardSizePixels.y / 8.f);
+    const auto square_size = Vec2D{
+                boardSizePixels.x / 8.f, boardSizePixels.y / 8.f
+            };
 
     build_background(square_size);
 
@@ -73,7 +77,7 @@ VisualBoard::VisualBoard(const Vec2D& boardSizePixels, ChessGui* gui,
                          const Vec2D& parentOffset) : boardSize_(boardSizePixels),
                                                       parent_(gui), parentOffset_(parentOffset){
     // set the builder up
-    const auto square_size = Vec2D(boardSizePixels.x / 8.f, boardSizePixels.y / 8.f);
+    const auto square_size = Vec2D{boardSizePixels.x / 8.f, boardSizePixels.y / 8.f};
 
     build_background(square_size);
 
@@ -101,6 +105,16 @@ void VisualBoard::build_background(const Vec2D& square_size){
         }
     }
 }
+
+void VisualBoard::highlight_square(RankAndFile rankAndFile){
+    auto highlightedSquare = std::ranges::find_if(squares_, [&](auto& square) {
+        return square.getRankFile().file + 1 == rankAndFile.file && square.getRankFile().rank + 1 == rankAndFile.rank;
+    });
+
+    highlightedSquare->setHighlighted(true);
+}
+
+void VisualBoard::clear_highlights(){ for (auto& square: squares_) { square.setHighlighted(false); } }
 
 void VisualBoard::draw(SDL_Renderer* renderer){
     // draw squares

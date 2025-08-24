@@ -62,7 +62,7 @@ public:
 
 private:
 
-    std::string source_path = "C:/Users/jacks/source/repos/Chess/pieces/pieces-basic-png/";
+    std::string source_path = "C:/Users/jacks/source/repos/Chess/resources/pieces/pieces-basic-png/";
     ChessGui* gui;
 };
 

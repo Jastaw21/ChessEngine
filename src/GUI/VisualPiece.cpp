@@ -99,7 +99,7 @@ std::vector<std::shared_ptr<VisualPiece> > VisualPieceBuilder::FromFEN(const std
             auto uniqueTexture = std::shared_ptr<SDL_Texture>(rawPieceTexture, SDL_DestroyTexture);
 
             // construct the piece
-            auto piece = std::make_shared < VisualPiece > (uniqueTexture, squareSize, concretePiece);
+            auto piece = std::make_shared<VisualPiece>(uniqueTexture, squareSize, concretePiece);
 
             // add it and move on
             pieces.push_back(piece);
@@ -129,7 +129,7 @@ std::vector<std::shared_ptr<VisualPiece> > VisualPieceBuilder::buildInstances(){
         auto uniqueTexture = std::shared_ptr<SDL_Texture>(rawPieceTexture, SDL_DestroyTexture);
 
         // construct the piece
-        auto visualPiece = std::make_shared < VisualPiece > (uniqueTexture, squareSize, concretePiece);
+        auto visualPiece = std::make_shared<VisualPiece>(uniqueTexture, squareSize, concretePiece);
 
         // add it and move on
         pieces.push_back(visualPiece);
