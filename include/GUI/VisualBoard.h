@@ -47,7 +47,7 @@ class VisualBoard final : public DrawableEntity {
 public:
 
     ~VisualBoard() override;
-    void drawPieces(SDL_Renderer* renderer) const;
+    void drawPieces(SDL_Renderer* renderer);
 
     VisualBoard(const Vec2D& boardSizePixels, ChessGui* gui);
     VisualBoard(const Vec2D& boardSizePixels, ChessGui* gui, const Vec2D& parentOffset);
@@ -61,26 +61,18 @@ public:
     Vec2D squareSize() const;
     [[nodiscard]] const Vec2D &boardSize() const{ return boardSize_; }
 
-    void updatePieceLocation(Piece piece, size_t index);
-
-    bool board_dirty() const{ return boardDirty; }
-    void set_board_dirty(const bool board_dirty){ boardDirty = board_dirty; }
-
 private:
 
     std::vector<BoardSquare> squares_;
     std::vector<std::shared_ptr<VisualPiece> > pieces_{};
 
-    void updatePieceLocations();
+
     Vec2D boardSize_;
 
     ChessGui* parent_;
     Vec2D parentOffset_;
 
-    bool boardDirty = true;
-
-    std::optional<std::shared_ptr<VisualPiece> > getFirstPieceOfType(Piece piece_) const;
-    std::unordered_map<Piece, VisualPiece> pieceInstances;
+    VisualPieceSet pieceSet_;
 };
 
 

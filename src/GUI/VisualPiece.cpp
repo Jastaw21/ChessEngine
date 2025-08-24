@@ -25,10 +25,10 @@ inline constexpr auto SRC_RECT_128_128 = SDL_FRect{0, 0, 128, 128};
 
 
 VisualPiece::VisualPiece(std::shared_ptr<SDL_Texture> texture,
-                         const Vec2D& squareSize
+                         const Vec2D& squareSize, Piece piece
 )
 
-    : texture_(std::move(texture)), squareSize_(squareSize){}
+    : texture_(std::move(texture)), squareSize_(squareSize), piece_(piece){}
 
 VisualPiece::~VisualPiece(){
     SDL_DestroyTexture(texture_.get());
@@ -42,43 +42,15 @@ void VisualPiece::draw(SDL_Renderer* renderer, const SDL_FRect& destRect) const{
 }
 
 
-VisualPieceBuilder::VisualPieceBuilder(const Vec2D& squareSize, ChessGui* gui) : squareSize(squareSize), gui(gui){}
+const std::shared_ptr<VisualPiece> &VisualPieceSet::operator[](Piece pieceToGet){
+    const auto result = std::ranges::find_if(pieces_, [&](auto& visualPiece) {
+        return visualPiece->piece() == pieceToGet;
+    });
 
-
-std::vector<std::shared_ptr<VisualPiece> > VisualPieceBuilder::buildInstances(){
-    // builds a unique set of the pieces we might need to draw
-    std::vector<std::shared_ptr<VisualPiece> > pieces;
-    for (int piece = 0; piece < PIECE_N; piece++) {
-        const auto pieceType = static_cast<Piece>(piece);
-
-        const bool isWhite = pieceColours[pieceType] == WHITE;
-        char fenStyleString = tolower(reversePieceMap.at(pieceType));
-        // where is the piece saved?
-        std::string path = source_path +
-                           (isWhite ? "white" : "black") +
-                           pieceFileSuffixes.at(fenStyleString);
-
-        // load the texture and make a pointer of it
-        SDL_Texture* rawPieceTexture = IMG_LoadTexture(gui->getRenderer(), path.c_str());
-        auto uniqueTexture = std::shared_ptr<SDL_Texture>(rawPieceTexture, SDL_DestroyTexture);
-
-        // construct the piece
-        auto visualPiece = std::make_shared<VisualPiece>(uniqueTexture, squareSize);
-
-        // add it and move on
-        pieces.push_back(visualPiece);
-    }
-
-    return pieces;
+    return *result;
 }
 
-VisualPieceSet::VisualPieceSet(const Vec2D& squareSize, ChessGui* gui){
-    gui_ = gui;
-    squareSize_ = squareSize;
-    buildPieces();
-}
-
-void VisualPieceSet::buildPieces(){
+void VisualPieceSet::buildPieces(Vec2D squareSize, ChessGui* gui){
     for (int piece = 0; piece < PIECE_N; piece++) {
         const auto pieceType = static_cast<Piece>(piece);
 
@@ -92,13 +64,14 @@ void VisualPieceSet::buildPieces(){
                            pieceFileSuffixes.at(fenStyleString);
 
         // load the texture and make a pointer of it
-        SDL_Texture* rawPieceTexture = IMG_LoadTexture(gui_->getRenderer(), path.c_str());
+        SDL_Texture* rawPieceTexture = IMG_LoadTexture(gui->getRenderer(), path.c_str());
         auto uniqueTexture = std::shared_ptr<SDL_Texture>(rawPieceTexture, SDL_DestroyTexture);
 
         // construct the piece
-        auto visualPiece = std::make_shared<VisualPiece>(uniqueTexture, squareSize_);
+        auto visualPiece = std::make_shared<VisualPiece>(uniqueTexture, squareSize, pieceType);
 
         // add it and move on
         pieces_.push_back(visualPiece);
     }
 }
+

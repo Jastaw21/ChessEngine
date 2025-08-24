@@ -4,9 +4,6 @@
 
 
 #include "GUI/VisualBoard.h"
-
-#include <bitset>
-
 #include "BoardManager/BitBoards.h"
 #include "GUI/gui.h"
 #include "GUI/VisualPiece.h"
@@ -35,8 +32,8 @@ VisualBoard::~VisualBoard(){
     while (!squares_.empty()) { squares_.pop_back(); }
 }
 
-void VisualBoard::drawPieces(SDL_Renderer* renderer) const{
-    // uses the managers bitboards as the source of truth.
+void VisualBoard::drawPieces(SDL_Renderer* renderer){
+    // uses the manager's bitboards as the source of truth.
     const auto& boards = parent_->getMatchManager()->getBitboards();
     for (int pieceIndex = 0; pieceIndex < PIECE_N; pieceIndex++) {
         auto board = boards->getBitboard(static_cast<Piece>(pieceIndex));
@@ -55,7 +52,7 @@ void VisualBoard::drawPieces(SDL_Renderer* renderer) const{
                     };
 
             const auto offsetRect = addOffset(destRect, parentOffset_);
-            pieces_[pieceIndex]->draw(renderer, offsetRect);
+            pieceSet_[static_cast<Piece>(pieceIndex)]->draw(renderer, offsetRect);
         }
     }
 }
@@ -68,10 +65,7 @@ VisualBoard::VisualBoard(const Vec2D& boardSizePixels, ChessGui* gui) : boardSiz
             };
 
     buildBackground(square_size);
-
-    auto builder = VisualPieceBuilder(square_size, gui);
-    const auto created_pieces = builder.buildInstances();
-    for (auto& piece: created_pieces) { pieces_.push_back(piece); }
+    pieceSet_.buildPieces(square_size, gui);
 }
 
 VisualBoard::VisualBoard(const Vec2D& boardSizePixels, ChessGui* gui,
@@ -81,10 +75,7 @@ VisualBoard::VisualBoard(const Vec2D& boardSizePixels, ChessGui* gui,
     const auto square_size = Vec2D{boardSizePixels.x / 8.f, boardSizePixels.y / 8.f};
 
     buildBackground(square_size);
-
-    auto builder = VisualPieceBuilder(square_size, gui);
-    const auto created_pieces = builder.buildInstances();
-    for (auto& piece: created_pieces) { pieces_.push_back(piece); }
+    pieceSet_.buildPieces(square_size, gui);
 }
 
 void VisualBoard::buildBackground(const Vec2D& square_size){

@@ -11,9 +11,8 @@
 #include <SDL3/SDL.h>
 
 #include "DrawableEntity.h"
-#include "Engine/Piece.h"
-#include "Utility/Fen.h"
 #include "Utility/Vec2D.h"
+#include "Engine/Piece.h"
 
 class ChessGui;
 
@@ -22,62 +21,38 @@ class VisualPiece final : public DrawableEntity {
 public:
 
     ~VisualPiece() override;
-
-    [[nodiscard]] Piece &getPiece() const;
-
     VisualPiece(std::shared_ptr<SDL_Texture> texture,
-                const Vec2D& squareSize);
+                const Vec2D& squareSize, Piece piece);
     virtual void draw(SDL_Renderer* renderer) override{ return; }
 
     void draw(SDL_Renderer* renderer, const SDL_FRect& destRect) const;
 
     void setLatched(const bool latched){ isLatched_ = latched; }
     bool isLatched() const{ return isLatched_; }
+    [[nodiscard]] Piece piece() const{ return piece_; }
+    void set_piece(Piece piece){ piece_ = piece; }
 
 private:
 
     std::shared_ptr<SDL_Texture> texture_;
     Vec2D squareSize_{};
 
+    Piece piece_;
 
-    const Piece &getPieceType() const;
     bool isLatched_ = false;
-};
-
-
-class VisualPieceBuilder {
-public:
-
-    explicit VisualPieceBuilder(const Vec2D& squareSize, ChessGui* gui);
-
-    std::vector<std::shared_ptr<VisualPiece> > FromFEN(const std::string& FEN = Fen::STARTING_FEN);
-
-    Vec2D squareSize;
-
-    std::vector<std::shared_ptr<VisualPiece> > buildInstances();
-
-private:
-
-    std::string source_path = "C:/Users/jacks/source/repos/Chess/resources/pieces/pieces-basic-png/";
-    ChessGui* gui;
 };
 
 class VisualPieceSet {
 public:
 
-    explicit VisualPieceSet(const Vec2D& squareSize, ChessGui* gui_);
-    ~VisualPieceSet();
+    const std::shared_ptr<VisualPiece> &operator[](Piece pieceToGet);
+
+    void buildPieces(Vec2D squareSize, ChessGui* gui);
 
 private:
 
-    void buildPieces();
-
-
-    std::vector<std::shared_ptr<VisualPiece> > pieces_;
+    std::vector<std::shared_ptr<VisualPiece> > pieces_{};
     std::string source_path = "C:/Users/jacks/source/repos/Chess/resources/pieces/pieces-basic-png/";
-
-    ChessGui* gui_;
-    Vec2D squareSize_;
 };
 
 
