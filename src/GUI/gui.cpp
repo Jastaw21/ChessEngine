@@ -206,7 +206,8 @@ void ChessGui::addMouseClick(const int x, const int y){
     const auto clickedPiece = matchManager_->getBoardManager().getBitboards()->getPiece(
         rankAndFile.rank, rankAndFile.file);
 
-    if (!clickedPiece.has_value()) { return; }
+    if (!clickedPiece.has_value()) { return; } // no piece clicked
+    // wrong colour clicked
     if (pieceColours[clickedPiece.value()] != matchManager_->getBoardManager().getCurrentTurn()) { return; }
 
     clickedSquare = candidateClickedSquare;

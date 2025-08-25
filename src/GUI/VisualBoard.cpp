@@ -67,7 +67,8 @@ void VisualBoard::drawPieces(SDL_Renderer* renderer){
     // draw the held piece
     if (heldPieceType != PIECE_N) {
         const auto destRect = SDL_FRect{
-                    .x = heldPiecePosition_.x, .y = heldPiecePosition_.y, .w = squareSize().x, .h = squareSize().y
+                    .x = heldPiecePosition_.x - squareSize().x / 2, .y = heldPiecePosition_.y - squareSize().y / 2,
+                    .w = squareSize().x, .h = squareSize().y
                 };
         pieceSet_[heldPieceType]->draw(renderer, destRect);
     }
