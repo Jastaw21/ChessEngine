@@ -8,7 +8,6 @@ message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
 find_package(SDL3 REQUIRED CONFIG)
 find_package(SDL3_image REQUIRED CONFIG)
 
-
 # === Enable testing (GoogleTest still in tests/ folder) ===
 enable_testing()
 
@@ -46,6 +45,7 @@ add_library(
 )
 
 target_include_directories(chess_lib PUBLIC include)
+target_include_directories(chess_lib PUBLIC include/thirdparty)
 
 target_link_libraries(chess_lib
         PUBLIC

@@ -13,6 +13,7 @@
 #include "EngineShared/UCIParsing/UciParser.h"
 #include "Utility/Fen.h"
 
+class ChessGui;
 class CommunicatorBase;
 using MessageQueue = std::queue<std::string>;
 
@@ -51,6 +52,7 @@ public:
 private:
 
     void parseUCI(const std::string& uci);
+    void notifyGUIofMove(const Move& move);
 
     ChessPlayer* currentPlayer_ = nullptr;
     ChessPlayer* otherPlayer_ = nullptr;
@@ -60,6 +62,7 @@ private:
     ManagerCommandHandler commandHandler;
     BoardManager boardManager;
     CommunicatorBase* communicator_ = nullptr;
+    ChessGui* gui_ = nullptr;
 
     FenString startingFen_ = Fen::FULL_STARTING_FEN;
 
@@ -84,6 +87,8 @@ public:
     void setOtherPlayer(ChessPlayer* other_player){ otherPlayer_ = other_player; }
     BoardManager &getBoardManager(){ return boardManager; }
     BitBoards *getBitboards(){ return boardManager.getBitboards(); }
+    void setGUI(ChessGui* gui){ gui_ = gui; }
+    ChessGui *getGui(){ return gui_; }
 };
 
 

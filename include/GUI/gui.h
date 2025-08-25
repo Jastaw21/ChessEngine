@@ -23,10 +23,17 @@ inline std::unordered_map<SDL_Keycode, bool> modifiersSet = {
             {SDLK_LCTRL, false}, {SDLK_LSHIFT, false}, {SDLK_LALT, false}
         };
 
+
+struct Sound {
+    SDL_AudioSpec spec;
+    std::vector<float> data;
+};
+
 class ChessGui {
 public:
 
     explicit ChessGui(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer);
+    void intiGuiStuff();
     void initSDLStuff();
     void initChessStuff(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer);
     ChessGui();
@@ -44,6 +51,8 @@ public:
     void addMouseRelease(int x, int y);
 
     [[nodiscard]] int clicked_square(){ return clickedSquare; }
+
+    void recieveInfoOfEngineMove(Move move);
 
 private:
 
@@ -77,6 +86,12 @@ private:
     std::shared_ptr<GoodEvaluator> evaluator_;
 
     bool bMouseHeld = false;
+
+    SDL_AudioDeviceID audioID;
+    Sound movePiecesSound;
+    Sound captureSound;
+    Sound checkmateSound;
+    void playSound(Sound& sound);
 };
 
 

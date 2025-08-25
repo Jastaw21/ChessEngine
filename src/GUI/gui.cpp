@@ -8,7 +8,38 @@
 #include "GUI/DrawableEntity.h"
 #include "GUI/VisualBoard.h"
 
+#define MINIMP3_IMPLEMENTATION
+#include "minimp3.h"
+#include "minimp3_ex.h"
+
 constexpr int deltaTime = 16;
+
+
+Sound buildAudioStream(const std::string& path){
+    Sound sound;
+    mp3dec_t mp3dec;
+    mp3dec_file_info_t info;
+    mp3dec_load(&mp3dec, path.c_str(),
+                &info,
+                NULL, NULL);
+
+    std::vector<float> float_samples(info.samples);
+    for (size_t i = 0; i < info.samples; i++) {
+        float_samples[i] = info.buffer[i] / 32768.0f; // Convert int16 to float
+    }
+
+    free(info.buffer);
+
+    SDL_AudioSpec sourceSpec;
+    sourceSpec.format = SDL_AUDIO_F32;
+    sourceSpec.channels = info.channels;
+    sourceSpec.freq = info.hz;
+
+    sound.spec = sourceSpec;
+    sound.data = float_samples;
+
+    return sound;
+}
 
 
 ChessGui::ChessGui(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer){
@@ -16,22 +47,35 @@ ChessGui::ChessGui(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer){
     initChessStuff(whitePlayer, blackPlayer);
 }
 
-void ChessGui::initSDLStuff(){
-    window = SDL_CreateWindow("Chess", 800, 900, 0);
-    renderer = SDL_CreateRenderer(window, nullptr);
-    running = true;
-
+void ChessGui::intiGuiStuff(){
     visualBoard = std::make_shared<VisualBoard>(Vec2D{800, 800}, this, Vec2D{0, 20});
     registerEntity(visualBoard);
 
     evaluationBar_ = std::make_shared<EvaluationBar>(Vec2D{0, 0}, Vec2D{800, 20});
     registerEntity(evaluationBar_);
+}
+
+void ChessGui::initSDLStuff(){
+    window = SDL_CreateWindow("Chess", 800, 900, 0);
+    renderer = SDL_CreateRenderer(window, nullptr);
+    running = true;
+
+    intiGuiStuff();
 
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO);
+
+    SDL_AudioSpec spec;
+    spec.format = SDL_AUDIO_F32;
+    spec.channels = 2;
+    spec.freq = 44100;
+    audioID = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec);
+    movePiecesSound = buildAudioStream("C:/Users/jacks/source/repos/Chess/resources/sounds/move-self.mp3");
+    captureSound = buildAudioStream("C:/Users/jacks/source/repos/Chess/resources/sounds/capture.mp3");
 }
 
 void ChessGui::initChessStuff(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer){
     matchManager_ = std::make_shared<MatchManager>(whitePlayer, blackPlayer);
+    matchManager_->setGUI(this);
     evaluator_ = std::make_shared<GoodEvaluator>(&matchManager_.get()->getBoardManager());
 }
 
@@ -153,6 +197,21 @@ void ChessGui::handleKeyUp(const SDL_Keycode key){
     }
 }
 
+void ChessGui::playSound(Sound& sound){
+    SDL_AudioSpec targetSpec = {
+                .format = SDL_AUDIO_F32,
+                .channels = 2,
+                .freq = sound.spec.freq
+            };
+
+    SDL_AudioStream* stream = SDL_CreateAudioStream(&sound.spec, &targetSpec);
+    SDL_BindAudioStream(audioID, stream);
+
+    SDL_PutAudioStreamData(stream, sound.data.data(), sound.data.size() * sizeof(sound.data[0]));
+
+    SDL_FlushAudioStream(stream);
+}
+
 void ChessGui::handleMouseDown(const Uint8 button){
     if (matchManager_->currentPlayer()->playerType != HUMAN) { return; }
 
@@ -211,7 +270,7 @@ void ChessGui::addMouseClick(const int x, const int y){
     if (pieceColours[clickedPiece.value()] != matchManager_->getBoardManager().getCurrentTurn()) { return; }
 
     clickedSquare = candidateClickedSquare;
-    visualBoard->highlightSquare(rankAndFile);
+    visualBoard->highlightSquare(rankAndFile, HighlightType::RECENT_MOVE);
     visualBoard->pickUpPiece(rankAndFile, clickedPiece.value());
 }
 
@@ -239,11 +298,22 @@ void ChessGui::addMouseRelease(const int x, const int y){
     // move isn't valid
     if (!matchManager_->getBoardManager().checkMove(candidateMove)) {
         visualBoard->clearHighlights();
+        visualBoard->highlightSquare(rankAndFile, HighlightType::INVALID_MOVE);
         clickedSquare = -1;
         return;
     }
+
     const auto humanPlayer = static_cast<HumanPlayer *>(matchManager_->currentPlayer());
     humanPlayer->addMessage("bestmove " + candidateMove.toUCI());
-    visualBoard->highlightSquare(rankAndFile);
+    visualBoard->highlightSquare(rankAndFile, HighlightType::RECENT_MOVE);
     visualBoard->dropPiece();
+}
+
+void ChessGui::recieveInfoOfEngineMove(Move move){
+    visualBoard->clearHighlights();
+    visualBoard->highlightSquare({move.rankFrom, move.fileFrom}, HighlightType::RECENT_MOVE);
+    visualBoard->highlightSquare({move.rankTo, move.fileTo}, HighlightType::RECENT_MOVE);
+
+    if (move.resultBits & MoveResult::CAPTURE) { playSound(captureSound); } else if (
+        move.resultBits & MoveResult::PUSH) { playSound(movePiecesSound); }
 }

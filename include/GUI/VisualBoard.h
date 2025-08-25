@@ -14,6 +14,13 @@ struct RankAndFile;
 class BitBoards;
 class Gui;
 
+enum class HighlightType {
+    NONE,
+    RECENT_MOVE,
+    INVALID_MOVE,
+    POSSIBLE_SQUARE
+};
+
 class BoardSquare final : public DrawableEntity {
 public:
 
@@ -27,6 +34,8 @@ public:
     void setIsDrawn(const bool value){ bIsDrawn = value; }
     void setHighlighted(const bool value){ isHiglighted = value; }
     bool isHighlighted() const{ return isHiglighted; }
+    HighlightType getHighlightType() const{ return highlightType; }
+    void setHighlightType(const HighlightType value){ highlightType = value; }
 
     RankAndFile getRankFile() const;
 
@@ -37,6 +46,7 @@ private:
     SDL_FRect rect_;
 
     bool isHiglighted = false;
+    HighlightType highlightType = HighlightType::NONE;
     bool bIsDrawn = true;
 };
 
@@ -51,6 +61,7 @@ public:
     VisualBoard(const Vec2D& boardSizePixels, ChessGui* gui, const Vec2D& parentOffset);
     void buildBackground(const Vec2D& square_size);
     void highlightSquare(RankAndFile rankAndFile);
+    void highlightSquare(RankAndFile rankAndFile, HighlightType highlightType);
     void clearHighlights();
     void pickUpPiece(const RankAndFile& rankAndFile);
     void pickUpPiece(const RankAndFile& rankAndFile, const Piece& pieceHeld);

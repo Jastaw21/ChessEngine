@@ -13,3 +13,5 @@ resources/pieces/
 /sounds/
 /pieces/
 /resources/
+/include/thirdparty/minimp3.h
+/include/thirdparty/minimp3_ex.h

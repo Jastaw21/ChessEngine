@@ -20,8 +20,23 @@ BoardSquare::BoardSquare(const bool isWhite_p, const int rank_p, const int file_
       rect_(rect){ renderInfo.color = isWhite ? SDL_Color{255, 242, 204, 255} : SDL_Color{71, 98, 90, 255}; }
 
 void BoardSquare::draw(SDL_Renderer* renderTarget){
-    const SDL_Color& color = isHighlighted() ? SDL_Color{210, 245, 127, 1} : renderInfo.color;
-    SDL_SetRenderDrawColor(renderTarget, color.r, color.g, color.b, color.a);
+    SDL_Color colour;
+
+    switch (highlightType) {
+        case HighlightType::NONE:
+            colour = renderInfo.color;
+            break;
+        case HighlightType::INVALID_MOVE:
+            colour = SDL_Color{255, 77, 77, 1};
+            break;
+        case HighlightType::RECENT_MOVE:
+            colour = SDL_Color{210, 245, 127, 1};
+            break;
+        default:
+            colour = renderInfo.color;
+            break;
+    }
+    SDL_SetRenderDrawColor(renderTarget, colour.r, colour.g, colour.b, colour.a);
     SDL_RenderFillRect(renderTarget, &rect_);
 }
 
@@ -123,7 +138,15 @@ void VisualBoard::highlightSquare(RankAndFile rankAndFile){
     highlightedSquare->setHighlighted(true);
 }
 
-void VisualBoard::clearHighlights(){ for (auto& square: squares_) { square.setHighlighted(false); } }
+void VisualBoard::highlightSquare(RankAndFile rankAndFile, HighlightType highlightType){
+    auto highlightedSquare = std::ranges::find_if(squares_, [&](auto& square) {
+        return square.getRankFile().file + 1 == rankAndFile.file && square.getRankFile().rank + 1 == rankAndFile.rank;
+    });
+
+    highlightedSquare->setHighlightType(highlightType);
+}
+
+void VisualBoard::clearHighlights(){ for (auto& square: squares_) { square.setHighlightType(HighlightType::NONE); } }
 
 
 void VisualBoard::pickUpPiece(const RankAndFile& rankAndFile){ heldPieceOrigin_ = rankAndFile; }
@@ -150,7 +173,3 @@ Vec2D VisualBoard::squareSize() const{
     const Vec2D local_size = boardSize_ / 8.f;
     return local_size;
 }
-
-
-
-

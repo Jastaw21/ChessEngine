@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <fstream>
 #include "EngineShared/CommunicatorBase.h"
+#include "GUI/gui.h"
 
 MatchManager::MatchManager(ChessPlayer* startingPlayer, ChessPlayer* otherPlayer){
     currentPlayer_ = startingPlayer;
@@ -63,6 +64,8 @@ void MatchManager::parseUCI(const std::string& uci){
     auto visitor = [this](const auto& cmd) { this->commandHandler(cmd, this); };
     std::visit(visitor, *command);
 }
+
+void MatchManager::notifyGUIofMove(const Move& move){}
 
 void MatchManager::restartGame(){
     dumpGameLog();

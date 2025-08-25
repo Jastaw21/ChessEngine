@@ -7,6 +7,7 @@
 #include "MatchManager/MatchManager.h"
 #include "Engine/EngineBase.h"
 #include "EngineShared/CommunicatorBase.h"
+#include "GUI/gui.h"
 
 
 void ManagerCommandHandler::generateFullPositionCommand(MatchManager* matchManager, std::string& fullPositionCommand){
@@ -79,6 +80,10 @@ void ManagerCommandHandler::operator()(const BestMoveCommand& cmd, MatchManager*
     // generate the command with move history from our internal state
     std::string fullPositionCommand;
     generateFullPositionCommand(matchManager, fullPositionCommand);
+
+    if (matchManager->currentPlayer()->playerType != HUMAN) {
+        matchManager->getGui()->recieveInfoOfEngineMove(matchManager->getMoveHistory().top());
+    }
 
     // we've done receiving from the current player and need to swap to forward the command
     matchManager->swapPlayers();
