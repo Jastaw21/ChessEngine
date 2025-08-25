@@ -6,6 +6,7 @@
 #include <SDL3/SDL.h>
 
 #include "EvaluationBar.h"
+#include "PromotionPiecePicker.h"
 
 #include "BoardManager/BoardManager.h"
 #include "MatchManager/MatchManager.h"
@@ -33,7 +34,7 @@ class ChessGui {
 public:
 
     explicit ChessGui(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer);
-    void intiGuiStuff();
+    void initGuiStuff();
     void initSDLStuff();
     void initChessStuff(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer);
     ChessGui();
@@ -52,7 +53,7 @@ public:
 
     [[nodiscard]] int clicked_square(){ return clickedSquare; }
 
-    void recieveInfoOfEngineMove(Move move);
+    void receiveInfoOfEngineMove(const Move& move) const;
 
 private:
 
@@ -64,9 +65,12 @@ private:
     // drawing
     SDL_Window* window;
     SDL_Renderer* renderer;
+
+    // visuals
     std::vector<std::shared_ptr<DrawableEntity> > drawables;
     std::shared_ptr<VisualBoard> visualBoard;
     std::shared_ptr<EvaluationBar> evaluationBar_;
+    std::shared_ptr<PromotionPiecePicker> picker_;
 
     // chess game
     std::shared_ptr<MatchManager> matchManager_;
@@ -91,7 +95,14 @@ private:
     Sound movePiecesSound;
     Sound captureSound;
     Sound checkmateSound;
-    void playSound(Sound& sound);
+    Sound illegalSound;
+    Sound clickSound;
+    void playSound(const Sound& sound) const;
+
+    Move outboundMove;
+    bool outboundMoveIsReady = false;
+    void completeMove();
+    void beginMove(const RankAndFile rankAndFile, const Piece candidatePiece);
 };
 
 

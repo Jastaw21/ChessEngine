@@ -67,7 +67,7 @@ public:
     void pickUpPiece(const RankAndFile& rankAndFile, const Piece& pieceHeld);
     void dropPiece();
     void updateHeldPieceLocation(const Vec2D mousePos){ heldPiecePosition_ = mousePos; };
-
+    VisualPieceSet &getPieceSet(){ return pieceSet_; }
 
     virtual void draw(SDL_Renderer* renderer) override;
 

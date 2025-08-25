@@ -4,13 +4,15 @@
 
 #ifndef CHESS_EVALUATIONBAR_H
 #define CHESS_EVALUATIONBAR_H
+
 #include "DrawableEntity.h"
 
+struct TTF_Font;
 
 class EvaluationBar : public DrawableEntity {
 public:
 
-    EvaluationBar(const Vec2D& pos, const Vec2D& size);
+    EvaluationBar(const Vec2D& pos, const Vec2D& size, TTF_Font* font);
     virtual void draw(SDL_Renderer* renderer) override;
 
 private:
@@ -23,6 +25,8 @@ public:
 
     float get_evaluation() const{ return evaluation_; }
     void set_evaluation(const float evaluation){ this->evaluation_ = evaluation; }
+
+    TTF_Font* font_ = nullptr;
 };
 
 

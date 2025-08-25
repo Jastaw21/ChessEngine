@@ -12,7 +12,7 @@ void runGame(){
     blackPlayer.setEvaluator(std::make_shared<GoodEvaluator>(blackPlayer.boardManager()));
 
     auto gui = ChessGui(&whitePlayer, &blackPlayer);
-    gui.getMatchManager()->getBitboards()->setFenPositionOnly(Fen::STARTING_FEN);
+    gui.getMatchManager()->setStartingFen("8/P6r/7b/8/8/8/6Q1/5B2 w - - 0 1");
     gui.loop();
 }
 

@@ -85,18 +85,17 @@ GoodEvaluator::GoodEvaluator(BoardManager* manager) : EvaluatorBase(manager){
 
 float GoodEvaluator::evaluate(){
     auto score = materialScore() + pieceSquareScore();
-    const auto result = boardManager_->getGameResult();
-    bool wasCheckmate = result & GameResult::CHECKMATE;
 
-    if (boardManager_->getMoveHistory().size() > 0 && boardManager_->getMoveHistory().top().resultBits &
+    const auto gameResult = boardManager_->getGameResult();
+    bool wasCheckmate = gameResult & GameResult::CHECKMATE;
+
+    if (!boardManager_->getMoveHistory().empty() && boardManager_->getMoveHistory().top().resultBits &
         MoveResult::CHECK_MATE) { wasCheckmate = true; }
 
-    if (wasCheckmate) {
-        // std::cout << "Checkmate" << std::endl;
-        return -INFINITY;
-    }
+    if (wasCheckmate) { return -INFINITY; }
 
-    return score;
+    // centipawns
+    return score / (pieceValues[WP] / 100.f);
 }
 
 float GoodEvaluator::kingSafety(){ return EvaluatorBase::kingSafety(); }
@@ -151,13 +150,10 @@ float BadEvaluator::evaluate(){
     const auto result = boardManager_->getGameResult();
     bool wasCheckmate = result & GameResult::CHECKMATE;
 
-    if (boardManager_->getMoveHistory().size() > 0 && boardManager_->getMoveHistory().top().resultBits &
+    if (!boardManager_->getMoveHistory().empty() && boardManager_->getMoveHistory().top().resultBits &
         MoveResult::CHECK_MATE) { wasCheckmate = true; }
 
-    if (wasCheckmate) {
-        // std::cout << "Checkmate" << std::endl;
-        return -INFINITY;
-    }
+    if (wasCheckmate) { return -INFINITY; }
 
     return 0;
 }

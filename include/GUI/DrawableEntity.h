@@ -43,7 +43,7 @@ protected:
 
 public:
 
-    [[nodiscard]] Vec2D get_parent_offset() const{ return parentOffset_; }
+    [[nodiscard]] Vec2D getParentOffset() const{ return parentOffset_; }
     void set_parent_offset(const Vec2D& parent_offset){ parentOffset_ = parent_offset; }
 };
 

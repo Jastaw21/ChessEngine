@@ -82,7 +82,7 @@ void ManagerCommandHandler::operator()(const BestMoveCommand& cmd, MatchManager*
     generateFullPositionCommand(matchManager, fullPositionCommand);
 
     if (matchManager->currentPlayer()->playerType != HUMAN) {
-        matchManager->getGui()->recieveInfoOfEngineMove(matchManager->getMoveHistory().top());
+        matchManager->getGui()->receiveInfoOfEngineMove(matchManager->getMoveHistory().top());
     }
 
     // we've done receiving from the current player and need to swap to forward the command

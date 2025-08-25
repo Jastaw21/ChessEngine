@@ -7,6 +7,8 @@ message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
 # === Use SDL3, SDL3_image, SDL3_ttf from vcpkg ===
 find_package(SDL3 REQUIRED CONFIG)
 find_package(SDL3_image REQUIRED CONFIG)
+find_package(sdl3_ttf REQUIRED CONFIG)
+
 
 # === Enable testing (GoogleTest still in tests/ folder) ===
 enable_testing()
@@ -36,12 +38,14 @@ add_library(
         src/EngineShared/StandaloneEngineWrapper.cpp
         src/CLIEngine/StandaloneUciPlayer.cpp
         src/Engine/Evaluation.cpp
-        include/GUI/EvaluationBar.cpp
+        src/GUI/EvaluationBar.cpp
         src/EngineShared/CommandHandlerBase.cpp
         src/EngineShared/UCIParsing/UciParser.cpp
         src/EngineShared/UCIParsing/Tokeniser.cpp
         src/EngineShared/CommunicatorBase.cpp
         src/EngineShared/ZobristHash.cpp
+        src/GUI/PromotionPiecePicker.cpp
+        include/GUI/PromotionPiecePicker.h
 )
 
 target_include_directories(chess_lib PUBLIC include)
@@ -51,7 +55,7 @@ target_link_libraries(chess_lib
         PUBLIC
         SDL3::SDL3
         SDL3_image::SDL3_image
-
+        SDL3_ttf::SDL3_ttf
 )
 
 # === Main GUI Application ===
@@ -82,3 +86,8 @@ target_include_directories(GenerateMagicNumbers PRIVATE include)
 add_executable(StandaloneEngine src/CLIEngine/CLIEngine.cpp)
 target_link_libraries(StandaloneEngine chess_lib)
 target_include_directories(StandaloneEngine PRIVATE include)
+
+
+set(RESOURCE_DIR_VAR "${CMAKE_CURRENT_SOURCE_DIR}/resources")
+add_compile_definitions(RESOURCE_DIR=\"${RESOURCE_DIR_VAR}\")
+

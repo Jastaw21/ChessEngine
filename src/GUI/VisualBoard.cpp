@@ -131,7 +131,7 @@ void VisualBoard::buildBackground(const Vec2D& square_size){
 }
 
 void VisualBoard::highlightSquare(RankAndFile rankAndFile){
-    auto highlightedSquare = std::ranges::find_if(squares_, [&](auto& square) {
+    const auto highlightedSquare = std::ranges::find_if(squares_, [&](auto& square) {
         return square.getRankFile().file + 1 == rankAndFile.file && square.getRankFile().rank + 1 == rankAndFile.rank;
     });
 
@@ -139,7 +139,7 @@ void VisualBoard::highlightSquare(RankAndFile rankAndFile){
 }
 
 void VisualBoard::highlightSquare(RankAndFile rankAndFile, HighlightType highlightType){
-    auto highlightedSquare = std::ranges::find_if(squares_, [&](auto& square) {
+    const auto highlightedSquare = std::ranges::find_if(squares_, [&](auto& square) {
         return square.getRankFile().file + 1 == rankAndFile.file && square.getRankFile().rank + 1 == rankAndFile.rank;
     });
 

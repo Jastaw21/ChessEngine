@@ -86,12 +86,18 @@ TokenType Tokeniser::getUnknownTokenType(const std::string& token){
 }
 
 bool Tokeniser::isMove(const std::string& token){
-
     if (token.size() < 4)
         return false;
     bool isMove = false;
 
-    if (token.size() == 4) { isMove = true; }
+    if (token.size() == 4 || token.size() == 5) { isMove = true; }
+
+    if (token.size() == 5) {
+        char fifth = token[4];
+        if (fifth != 'Q' && fifth != 'q' && fifth != 'N' && fifth != 'n' && fifth != 'B' && fifth != 'b'
+            && fifth != 'R' && fifth != 'r'
+        ) { return false; }
+    }
     // should be alpha, digit, alpha, digit
     if (!std::isalpha(token[0]) || !std::isalpha(token[2]) || !std::isdigit(token[1]) || !std::isdigit(token[3]))
         isMove = false;
@@ -108,9 +114,10 @@ bool Tokeniser::isPosition(const std::string& token){
 }
 
 
-bool Tokeniser::isIntLiteral(const std::string& token) {
-    return std::ranges::all_of(token, [](char c){ return std::isdigit(static_cast<unsigned char>(c)); });
+bool Tokeniser::isIntLiteral(const std::string& token){
+    return std::ranges::all_of(token, [](char c) { return std::isdigit(static_cast<unsigned char>(c)); });
 }
-bool Tokeniser::isStringLiteral(const std::string& token) {
-    return std::ranges::all_of(token, [](char c){ return std::isalpha(static_cast<unsigned char>(c)); });
+
+bool Tokeniser::isStringLiteral(const std::string& token){
+    return std::ranges::all_of(token, [](char c) { return std::isalpha(static_cast<unsigned char>(c)); });
 }
