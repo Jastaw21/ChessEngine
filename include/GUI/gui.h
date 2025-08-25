@@ -75,6 +75,8 @@ private:
     int clickedSquare = -1;
 
     std::shared_ptr<GoodEvaluator> evaluator_;
+
+    bool bMouseHeld = false;
 };
 
 

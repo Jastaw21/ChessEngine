@@ -21,10 +21,10 @@ void ChessGui::initSDLStuff(){
     renderer = SDL_CreateRenderer(window, nullptr);
     running = true;
 
-    visualBoard = std::make_shared<VisualBoard>(Vec2D{800, 800}, this, Vec2D(0, 20));
+    visualBoard = std::make_shared<VisualBoard>(Vec2D{800, 800}, this, Vec2D{0, 20});
     registerEntity(visualBoard);
 
-    evaluationBar_ = std::make_shared<EvaluationBar>(Vec2D(0, 0), Vec2D(800, 20));
+    evaluationBar_ = std::make_shared<EvaluationBar>(Vec2D{0, 0}, Vec2D{800, 20});
     registerEntity(evaluationBar_);
 
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO);
@@ -56,6 +56,12 @@ void ChessGui::updateGame(const int deltaTime_){
     if (runningTime >= 100) {
         matchManager_->tick();
         runningTime = 0;
+    }
+
+    if (bMouseHeld) {
+        float mouseX, mouseY;
+        SDL_GetMouseState(&mouseX, &mouseY);
+        visualBoard->updateHeldPieceLocation(Vec2D{mouseX, mouseY});
     }
 }
 
@@ -155,6 +161,8 @@ void ChessGui::handleMouseDown(const Uint8 button){
             float x, y;
             SDL_GetMouseState(&x, &y);
             addMouseClick(x, y);
+            bMouseHeld = true;
+            break;
         }
         default:
             break;
@@ -168,6 +176,7 @@ void ChessGui::handleMouseUp(const Uint8 button){
             float y;
             SDL_GetMouseState(&x, &y);
             addMouseRelease(x, y);
+            bMouseHeld = false;
             break;
         }
         default:
@@ -201,12 +210,14 @@ void ChessGui::addMouseClick(const int x, const int y){
     if (pieceColours[clickedPiece.value()] != matchManager_->getBoardManager().getCurrentTurn()) { return; }
 
     clickedSquare = candidateClickedSquare;
-
     visualBoard->highlightSquare(rankAndFile);
+    visualBoard->pickUpPiece(rankAndFile, clickedPiece.value());
 }
 
 void ChessGui::addMouseRelease(const int x, const int y){
     if (matchManager_->currentPlayer()->playerType != HUMAN) { return; }
+
+    if (bMouseHeld) { visualBoard->dropPiece(); }
 
     // where did we click?
     const auto rankAndFile = getRankAndFile(x, y);
@@ -233,4 +244,5 @@ void ChessGui::addMouseRelease(const int x, const int y){
     const auto humanPlayer = static_cast<HumanPlayer *>(matchManager_->currentPlayer());
     humanPlayer->addMessage("bestmove " + candidateMove.toUCI());
     visualBoard->highlightSquare(rankAndFile);
+    visualBoard->dropPiece();
 }

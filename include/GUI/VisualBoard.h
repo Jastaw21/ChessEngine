@@ -6,8 +6,6 @@
 #define BOARDBACKGROUND_H
 
 #include <memory>
-#include <optional>
-
 #include "DrawableEntity.h"
 #include "VisualPiece.h"
 #include "Utility/Vec2D.h"
@@ -54,6 +52,10 @@ public:
     void buildBackground(const Vec2D& square_size);
     void highlightSquare(RankAndFile rankAndFile);
     void clearHighlights();
+    void pickUpPiece(const RankAndFile& rankAndFile);
+    void pickUpPiece(const RankAndFile& rankAndFile, const Piece& pieceHeld);
+    void dropPiece();
+    void updateHeldPieceLocation(const Vec2D mousePos){ heldPiecePosition_ = mousePos; };
 
 
     virtual void draw(SDL_Renderer* renderer) override;
@@ -73,6 +75,10 @@ private:
     Vec2D parentOffset_;
 
     VisualPieceSet pieceSet_;
+
+    RankAndFile heldPieceOrigin_{};
+    Piece heldPieceType = PIECE_N;
+    Vec2D heldPiecePosition_{};
 };
 
 

@@ -13,19 +13,18 @@
 
 #include "Engine/Piece.h"
 #include "Utility/Fen.h"
+#include "Utility/Vec2D.h"
 
 typedef uint64_t Bitboard;
 
 struct Move;
 
-struct RankAndFile {
-    int rank;
-    int file;
-};
 
 int rankAndFileToSquare(int rank, int file);
 
 void squareToRankAndFile(int square, int& rank, int& file);
+
+RankAndFile squareToRankAndFileStruct(const int square);
 
 int squareToFile(int square);
 

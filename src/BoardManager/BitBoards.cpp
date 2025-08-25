@@ -5,7 +5,6 @@
 #include "BoardManager/BitBoards.h"
 
 #include <algorithm>
-#include <bitset>
 #include <iostream>
 #include <numeric>
 
@@ -29,6 +28,12 @@ int rankAndFileToSquare(const int rank, const int file){
 void squareToRankAndFile(const int square, int& rank, int& file){
     file = square % 8 + 1;
     rank = square / 8 + 1;
+}
+
+RankAndFile squareToRankAndFileStruct(const int square){
+    RankAndFile result;
+    squareToRankAndFile(square, result.rank, result.file);
+    return result;
 }
 
 int squareToFile(const int square){ return square % 8 + 1; }

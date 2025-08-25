@@ -35,25 +35,41 @@ VisualBoard::~VisualBoard(){
 void VisualBoard::drawPieces(SDL_Renderer* renderer){
     // uses the manager's bitboards as the source of truth.
     const auto& boards = parent_->getMatchManager()->getBitboards();
+
+    // draw the "latched" pieces
     for (int pieceIndex = 0; pieceIndex < PIECE_N; pieceIndex++) {
         auto board = boards->getBitboard(static_cast<Piece>(pieceIndex));
 
         while (board) {
+            // bit popping
             const auto square = std::countr_zero(board);
+            const auto rankAndFile = squareToRankAndFileStruct(square);
             board &= ~(1ULL << square);
-            int rank;
-            int file;
-            squareToRankAndFile(square, rank, file);
-            const int invertedRank = 8 - rank;
-            const int invertedFile = file - 1;
+
+            if (rankAndFile == heldPieceOrigin_) { continue; } // if we're holding it, don't draw it by this method
+
+            // invert the ranks and files, as SDL draws from the top left
+            const int invertedRank = 8 - rankAndFile.rank;
+            const int invertedFile = rankAndFile.file - 1;
             const auto destRect = SDL_FRect{
                         .x = invertedFile * squareSize().x, .y = invertedRank * squareSize().y, .w = squareSize().x,
                         .h = squareSize().y
                     };
 
+            // need to account for the fact the board doesn't start at 0,0
             const auto offsetRect = addOffset(destRect, parentOffset_);
+
+            // draw it
             pieceSet_[static_cast<Piece>(pieceIndex)]->draw(renderer, offsetRect);
         }
+    }
+
+    // draw the held piece
+    if (heldPieceType != PIECE_N) {
+        const auto destRect = SDL_FRect{
+                    .x = heldPiecePosition_.x, .y = heldPiecePosition_.y, .w = squareSize().x, .h = squareSize().y
+                };
+        pieceSet_[heldPieceType]->draw(renderer, destRect);
     }
 }
 
@@ -107,6 +123,20 @@ void VisualBoard::highlightSquare(RankAndFile rankAndFile){
 }
 
 void VisualBoard::clearHighlights(){ for (auto& square: squares_) { square.setHighlighted(false); } }
+
+
+void VisualBoard::pickUpPiece(const RankAndFile& rankAndFile){ heldPieceOrigin_ = rankAndFile; }
+
+void VisualBoard::pickUpPiece(const RankAndFile& rankAndFile, const Piece& pieceHeld){
+    heldPieceOrigin_ = rankAndFile;
+    heldPieceType = pieceHeld;
+}
+
+void VisualBoard::dropPiece(){
+    heldPieceType = PIECE_N;
+    heldPieceOrigin_ = {};
+    heldPiecePosition_ = {};
+}
 
 void VisualBoard::draw(SDL_Renderer* renderer){
     // draw squares

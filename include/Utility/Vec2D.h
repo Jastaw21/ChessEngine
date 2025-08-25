@@ -11,21 +11,29 @@ public:
 
     float x, y;
 
-    Vec2D operator+(const Vec2D &v) const{ return Vec2D(x + v.x, y + v.y); }
-    Vec2D operator-(const Vec2D &v) const{ return Vec2D(x - v.x, y - v.y); }
-    Vec2D operator/(const float &v) const{ return Vec2D(x / v, y / v); }
+    Vec2D operator+(const Vec2D& v) const{ return Vec2D(x + v.x, y + v.y); }
+    Vec2D operator-(const Vec2D& v) const{ return Vec2D(x - v.x, y - v.y); }
+    Vec2D operator/(const float& v) const{ return Vec2D(x / v, y / v); }
 
-    Vec2D operator+=(const Vec2D &rhs){
+    Vec2D operator+=(const Vec2D& rhs){
         x += rhs.x;
         y += rhs.y;
         return *this;
     }
 
-    Vec2D operator-=(const Vec2D &rhs){
+    Vec2D operator-=(const Vec2D& rhs){
         x -= rhs.x;
         y -= rhs.y;
         return *this;
     }
+};
+
+
+struct RankAndFile {
+    int rank = -1;
+    int file = -1;
+
+    bool operator==(const RankAndFile& other) const{ return other.rank == rank && other.file == file; }
 };
 
 
