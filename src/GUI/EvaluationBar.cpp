@@ -4,6 +4,8 @@
 
 #include "../../include/GUI/EvaluationBar.h"
 
+#include <iomanip>
+#include <ios>
 #include <string>
 #include  <SDL3_ttf/SDL_ttf.h>
 #include <SDL3/SDL.h>
@@ -27,17 +29,22 @@ void EvaluationBar::draw(SDL_Renderer* renderer){
             };
     SDL_RenderFillRect(renderer, &blackRect);
 
-    SDL_Surface* textSurface =
-            TTF_RenderText_Solid(font_, std::to_string(evaluation_).c_str(), std::to_string(evaluation_).size(),
-                                 SDL_Color{255, 0, 0, 255});
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(2) << evaluation_;
+    std::string evalText = ss.str();
 
-    int textW = textSurface->w;
-    int textH = textSurface->h;
-    SDL_FRect textRect = {
-                .x = barPos_.x + (barSize_.x - textW) / 2.0f,
+    SDL_Surface* textSurface = TTF_RenderText_Solid(font_,
+                                                    evalText.c_str(),
+                                                    evalText.size(),
+                                                    SDL_Color{255, 0, 0, 255});
+
+    const int textW = textSurface->w;
+    const int textH = textSurface->h;
+    const SDL_FRect textRect = {
+                .x = barPos_.x + 5.0f,
                 .y = barPos_.y + (barSize_.y - textH) / 2.0f,
-                .w = (float) textW,
-                .h = (float) textH
+                .w = static_cast<float>(textW),
+                .h = static_cast<float>(textH)
             };
 
     SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
