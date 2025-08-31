@@ -7,7 +7,6 @@
 #include <cmath>
 
 #include "Engine/Evaluation.h"
-#include "EngineShared/CommunicatorBase.h"
 
 
 EngineBase::EngineBase() : ChessPlayer(ENGINE),
@@ -17,15 +16,9 @@ EngineBase::EngineBase() : ChessPlayer(ENGINE),
 
 void EngineBase::go(const int depth){
     const auto bestMove = search(depth);
-    communicator_->sendFromEngine("bestmove " + bestMove.toUCI());
+    std::cout << "bestmove " << bestMove.toUCI() << std::endl;
 }
 
-Move EngineBase::getBestMove(const int depth){
-    const auto rmove = search(depth);
-    return rmove;
-}
-
-void EngineBase::makeReady(){ return; }
 
 void EngineBase::parseUCI(const std::string& uci){
     auto command = parser.parse(uci);
@@ -72,7 +65,6 @@ std::vector<PerftResults> EngineBase::runDivideTest(const int depth){ return per
 std::vector<Move> EngineBase::generateMoveList(){ return std::vector<Move>(); }
 
 void EngineBase::loadFEN(const std::string& fen){ boardManager()->setFullFen(fen); }
-
 
 PerftResults EngineBase::perft(const int depth){
     if (depth == 0) return PerftResults{1, 0, 0, 0, 0, 0};

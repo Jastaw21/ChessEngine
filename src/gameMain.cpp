@@ -1,8 +1,8 @@
 #include "HumanPlayer.h"
-#include "BoardManager/BitBoards.h"
-#include "CLIEngine/StandaloneUciPlayer.h"
+
 #include "Engine/MainEngine.h"
-#include "EngineShared/CommunicatorBase.h"
+#include "EngineShared/ProcessChessEngine.h"
+
 #include "GUI/gui.h"
 
 
@@ -12,23 +12,21 @@ void runGame(){
     blackPlayer.setEvaluator(std::make_shared<GoodEvaluator>(blackPlayer.boardManager()));
 
     auto gui = ChessGui(&whitePlayer, &blackPlayer);
-    gui.getMatchManager()->setStartingFen("8/P6r/7b/8/8/8/6Q1/5B2 w - - 0 1");
+    gui.getMatchManager()->setStartingFen(Fen::FULL_STARTING_FEN);
     gui.loop();
 }
 
 void runEngineStandaloneGame(){
-    auto whiteEngine =
-            StandaloneUCIPlayer(R"(C:\Users\jacks\source\repos\Chess\cmake-build-release\StandaloneEngine.exe)");
+    ProcessChessEngine whiteEngine{"StandaloneEngine.exe"};
+    whiteEngine.setEngineID("White");
+    ProcessChessEngine blackEngine{"StandaloneEngine.exe"};
+    blackEngine.setEngineID("Black");
 
-    auto blackEngine =
-            StandaloneUCIPlayer(R"(C:\Users\jacks\source\repos\Chess\cmake-build-release\StandaloneEngine.exe)");
     auto gui = ChessGui(&whiteEngine, &blackEngine);
     gui.getMatchManager()->setStartingFen(Fen::FULL_STARTING_FEN);
-
-    whiteEngine.setCommunicator(std::make_shared<TerminalCommunicator>(gui.getMatchManager().get(), &whiteEngine));
-    blackEngine.setCommunicator(std::make_shared<TerminalCommunicator>(gui.getMatchManager().get(), &blackEngine));
     gui.loop();
 }
+
 
 void runEngineGame(){
     auto whitePlayer = MainEngine();
@@ -45,6 +43,6 @@ void runEngineGame(){
 }
 
 int main(int argc, char** argv){
-    runGame();
+    runEngineStandaloneGame();
     return 0;
 }

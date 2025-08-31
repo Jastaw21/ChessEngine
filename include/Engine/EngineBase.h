@@ -37,13 +37,13 @@ public:
     virtual void setSearchDepth(const int search_depth){ searchDepth_ = search_depth; }
 
     // UCI Protocol Interface
-    virtual void parseUCI(const std::string& uci) override;
+    virtual void parseUCI(const std::string& uci);
     void go(int depth);
     Move getBestMove(int depth);
     void stop(){ shouldStop = true; }
-    void quit(){ shouldQuit = true; }
-    static void makeReady();
+    void quit(){ shouldQuit_ = true; }
     void reset(){ internalBoardManager_.resetGame(); }
+    bool shouldQuit(){ return shouldQuit_; }
 
     // Performance Testing Interface
     virtual PerftResults runPerftTest(const std::string& Fen, int depth);
@@ -70,12 +70,13 @@ protected:
     // Internal State
     BoardManager internalBoardManager_;
     std::shared_ptr<EvaluatorBase> evaluator_;
+    bool shouldQuit_ = false;
 
 private:
 
     // Engine Control Flags
     bool shouldStop = false;
-    bool shouldQuit = false;
+
     int searchDepth_ = 4;
 
     std::mt19937 rng; // used for randomising the moves if no best move found;

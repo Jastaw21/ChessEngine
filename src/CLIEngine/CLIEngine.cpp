@@ -4,16 +4,15 @@
 
 
 #include "../../include/Engine/MainEngine.h"
-#include "EngineShared/CommunicatorBase.h"
+
 
 int main(){
     auto engine = MainEngine();
     engine.setEvaluator(std::make_shared<GoodEvaluator>(engine.boardManager()));
-
-    while (true) {
+    while (!engine.shouldQuit()) {
         char input[1024];
-
         std::cin.getline(input, 1024);
-        engine.parseUCI(input);
+
+        engine.sendCommand(input);
     }
 }

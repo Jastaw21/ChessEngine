@@ -15,12 +15,15 @@ public:
 
     explicit HumanPlayer(Colours colour = WHITE);
 
+    virtual bool sendCommand(const std::string& command) override{ return true; };
+
+    virtual std::string readResponse() override{
+        auto returnValue = message_;
+        message_ = "";
+        return returnValue;
+    }
 
     void addMessage(const std::string& message){ message_ = message; }
-    [[nodiscard]] std::string getMessage() const{ return message_; }
-
-    virtual void parseUCI(const std::string& uci) override;
-    virtual std::optional<std::string> consumeMessage() override;
 
 private:
 

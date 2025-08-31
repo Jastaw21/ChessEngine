@@ -6,7 +6,6 @@
 
 #include <filesystem>
 #include <fstream>
-#include "EngineShared/CommunicatorBase.h"
 #include "GUI/gui.h"
 
 MatchManager::MatchManager(ChessPlayer* startingPlayer, ChessPlayer* otherPlayer){
@@ -15,11 +14,11 @@ MatchManager::MatchManager(ChessPlayer* startingPlayer, ChessPlayer* otherPlayer
 
     whitePlayer = startingPlayer;
     blackPlayer = otherPlayer;
+}
 
-    const auto currentCommunicator = std::make_shared<CommunicatorBase>(this, currentPlayer_);
-    currentPlayer_->setCommunicator(currentCommunicator);
-    const auto otherCommunicator = std::make_shared<CommunicatorBase>(this, otherPlayer_);
-    otherPlayer_->setCommunicator(otherCommunicator);
+MatchManager::~MatchManager(){
+    whitePlayer->sendCommand("quit");
+    blackPlayer->sendCommand("quit");
 }
 
 void MatchManager::startGame(){
@@ -28,8 +27,8 @@ void MatchManager::startGame(){
 
     if (currentPlayer_->playerType == HUMAN) { return; }
 
-    currentPlayer()->parseUCI("position " + boardManager.getFullFen());
-    currentPlayer()->parseUCI("go");
+    currentPlayer()->sendCommand("position " + boardManager.getFullFen());
+    currentPlayer()->sendCommand("go");
 }
 
 void MatchManager::processGameResult(){
@@ -51,15 +50,17 @@ void MatchManager::tick(){
         processGameResult();
         return;
     }
-    if (const auto message = currentPlayer_->consumeMessage(); message.has_value()) {
-        std::cout << message.value() << std::endl;
+    if (const auto message = currentPlayer_->readResponse(); message != "") {
         // handle the inbound command
-        parseUCI(message.value());
+        parseUCI(message);
     }
 }
 
 void MatchManager::parseUCI(const std::string& uci){
-    auto command = parser.parse(uci);
+    size_t start = uci.find_first_not_of("\t\r\n");
+    size_t end = uci.find_last_not_of("\t\r\n");
+    auto adjustedCommand = uci.substr(start, end - start + 1);
+    auto command = parser.parse(adjustedCommand);
     // Create a visitor lambda that captures 'this' and forwards to command handler
     auto visitor = [this](const auto& cmd) { this->commandHandler(cmd, this); };
     std::visit(visitor, *command);
@@ -74,10 +75,8 @@ void MatchManager::restartGame(){
     currentPlayer_ = whitePlayer;
     otherPlayer_ = blackPlayer;
     // tell both players it's a new game
-    currentPlayer()->parseUCI("ucinewgame");
-    currentPlayer()->getCommunicator()->resetQueues();
-    otherPlayer()->parseUCI("ucinewgame");
-    otherPlayer()->getCommunicator()->resetQueues();
+    currentPlayer()->sendCommand("ucinewgame");
+    otherPlayer()->sendCommand("ucinewgame");
     startGame();
 }
 

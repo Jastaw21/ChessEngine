@@ -6,7 +6,6 @@
 #include "MatchManager/ManagerCommandHandler.h"
 #include "MatchManager/MatchManager.h"
 #include "Engine/EngineBase.h"
-#include "EngineShared/CommunicatorBase.h"
 #include "GUI/gui.h"
 
 
@@ -69,7 +68,7 @@ void ManagerCommandHandler::operator()(const PositionCommand& cmd, MatchManager*
             fullPositionCommand += " ";
         }
     }
-    matchManager->currentPlayer()->getCommunicator()->sendToEngine(fullPositionCommand);
+    matchManager->currentPlayer()->sendCommand(fullPositionCommand);
     matchManager->swapPlayers();
 }
 
@@ -88,8 +87,8 @@ void ManagerCommandHandler::operator()(const BestMoveCommand& cmd, MatchManager*
     // we've done receiving from the current player and need to swap to forward the command
     matchManager->swapPlayers();
 
-    matchManager->currentPlayer()->getCommunicator()->sendToEngine(fullPositionCommand); // send to engine
-    matchManager->currentPlayer()->getCommunicator()->sendToEngine("go");
+    matchManager->currentPlayer()->sendCommand(fullPositionCommand); // send to engine
+    matchManager->currentPlayer()->sendCommand("go depth 3");
 }
 
 void ManagerCommandHandler::operator()(const NewGameCommand& cmd, MatchManager* matchManager){}

@@ -24,14 +24,9 @@ public:
     virtual ~ChessPlayer() = default;
     explicit ChessPlayer(PlayerType playerType);
 
-    virtual void parseUCI(const std::string& uci) = 0;
+    virtual bool sendCommand(const std::string& command) = 0;
+    virtual std::string readResponse() = 0;
 
-    bool setReady(const bool isReady){ return true; };
-    bool isReady() const{ return true; }
-    std::shared_ptr<CommunicatorBase> getCommunicator() const{ return communicator_; }
-    void setCommunicator(const std::shared_ptr<CommunicatorBase>& communicator){ communicator_ = communicator; }
-
-    virtual std::optional<std::string> consumeMessage();
 
     PlayerType playerType;
 
@@ -42,8 +37,6 @@ protected:
 
     UCIParser parser;
     CommandHandlerBase commandHandler;
-    std::shared_ptr<CommunicatorBase> communicator_;
-
     std::string engineID_ = "default";
 };
 

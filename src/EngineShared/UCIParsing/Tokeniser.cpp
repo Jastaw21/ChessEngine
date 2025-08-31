@@ -17,7 +17,10 @@ void Tokeniser::tokenise(const std::string& input){
         if (c == ' ') {
             // outsource handling
             handleToken(token);
-        } else { token += c; }
+        }
+
+        // continue building the token
+        else { token += c; }
     }
 
     // Handle the last token if input doesn't end with space
@@ -81,6 +84,8 @@ TokenType Tokeniser::getUnknownTokenType(const std::string& token){
         return TokenType::INT_LITERAL;
     if (isStringLiteral(token))
         return TokenType::STRING_LITERAL;
+    if (token == "\n" || token == "\r")
+        return TokenType::EOF_TOKEN;
 
     return TokenType::UNKNOWN;
 }

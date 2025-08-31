@@ -7,20 +7,19 @@
 
 void CommandHandlerBase::operator()(const UCICommand& cmd, EngineBase* engine){
     std::cout << "uciok" << std::endl;
-    std::cout << "id " << engine->engineID();
+    std::cout << "id " << engine->engineID() << std::endl;
 }
 
 void CommandHandlerBase::operator()(const StopCommand& cmd, EngineBase* engine){ engine->stop(); }
 
 void CommandHandlerBase::operator()(const IsReadyCommand& cmd, EngineBase* engine){
-    engine->makeReady();
-    if (engine->isReady()) { std::cout << "readyok" << std::endl; }
+    std::cout << "readyok" << std::endl;
 }
 
 void CommandHandlerBase::operator()(const QuitCommand& cmd, EngineBase* engine){ engine->quit(); }
 
 void CommandHandlerBase::operator()(const GoCommand& cmd, EngineBase* engine){
-    if (cmd.depth.has_value()) { engine->go(cmd.depth.value()); } else { engine->go(2); }
+    if (cmd.depth.has_value()) { engine->go(cmd.depth.value()); } else { engine->go(engine->getSearchDepth()); }
 }
 
 void CommandHandlerBase::operator()(const PositionCommand& cmd, EngineBase* engine){

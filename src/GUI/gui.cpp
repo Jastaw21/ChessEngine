@@ -123,6 +123,8 @@ void ChessGui::updateGame(const int deltaTime_){
     }
 
     if (outboundMoveIsReady) { completeMove(); }
+
+    if (bEvaluationDirty) { updateEvaluationBar(); }
 }
 
 void ChessGui::loop(){
@@ -133,13 +135,6 @@ void ChessGui::loop(){
         render();
         SDL_Delay(deltaTime); // Simulate ~60 FPS
         updateGame(deltaTime);
-        const auto eval = evaluator_->evaluate();
-        if (matchManager_->getBoardManager().getCurrentTurn() == BLACK) {
-            eval * -1.f; // invert it, if it's good for black, we turn it negative.
-        }
-
-        const auto resultEval = MathUtility::map(eval, -600, 600, 0.f, 1.f);
-        evaluationBar_->set_evaluation(resultEval);
     }
 
     SDL_DestroyWindow(window);
@@ -170,23 +165,40 @@ void ChessGui::addMouseClick(const int x, const int y){
     playSound(clickSound);
 }
 
+void ChessGui::handleInvalidMove(){
+    visualBoard->clearHighlights();
+    visualBoard->highlightSquare({outboundMove.rankTo, outboundMove.fileTo}, HighlightType::INVALID_MOVE);
+    clickedSquare = -1;
+    playSound(illegalSound);
+    outboundMoveIsReady = false;
+    outboundMove = Move();
+    visualBoard->dropPiece();
+}
+
+void ChessGui::updateEvaluationBar(){
+    const auto eval = evaluator_->evaluate();
+    if (matchManager_->getBoardManager().getCurrentTurn() == BLACK) {
+        eval * -1.f; // invert it, if it's good for black, we turn it negative.
+    }
+
+    const auto resultEval = MathUtility::map(eval, -600, 600, 0.f, 1.f);
+    evaluationBar_->set_evaluation(resultEval);
+
+    bEvaluationDirty = false;
+}
+
 void ChessGui::completeMove(){
     if (!matchManager_->getBoardManager().checkMove(outboundMove)) {
-        visualBoard->clearHighlights();
-        visualBoard->highlightSquare({outboundMove.rankTo, outboundMove.fileTo}, HighlightType::INVALID_MOVE);
-        clickedSquare = -1;
-        playSound(illegalSound);
-        outboundMoveIsReady = false;
-        outboundMove = Move();
-        visualBoard->dropPiece();
-    } else {
-        const auto humanPlayer = static_cast<HumanPlayer *>(matchManager_->currentPlayer());
-        humanPlayer->addMessage("bestmove " + outboundMove.toUCI());
-        visualBoard->highlightSquare({outboundMove.rankTo, outboundMove.fileTo}, HighlightType::RECENT_MOVE);
-        visualBoard->dropPiece();
-        outboundMove = Move();
-        outboundMoveIsReady = false;
+        handleInvalidMove();
+        return;
     }
+    const auto humanPlayer = static_cast<HumanPlayer *>(matchManager_->currentPlayer());
+    humanPlayer->addMessage("bestmove " + outboundMove.toUCI());
+    visualBoard->highlightSquare({outboundMove.rankTo, outboundMove.fileTo}, HighlightType::RECENT_MOVE);
+    visualBoard->dropPiece();
+    outboundMove = Move();
+    outboundMoveIsReady = false;
+    bEvaluationDirty = true;
 }
 
 void ChessGui::beginMove(const RankAndFile rankAndFile, const Piece candidatePiece){
@@ -227,13 +239,15 @@ void ChessGui::addMouseRelease(const int x, const int y){
     }
 }
 
-void ChessGui::receiveInfoOfEngineMove(const Move& move) const{
+void ChessGui::receiveInfoOfEngineMove(const Move& move){
     visualBoard->clearHighlights();
     visualBoard->highlightSquare({move.rankFrom, move.fileFrom}, HighlightType::RECENT_MOVE);
     visualBoard->highlightSquare({move.rankTo, move.fileTo}, HighlightType::RECENT_MOVE);
 
     if (move.resultBits & MoveResult::CAPTURE) { playSound(captureSound); } else if (
         move.resultBits & MoveResult::PUSH) { playSound(movePiecesSound); }
+
+    bEvaluationDirty = true;
 }
 
 void ChessGui::pollEvents(){

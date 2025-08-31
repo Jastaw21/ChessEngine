@@ -49,16 +49,19 @@ public:
     void loop();
 
     void addMouseClick(int x, int y);
+    void handleInvalidMove();
+    void updateEvaluationBar();
     void addMouseRelease(int x, int y);
 
     [[nodiscard]] int clicked_square(){ return clickedSquare; }
 
-    void receiveInfoOfEngineMove(const Move& move) const;
+    void receiveInfoOfEngineMove(const Move& move);
 
 private:
 
     // loop stuff
     bool running;
+    bool bEvaluationDirty = true;
     void pollEvents();
     void render() const;
 

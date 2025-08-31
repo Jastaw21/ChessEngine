@@ -5,6 +5,8 @@
 #ifndef CHESS_EVALUATIONBAR_H
 #define CHESS_EVALUATIONBAR_H
 
+#include <SDL3_ttf/SDL_ttf.h>
+
 #include "DrawableEntity.h"
 
 struct TTF_Font;
@@ -24,9 +26,12 @@ private:
 public:
 
     float get_evaluation() const{ return evaluation_; }
-    void set_evaluation(const float evaluation){ this->evaluation_ = evaluation; }
+    void set_evaluation(const float evaluation);
 
     TTF_Font* font_ = nullptr;
+    SDL_Texture* renderedText = nullptr;
+    SDL_FRect textRect;
+    SDL_Renderer* renderer_;
 };
 
 

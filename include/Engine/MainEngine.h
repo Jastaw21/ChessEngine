@@ -18,6 +18,9 @@ public:
     virtual std::vector<Move> generateMoveList() override;
     void setFullFen(const std::string& fen);
 
+    virtual bool sendCommand(const std::string& command) override;
+    virtual std::string readResponse() override;
+
 private:
 
     void addPromotionMoves(const Move& move);

@@ -76,4 +76,11 @@ std::vector<Move> MainEngine::generateMoveList(){
 
 void MainEngine::setFullFen(const std::string& fen){ internalBoardManager_.setFullFen(fen); }
 
+bool MainEngine::sendCommand(const std::string& command){
+    parseUCI(command);
+    return true;
+}
+
+std::string MainEngine::readResponse(){ return ""; }
+
 void MainEngine::addPromotionMoves(const Move& move){}

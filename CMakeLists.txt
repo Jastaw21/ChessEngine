@@ -35,17 +35,16 @@ add_library(
         src/MagicBitboards/MagicBitBoardShared.cpp
         src/MatchManager/MatchManager.cpp
         src/MatchManager/ManagerCommandHandler.cpp
-        src/EngineShared/StandaloneEngineWrapper.cpp
-        src/CLIEngine/StandaloneUciPlayer.cpp
         src/Engine/Evaluation.cpp
         src/GUI/EvaluationBar.cpp
         src/EngineShared/CommandHandlerBase.cpp
         src/EngineShared/UCIParsing/UciParser.cpp
         src/EngineShared/UCIParsing/Tokeniser.cpp
-        src/EngineShared/CommunicatorBase.cpp
         src/EngineShared/ZobristHash.cpp
         src/GUI/PromotionPiecePicker.cpp
         include/GUI/PromotionPiecePicker.h
+        include/EngineShared/ProcessChessEngine.cpp
+        include/EngineShared/ProcessChessEngine.h
 )
 
 target_include_directories(chess_lib PUBLIC include)

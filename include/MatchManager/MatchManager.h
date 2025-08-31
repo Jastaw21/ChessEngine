@@ -31,6 +31,7 @@ public:
                                                  startingFen_(startingFen){}
 
     MatchManager(ChessPlayer* startingPlayer, ChessPlayer* otherPlayer);
+    ~MatchManager();
 
     void startGame();
     void processGameResult();
