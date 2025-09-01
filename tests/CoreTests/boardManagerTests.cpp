@@ -652,12 +652,12 @@ TEST(BoardManagerAdvancedRules, SimpleEnPassant){
 
     auto whiteMove1 = createMove(WP, "e2e4");
     ASSERT_TRUE(manager.tryMove(whiteMove1));
-    auto blakcMove1 = createMove(BP, "c7c6");
-    ASSERT_TRUE(manager.tryMove(blakcMove1));
+    auto blackMove1 = createMove(BP, "c7c6");
+    ASSERT_TRUE(manager.tryMove(blackMove1));
     auto whiteMove2 = createMove(WP, "e4e5");
     ASSERT_TRUE(manager.tryMove(whiteMove2));
-    auto blackMove1 = createMove(BP, "f7f5");
-    ASSERT_TRUE(manager.tryMove(blackMove1));
+    auto blackMove2 = createMove(BP, "f7f5");
+    ASSERT_TRUE(manager.tryMove(blackMove2));
 
     auto testEnPassant = createMove(WP, "e5f6");
     EXPECT_TRUE(manager.tryMove(testEnPassant));

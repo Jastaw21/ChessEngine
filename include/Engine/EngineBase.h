@@ -29,7 +29,7 @@ public:
     virtual Move search(int depth = 5);
 
     // Board State Management
-    [[nodiscard]] BoardManager *boardManager(){ return &internalBoardManager_; }
+    [[nodiscard]] BoardManager* boardManager(){ return &internalBoardManager_; }
     void loadFEN(const std::string& fen);
 
     // Search Configuration
@@ -39,9 +39,9 @@ public:
     // UCI Protocol Interface
     virtual void parseUCI(const std::string& uci);
     void go(int depth);
-    Move getBestMove(int depth);
     void stop(){ shouldStop = true; }
     void quit(){ shouldQuit_ = true; }
+    Move getBestMove(int depth){ return search(depth); }
     void reset(){ internalBoardManager_.resetGame(); }
     bool shouldQuit(){ return shouldQuit_; }
 

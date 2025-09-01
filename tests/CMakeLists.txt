@@ -22,6 +22,7 @@ add_executable(chess_tests
         CoreTests/Perft.cpp
         CoreTests/UCIParserTests.cpp
         CoreTests/utilityTests.cpp
+        CoreTests/ZobristTests.cpp
 )
 
 set_target_properties(chess_tests PROPERTIES CXX_STANDARD 20)

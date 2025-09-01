@@ -12,6 +12,15 @@
 #include <functional>
 
 
+/**
+ * Converts a given rank and file in a chessboard to the corresponding square index.
+ *
+ * @param rank The rank of the chessboard (1-based, valid values are 1 through 8).
+ * @param file The file of the chessboard (1-based, valid values are 1 through 8).
+ * @return The corresponding zero-based square index (0 to 63).
+ * @throws std::invalid_argument If the rank is not in the range [1, 8].
+ * @throws std::invalid_argument If the file is not in the range [1, 8].
+ */
 int rankAndFileToSquare(const int rank, const int file){
     if (rank < 1 || rank > 8) {
         std::cout << rank << "rr " << file << std::endl;
@@ -141,7 +150,7 @@ Bitboard BitBoards::getOccupancy(const Colours& colour) const{
     return result;
 }
 
-std::string &BitBoards::toFEN(){
+std::string& BitBoards::toFEN(){
     fen_ = "";
     // rank by rank
     for (int rank = 8; rank >= 1; --rank) {
