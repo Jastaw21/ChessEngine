@@ -7,7 +7,6 @@
 
 
 int main(){
-    std::cerr << "Starting Main: " << std::endl;
     auto engine = MainEngine();
     engine.setEvaluator(std::make_shared<GoodEvaluator>(engine.boardManager()));
     while (!engine.shouldQuit()) {

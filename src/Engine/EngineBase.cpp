@@ -8,6 +8,7 @@
 
 #include "Engine/Evaluation.h"
 
+float MATE_SCORE = 10000;
 
 EngineBase::EngineBase() : ChessPlayer(ENGINE),
                            rng(std::chrono::system_clock::now().time_since_epoch().count()){
@@ -36,10 +37,11 @@ Move EngineBase::search(const int depth){
     int randomIndex = rng() % moves.size();
     Move bestMove = moves[randomIndex];
 
-    float bestEval = -INFINITY;
+    float bestEval = -MATE_SCORE - 1;
     for (auto& move: moves) {
         internalBoardManager_.forceMove(move);
         float eval = -negamax(depth - 1, 1);
+        std::cout << "Move: " << move.toUCI() << " Score: " << eval << std::endl;
         internalBoardManager_.undoMove();
 
         if (eval > bestEval) {
@@ -47,6 +49,8 @@ Move EngineBase::search(const int depth){
             bestMove = move;
         }
     }
+
+    std::cout << "Choosing best score of: " << bestEval << " move: " << bestMove.toUCI();
     return bestMove;
 }
 
@@ -134,23 +138,30 @@ int EngineBase::simplePerft(const int depth){
     return nodes;
 }
 
+
 // Negamax implementation replaces Minimax logic
 float EngineBase::negamax(const int depth, const int ply){
     // Base case: leaf node or game over
-    if (depth == 0 || internalBoardManager_.isGameOver()) { return evaluator_->evaluate(); }
+    if (internalBoardManager_.getGameResult() & GameResult::CHECKMATE) { return -MATE_SCORE + ply; }
+    if (internalBoardManager_.getGameResult() & GameResult::DRAW) { return 0.0f; }
+    if (depth == 0) { return evaluator_->evaluate(); }
 
     auto moves = generateMoveList();
     if (moves.empty()) {
         return evaluator_->evaluate(); // includes stalemate or mate
     }
 
-    float bestScore = -INFINITY;
+    float bestScore = -MATE_SCORE - 1;
     for (auto& move: moves) {
         internalBoardManager_.forceMove(move);
         float score = -negamax(depth - 1, ply + 1);
         internalBoardManager_.undoMove();
 
         bestScore = std::max(bestScore, score);
+
+        if (score >= MATE_SCORE - ply) {
+            break; // Found a forced mate
+        }
     }
     return bestScore;
 }

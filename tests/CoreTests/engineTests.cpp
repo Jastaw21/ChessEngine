@@ -81,3 +81,12 @@ TEST(EngineTests, GeneratesPromotionMoves){
 
     EXPECT_TRUE(result);
 }
+
+TEST(EngineTests, FindsQuickestMate){
+    auto engine = MainEngine();
+    engine.setEvaluator(std::make_shared<GoodEvaluator>(engine.boardManager()));
+    engine.setFullFen("4k3/2ppppp1/2ppppp1/8/8/8/3PPP2/1Q2KQ2 w - - 0 1");
+
+    const auto bestMove = engine.getBestMove(3);
+    EXPECT_EQ(bestMove.toUCI(), "b1b8");
+}

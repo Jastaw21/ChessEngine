@@ -45,8 +45,11 @@ void ProcessChessEngine::stopProcess(){
     }
 }
 
-ProcessChessEngine::ProcessChessEngine(const std::string& exePath) : ChessPlayer(ENGINE){
+ProcessChessEngine::ProcessChessEngine(const std::string& exePath, const std::string& commsLog) : ChessPlayer(ENGINE){
     enginePath = exePath;
+    path = std::filesystem::current_path();
+    path += "/commsLog" + commsLog + ".txt";
+    outStream = std::ofstream(path);
     startEngine();
 }
 
@@ -97,6 +100,20 @@ bool ProcessChessEngine::startEngine(){
 bool ProcessChessEngine::sendCommand(const std::string& command){
     std::string cmd = command + '\n';
     DWORD bytesWritten;
+    outStream << "Recieved: " << command << std::endl;
+
+    if (command == "ucinewgame") {
+        FlushFileBuffers(hChildStdOutRead);
+        char buffer[4096];
+        DWORD bytesRead;
+        DWORD bytesAvailable;
+
+        // Keep reading until no more data available
+        while (PeekNamedPipe(hChildStdOutRead, NULL, 0, NULL, &bytesAvailable, NULL) && bytesAvailable > 0) {
+            DWORD toRead = (sizeof(buffer) < bytesAvailable) ? sizeof(buffer) : bytesAvailable;
+            if (!ReadFile(hChildStdOutRead, buffer, toRead, &bytesRead, NULL)) { break; }
+        }
+    }
 
     return WriteFile(hChildStdInWrite, cmd.c_str(),
                      cmd.length(), &bytesWritten, NULL) != 0;
@@ -116,6 +133,6 @@ std::string ProcessChessEngine::readResponse(){
         // Check if we have a complete line/response
         if (response.find('\n') != std::string::npos) { break; }
     }
-
+    outStream << "Sent: " << response << std::endl;
     return response;
 }

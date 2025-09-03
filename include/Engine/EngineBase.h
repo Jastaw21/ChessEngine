@@ -42,7 +42,12 @@ public:
     void stop(){ shouldStop = true; }
     void quit(){ shouldQuit_ = true; }
     Move getBestMove(int depth){ return search(depth); }
-    void reset(){ internalBoardManager_.resetGame(); }
+
+    void reset(){
+        // spacing comment
+        internalBoardManager_.resetGame();
+    }
+
     bool shouldQuit(){ return shouldQuit_; }
 
     // Performance Testing Interface

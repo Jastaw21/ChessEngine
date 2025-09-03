@@ -30,25 +30,12 @@ void ManagerCommandHandler::generateFullPositionCommand(MatchManager* matchManag
     }
 }
 
-void ManagerCommandHandler::operator()(const UCICommand& cmd, MatchManager* matchManager){
-    matchManager->getMessageQueueOutbound()->push("uci");
-    //matchManager->swapPlayers();
-}
+void ManagerCommandHandler::operator()(const UCICommand& cmd, MatchManager* matchManager){}
+void ManagerCommandHandler::operator()(const StopCommand& cmd, MatchManager* matchManager){}
 
-void ManagerCommandHandler::operator()(const StopCommand& cmd, MatchManager* matchManager){
-    matchManager->getMessageQueueOutbound()->push("stop");
-    //matchManager->swapPlayers();
-}
+void ManagerCommandHandler::operator()(const IsReadyCommand& cmd, MatchManager* matchManager){}
 
-void ManagerCommandHandler::operator()(const IsReadyCommand& cmd, MatchManager* matchManager){
-    matchManager->getMessageQueueOutbound()->push("isready");
-    //matchManager->swapPlayers();
-}
-
-void ManagerCommandHandler::operator()(const QuitCommand& cmd, MatchManager* matchManager){
-    matchManager->getMessageQueueOutbound()->push("quit");
-    //matchManager->swapPlayers();
-}
+void ManagerCommandHandler::operator()(const QuitCommand& cmd, MatchManager* matchManager){}
 
 void ManagerCommandHandler::operator()(const GoCommand& cmd, MatchManager* matchManager){
     return;
@@ -71,7 +58,6 @@ void ManagerCommandHandler::operator()(const PositionCommand& cmd, MatchManager*
     matchManager->currentPlayer()->sendCommand(fullPositionCommand);
     matchManager->swapPlayers();
 }
-
 
 void ManagerCommandHandler::operator()(const BestMoveCommand& cmd, MatchManager* matchManager){
     if (cmd.move.at(1) == '0') {

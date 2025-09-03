@@ -37,13 +37,11 @@ public:
     void processGameResult();
     void tick();
 
-    std::stack<Move> &getMoveHistory();
+    std::stack<Move>& getMoveHistory();
     void swapPlayers(){ std::swap(currentPlayer_, otherPlayer_); }
     void setCommunicator(CommunicatorBase* communicator_base){ communicator_ = communicator_base; }
     void addMove(const std::string& moveUCI);
-    void receiveCommand(const std::string& command){ messageQueueInbound_.push(command); }
-    MessageQueue *getMessageQueueOutbound(){ return &messageQueueOutbound_; }
-    MessageQueue *getMessageQueueInbound(){ return &messageQueueInbound_; }
+
 
     void setStartingFen(const FenString& fen){
         boardManager.setFullFen(fen);
@@ -67,8 +65,6 @@ private:
 
     FenString startingFen_ = Fen::FULL_STARTING_FEN;
 
-    MessageQueue messageQueueOutbound_;
-    MessageQueue messageQueueInbound_;
 
     void restartGame();
     void dumpGameLog();
@@ -82,14 +78,14 @@ private:
 public:
 
     [[nodiscard]] FenString startingFen() const{ return startingFen_; }
-    ChessPlayer *currentPlayer() const{ return currentPlayer_; }
-    ChessPlayer *otherPlayer() const{ return otherPlayer_; }
+    ChessPlayer* currentPlayer() const{ return currentPlayer_; }
+    ChessPlayer* otherPlayer() const{ return otherPlayer_; }
     void setCurrentPlayer(ChessPlayer* current_player){ currentPlayer_ = current_player; }
     void setOtherPlayer(ChessPlayer* other_player){ otherPlayer_ = other_player; }
-    BoardManager &getBoardManager(){ return boardManager; }
-    BitBoards *getBitboards(){ return boardManager.getBitboards(); }
+    BoardManager& getBoardManager(){ return boardManager; }
+    BitBoards* getBitboards(){ return boardManager.getBitboards(); }
     void setGUI(ChessGui* gui){ gui_ = gui; }
-    ChessGui *getGui(){ return gui_; }
+    ChessGui* getGui(){ return gui_; }
 };
 
 

@@ -74,7 +74,9 @@ void MatchManager::parseUCI(const std::string& uci){
     size_t end = uci.find_last_not_of("\t\r\n");
     auto adjustedCommand = uci.substr(start, end - start + 1);
     auto command = parser.parse(adjustedCommand);
-    // Create a visitor lambda that captures 'this' and forwards to command handler
+
+    if (!command.has_value()) { return; }
+
     auto visitor = [this](const auto& cmd) { this->commandHandler(cmd, this); };
     std::visit(visitor, *command);
 }

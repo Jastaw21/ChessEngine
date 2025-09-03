@@ -4,11 +4,12 @@
 
 #ifndef CHESS_PROCESSCHESSENGINE_H
 #define CHESS_PROCESSCHESSENGINE_H
+#include <filesystem>
 #include <iostream>
 
 #include "ChessPlayer.h"
 #include <windows.h>
-
+#include <fstream>
 
 class ProcessChessEngine final : public ChessPlayer {
 private:
@@ -31,6 +32,11 @@ public:
     virtual std::string readResponse() override;
 
     void stopProcess();
+    ProcessChessEngine(const std::string& exePath, const std::string& commsLog);
+
+    std::filesystem::path path;
+    std::string pathSuffix = "";
+    std::ofstream outStream;
 };
 
 

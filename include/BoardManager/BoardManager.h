@@ -109,7 +109,7 @@ public:
     int getGameResult();
 
     void resetGame(){
-        bitboards.setFenPositionOnly(Fen::STARTING_FEN);
+        setFullFen(Fen::FULL_STARTING_FEN);
         while (!moveHistory.empty()) { moveHistory.pop(); }
         repetitionTable.clear();
         enPassantSquare = -1;
@@ -118,7 +118,7 @@ public:
     void resetGame(const FenString& fen){
         setFullFen(fen);
         while (!moveHistory.empty()) { moveHistory.pop(); }
-        repetitionTable.clear();
+        while (!repetitionTable.empty()) { repetitionTable.pop_back(); }
     };
 
     void setFullFen(const FenString& fen);

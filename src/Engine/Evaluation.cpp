@@ -86,14 +86,6 @@ GoodEvaluator::GoodEvaluator(BoardManager* manager) : EvaluatorBase(manager){
 float GoodEvaluator::evaluate(){
     auto score = materialScore() + pieceSquareScore();
 
-    const auto gameResult = boardManager_->getGameResult();
-    bool wasCheckmate = gameResult & GameResult::CHECKMATE;
-
-    if (!boardManager_->getMoveHistory().empty() && boardManager_->getMoveHistory().top().resultBits &
-        MoveResult::CHECK_MATE) { wasCheckmate = true; }
-
-    if (wasCheckmate) { return -INFINITY; }
-
     // centipawns
     return score / (pieceValues[WP] / 100.f);
 }
