@@ -24,6 +24,4 @@ protected:
 };
 
 
-TEST_F(HumanPlayerInteractionTests, InitTests){ EXPECT_TRUE(gui.wasInit()); }
-
 

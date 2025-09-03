@@ -99,7 +99,7 @@ ChessGui::ChessGui(){
 
 bool ChessGui::wasInit() const{ return window != nullptr && renderer != nullptr; }
 
-SDL_Renderer *ChessGui::getRenderer() const{ return renderer; }
+SDL_Renderer* ChessGui::getRenderer() const{ return renderer; }
 
 void ChessGui::registerEntity(const std::shared_ptr<DrawableEntity>& entity){ drawables.push_back(entity); }
 
@@ -176,9 +176,9 @@ void ChessGui::handleInvalidMove(){
 }
 
 void ChessGui::updateEvaluationBar(){
-    const auto eval = evaluator_->evaluate();
+    auto eval = evaluator_->evaluate();
     if (matchManager_->getBoardManager().getCurrentTurn() == BLACK) {
-        eval * -1.f; // invert it, if it's good for black, we turn it negative.
+        eval *= -1.f; // invert it, if it's good for black, we turn it negative.
     }
 
     const auto resultEval = MathUtility::map(eval, -600, 600, 0.f, 1.f);
@@ -192,7 +192,7 @@ void ChessGui::completeMove(){
         handleInvalidMove();
         return;
     }
-    const auto humanPlayer = static_cast<HumanPlayer *>(matchManager_->currentPlayer());
+    const auto humanPlayer = static_cast<HumanPlayer*>(matchManager_->currentPlayer());
     humanPlayer->addMessage("bestmove " + outboundMove.toUCI());
     visualBoard->highlightSquare({outboundMove.rankTo, outboundMove.fileTo}, HighlightType::RECENT_MOVE);
     visualBoard->dropPiece();

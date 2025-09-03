@@ -39,9 +39,10 @@ public:
     void initChessStuff(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer);
     ChessGui();
 
+
     [[nodiscard]] bool wasInit() const;
 
-    [[nodiscard]] SDL_Renderer *getRenderer() const;
+    [[nodiscard]] SDL_Renderer* getRenderer() const;
     std::shared_ptr<MatchManager> getMatchManager(){ return matchManager_; }
     void registerEntity(const std::shared_ptr<DrawableEntity>& entity);
     void updateGame(int deltaTime_);

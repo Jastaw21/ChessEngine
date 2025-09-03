@@ -43,7 +43,7 @@ add_library(
         src/EngineShared/ZobristHash.cpp
         src/GUI/PromotionPiecePicker.cpp
         include/GUI/PromotionPiecePicker.h
-        include/EngineShared/ProcessChessEngine.cpp
+        src/Engine/ProcessChessEngine.cpp
         include/EngineShared/ProcessChessEngine.h
 )
 

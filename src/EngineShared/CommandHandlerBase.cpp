@@ -16,7 +16,10 @@ void CommandHandlerBase::operator()(const IsReadyCommand& cmd, EngineBase* engin
     std::cout << "readyok" << std::endl;
 }
 
-void CommandHandlerBase::operator()(const QuitCommand& cmd, EngineBase* engine){ engine->quit(); }
+void CommandHandlerBase::operator()(const QuitCommand& cmd, EngineBase* engine){
+    // space handler
+    engine->quit();
+}
 
 void CommandHandlerBase::operator()(const GoCommand& cmd, EngineBase* engine){
     if (cmd.depth.has_value()) { engine->go(cmd.depth.value()); } else { engine->go(engine->getSearchDepth()); }

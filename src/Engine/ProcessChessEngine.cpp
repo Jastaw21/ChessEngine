@@ -2,7 +2,7 @@
 // Created by jacks on 31/08/2025.
 //
 
-#include "ProcessChessEngine.h"
+#include "../../include/EngineShared/ProcessChessEngine.h"
 
 void ProcessChessEngine::stopProcess(){
     // Try graceful shutdown first
@@ -20,6 +20,9 @@ void ProcessChessEngine::stopProcess(){
         // No stdin pipe, just force terminate
         TerminateProcess(processInfo.hProcess, 1);
     }
+
+    FlushFileBuffers(hChildStdInWrite);
+    FlushFileBuffers(hChildStdOutRead);
 
     // Clean up handles
     if (hChildStdInWrite != NULL) {

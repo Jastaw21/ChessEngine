@@ -4,6 +4,8 @@
 
 #ifndef CHESS_PROCESSCHESSENGINE_H
 #define CHESS_PROCESSCHESSENGINE_H
+#include <iostream>
+
 #include "ChessPlayer.h"
 #include <windows.h>
 
@@ -15,15 +17,20 @@ private:
     HANDLE hChildStdOutRead;
     PROCESS_INFORMATION processInfo;
     std::string enginePath;
-    void stopProcess();
 
 public:
 
-    ~ProcessChessEngine(){ stopProcess(); }
+    ~ProcessChessEngine(){
+        std::cout << "deleting process" << std::endl;
+        stopProcess();
+    }
+
     ProcessChessEngine(const std::string& exePath);
     bool startEngine();
     virtual bool sendCommand(const std::string& command) override;
     virtual std::string readResponse() override;
+
+    void stopProcess();
 };
 
 

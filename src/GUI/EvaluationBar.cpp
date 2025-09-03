@@ -9,6 +9,7 @@
 #include <string>
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <sstream>
 
 EvaluationBar::EvaluationBar(const Vec2D& pos, const Vec2D& size, TTF_Font* font) : barSize_(size), barPos_(pos),
     font_(font){}

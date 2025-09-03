@@ -74,6 +74,10 @@ void ManagerCommandHandler::operator()(const PositionCommand& cmd, MatchManager*
 
 
 void ManagerCommandHandler::operator()(const BestMoveCommand& cmd, MatchManager* matchManager){
+    if (cmd.move.at(1) == '0') {
+        //spacing commend
+        std::cout << cmd.move << std::endl;
+    }
     matchManager->addMove(cmd.move); // add our history
 
     // generate the command with move history from our internal state

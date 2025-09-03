@@ -90,9 +90,9 @@ public:
     explicit BoardManager();
     explicit BoardManager(const Colours colour) : currentTurn(colour){}
 
-    BitBoards *getBitboards(){ return &bitboards; }
-    std::stack<Move> &getMoveHistory(){ return moveHistory; }
-    MagicBitBoards *getMagicBitBoards(){ return &magicBitBoards; }
+    BitBoards* getBitboards(){ return &bitboards; }
+    std::stack<Move>& getMoveHistory(){ return moveHistory; }
+    MagicBitBoards* getMagicBitBoards(){ return &magicBitBoards; }
 
     bool opponentKingInCheck(Move& move);
     bool opponentKingInCheck();
@@ -112,6 +112,7 @@ public:
         bitboards.setFenPositionOnly(Fen::STARTING_FEN);
         while (!moveHistory.empty()) { moveHistory.pop(); }
         repetitionTable.clear();
+        enPassantSquare = -1;
     };
 
     void resetGame(const FenString& fen){

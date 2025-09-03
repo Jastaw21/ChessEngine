@@ -6,6 +6,9 @@
 
 #include <filesystem>
 #include <fstream>
+
+#include "EngineShared/ProcessChessEngine.h"
+
 #include "GUI/gui.h"
 
 MatchManager::MatchManager(ChessPlayer* startingPlayer, ChessPlayer* otherPlayer){
@@ -17,8 +20,18 @@ MatchManager::MatchManager(ChessPlayer* startingPlayer, ChessPlayer* otherPlayer
 }
 
 MatchManager::~MatchManager(){
+    std::cout << "deleting manager" << std::endl;
     whitePlayer->sendCommand("quit");
     blackPlayer->sendCommand("quit");
+
+    if (whitePlayer->playerType == ENGINE) {
+        auto enginePlayer = dynamic_cast<ProcessChessEngine*>(whitePlayer);
+        if (enginePlayer) enginePlayer->stopProcess();
+    }
+    if (blackPlayer->playerType == ENGINE) {
+        auto enginePlayer = dynamic_cast<ProcessChessEngine*>(blackPlayer);
+        if (enginePlayer) enginePlayer->stopProcess();
+    }
 }
 
 void MatchManager::startGame(){
@@ -107,5 +120,5 @@ void MatchManager::dumpGameLog(){
 }
 
 
-std::stack<Move> &MatchManager::getMoveHistory(){ return boardManager.getMoveHistory(); }
+std::stack<Move>& MatchManager::getMoveHistory(){ return boardManager.getMoveHistory(); }
 void MatchManager::addMove(const std::string& moveUCI){ boardManager.tryMove(moveUCI); }
