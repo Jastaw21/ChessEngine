@@ -66,6 +66,38 @@ std::vector<PerftResults> EngineBase::runDivideTest(const std::string& Fen, cons
 
 std::vector<PerftResults> EngineBase::runDivideTest(const int depth){ return perftDivide(depth); }
 
+
+SearchResults EngineBase::searchWithResult(int depth){
+    SearchResults bestResult;
+    auto moves = generateMoveList();
+    if (moves.empty()) { return bestResult; }
+
+    bestResult.bestMove = moves[0];
+    bestResult.score = -MATE_SCORE - 1;
+
+    for (auto& move: moves) {
+        internalBoardManager_.forceMove(move);
+
+        std::vector<Move> thisPV;
+        float eval = -negamaxWithPV(depth - 1, 1, thisPV);
+
+        internalBoardManager_.undoMove();
+
+        if (eval > bestResult.score) {
+            bestResult.score = eval;
+            bestResult.bestMove = move;
+
+            bestResult.variation.clear();
+            bestResult.variation.push_back(move);
+            bestResult.variation.insert(bestResult.variation.end(),
+                                        thisPV.begin(), thisPV.end());
+        }
+    }
+
+    bestResult.depth = depth;
+    return bestResult;
+}
+
 std::vector<Move> EngineBase::generateMoveList(){ return std::vector<Move>(); }
 
 void EngineBase::loadFEN(const std::string& fen){ boardManager()->setFullFen(fen); }
@@ -139,8 +171,30 @@ int EngineBase::simplePerft(const int depth){
 }
 
 
-// Negamax implementation replaces Minimax logic
 float EngineBase::negamax(const int depth, const int ply){
+    if (internalBoardManager_.getGameResult() & GameResult::CHECKMATE) { return -MATE_SCORE + ply; }
+    if (internalBoardManager_.getGameResult() & GameResult::DRAW) { return 0.0f; }
+    if (depth == 0) { return evaluator_->evaluate(); }
+
+    auto moves = generateMoveList();
+    if (moves.empty()) { return evaluator_->evaluate(); }
+
+    float bestScore = -MATE_SCORE - 1;
+    for (auto& move: moves) {
+        internalBoardManager_.forceMove(move);
+        float score = -negamax(depth - 1, ply + 1);
+        internalBoardManager_.undoMove();
+
+        bestScore = std::max(bestScore, score);
+
+        if (score >= MATE_SCORE - ply) { break; }
+    }
+    return bestScore;
+}
+
+float EngineBase::negamaxWithPV(int depth, int ply, std::vector<Move>& pv){
+    pv.clear();
+
     // Base case: leaf node or game over
     if (internalBoardManager_.getGameResult() & GameResult::CHECKMATE) { return -MATE_SCORE + ply; }
     if (internalBoardManager_.getGameResult() & GameResult::DRAW) { return 0.0f; }
@@ -152,16 +206,27 @@ float EngineBase::negamax(const int depth, const int ply){
     }
 
     float bestScore = -MATE_SCORE - 1;
+    Move bestMove;
+    std::vector<Move> bestPV;
+
     for (auto& move: moves) {
         internalBoardManager_.forceMove(move);
-        float score = -negamax(depth - 1, ply + 1);
+        std::vector<Move> thisPV;
+        float score = -negamaxWithPV(depth - 1, ply + 1, thisPV);
+
         internalBoardManager_.undoMove();
 
-        bestScore = std::max(bestScore, score);
-
-        if (score >= MATE_SCORE - ply) {
-            break; // Found a forced mate
+        if (score > bestScore) {
+            bestScore = score;
+            bestMove = move;
+            bestPV = thisPV;
         }
     }
+
+    if (boardManager()->checkMove(bestMove)) {
+        pv.push_back(bestMove);
+        pv.insert(pv.end(), bestPV.begin(), bestPV.end());
+    }
+
     return bestScore;
 }

@@ -54,6 +54,10 @@ TEST(EngineTests, FindsMateInTwoSteps){
 
     const auto bestMove = engine.getBestMove(3);
     EXPECT_EQ(bestMove.toUCI(), "g4h6");
+
+    auto result = engine.searchWithResult(3);
+
+    std::cout << result.depth;
 }
 
 TEST(EngineTests, FindsMateInOneStep){
@@ -89,4 +93,8 @@ TEST(EngineTests, FindsQuickestMate){
 
     const auto bestMove = engine.getBestMove(3);
     EXPECT_EQ(bestMove.toUCI(), "b1b8");
+
+    auto bestMoveWithResult = engine.searchWithResult(3);
+
+    std::cout << bestMoveWithResult.bestMove.toUCI();
 }

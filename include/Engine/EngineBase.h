@@ -15,6 +15,13 @@
 
 #include "EngineShared/PerftResults.h"
 
+struct SearchResults {
+    float score;
+    Move bestMove;
+    int depth;
+    std::vector<Move> variation;
+};
+
 
 class EngineBase : public ChessPlayer {
 public:
@@ -57,6 +64,9 @@ public:
 
     void setEvaluator(std::shared_ptr<EvaluatorBase> evaluator){ evaluator_ = evaluator; }
     std::shared_ptr<EvaluatorBase> getEvaluator() const{ return evaluator_; }
+
+    float negamaxWithPV(int depth, int ply, std::vector<Move>& pv);
+    SearchResults searchWithResult(int depth = 3);
 
 protected:
 
