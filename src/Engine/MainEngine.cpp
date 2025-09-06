@@ -18,7 +18,8 @@ void MainEngine::processPawnPromotion(std::vector<Move>& validMoves, Move& baseM
 
     for (const auto& pieceChar: piecesToCheck) {
         auto promotionMove = createMove(baseMove.piece, baseMove.toUCI() + pieceChar);
-        validMoves.push_back(promotionMove);
+        // need to check the move doesnt leave you in check
+        if (boardManager()->checkMove(promotionMove)) { validMoves.push_back(promotionMove); }
     }
 }
 

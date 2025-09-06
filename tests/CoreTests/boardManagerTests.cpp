@@ -1,4 +1,4 @@
-//
+; //
 // Created by jacks on 21/06/2025.
 //
 
@@ -1289,4 +1289,23 @@ TEST(BoardManager, EnPassantSquareUndone){
     EXPECT_EQ(manager.getFullFen(), "rnbqkbnr/pp1pp1pp/2p5/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 1");
     manager.undoMove(blackMove2);
     EXPECT_EQ(manager.getFullFen(), "rnbqkbnr/pp1ppppp/2p5/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1");
+}
+
+TEST(BoardManager, PromotionAndCaptureWorkRight){
+    auto manager = BoardManager();
+
+    manager.setFullFen("r1bqkbnr/3p2pp/2n5/2pQpp2/P1PP4/4PPPP/1p6/RNB1KBNR b KQkq - 0 1");
+
+    auto promoteAndCaptureMove = createMove(BP, "b2a1q");
+    ASSERT_TRUE(manager.tryMove(promoteAndCaptureMove));
+
+    EXPECT_EQ(manager.getFullFen(), "r1bqkbnr/3p2pp/2n5/2pQpp2/P1PP4/4PPPP/8/qNB1KBNR w KQkq - 0 1");
+}
+
+TEST(BoardManager, CantPromoteInCheck){
+    auto manager = BoardManager();
+
+    manager.setFullFen("r2qkbnr/P2b2P1/7P/3Q4/8/2n5/4K3/q1q2BqR w kq - 0 1");
+    auto attemptedPromotion = createMove(WP, "g7f8Q");
+    EXPECT_FALSE(manager.tryMove(attemptedPromotion));
 }

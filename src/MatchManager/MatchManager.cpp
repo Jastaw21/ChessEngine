@@ -75,7 +75,10 @@ void MatchManager::parseUCI(const std::string& uci){
     auto adjustedCommand = uci.substr(start, end - start + 1);
     auto command = parser.parse(adjustedCommand);
 
-    if (!command.has_value()) { return; }
+    if (!command.has_value()) {
+        std::cout << "Invalid Command: " << uci << std::endl;
+        return;
+    }
 
     auto visitor = [this](const auto& cmd) { this->commandHandler(cmd, this); };
     std::visit(visitor, *command);

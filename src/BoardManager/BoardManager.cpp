@@ -22,7 +22,6 @@ std::string Move::toUCI() const{
     return coreMoveString + promotionString;
 }
 
-
 Move createMove(const Piece& piece, const std::string& moveUCI){
     const int fileFrom = moveUCI[0] - 'a' + 1;
     const int rankFrom = moveUCI[1] - '1' + 1;
@@ -98,10 +97,15 @@ bool BoardManager::prelimCheckMove(Move& move){
 
     // we are attacking an enemy, check it's legal (i.e. non-king)
     if (toSquareBitboard & enemyPieces) {
-        if (handleCapture(move))
-            return true;
-        move.resultBits |= ILLEGAL_MOVE;
-        return false;
+        bool captureHandled = handleCapture(move);
+        if (!captureHandled) {
+            move.resultBits = 0;
+            move.resultBits |= ILLEGAL_MOVE;
+            return false;
+        }
+
+        // if it's not a promotion capture - escape now
+        if (move.promotedPiece == PIECE_N) { return true; }
     }
 
     // ep
@@ -111,7 +115,7 @@ bool BoardManager::prelimCheckMove(Move& move){
             return true;
         }
 
-        if (move.fileTo != move.fileFrom) {
+        if (move.fileTo != move.fileFrom && (move.resultBits & CAPTURE) == 0) {
             // if not EP or capture (handled above), going diagonal must be an illegal move
             move.resultBits = 0; // reset the move result tracker
             move.resultBits |= ILLEGAL_MOVE;

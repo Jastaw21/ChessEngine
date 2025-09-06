@@ -27,7 +27,7 @@ def get_game_log_moves(game_log_path: str) -> list[str]:
 def main():
     game = chess.pgn.Game()
 
-    listOfMoves = get_game_log_moves(r"C:\Users\jacks\source\repos\Chess\cmake-build-debug-visual-studio\gameLog.txt")
+    listOfMoves = get_game_log_moves(r"C:\Users\jacks\source\repos\Chess\cmake-build-release\gameLog.txt")
     node = game.add_line(listOfMoves)
 
     print(game)

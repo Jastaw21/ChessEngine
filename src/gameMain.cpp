@@ -17,7 +17,7 @@ void runGame(){
 }
 
 void runEngineStandaloneGame(){
-    ProcessChessEngine whiteEngine{"whiteEngine.exe", "w"};
+    ProcessChessEngine whiteEngine{"StandaloneEngine.exe", "w"};
     whiteEngine.setEngineID("White");
 
     ProcessChessEngine blackEngine{"StandaloneEngine.exe", "b"};

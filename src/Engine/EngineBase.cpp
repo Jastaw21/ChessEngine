@@ -41,7 +41,7 @@ Move EngineBase::search(const int depth){
     for (auto& move: moves) {
         internalBoardManager_.forceMove(move);
         float eval = -negamax(depth - 1, 1);
-        std::cout << "Move: " << move.toUCI() << " Score: " << eval << std::endl;
+
         internalBoardManager_.undoMove();
 
         if (eval > bestEval) {
@@ -50,7 +50,6 @@ Move EngineBase::search(const int depth){
         }
     }
 
-    std::cout << "Choosing best score of: " << bestEval << " move: " << bestMove.toUCI();
     return bestMove;
 }
 
