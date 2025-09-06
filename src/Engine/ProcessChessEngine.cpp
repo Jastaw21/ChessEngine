@@ -53,6 +53,11 @@ ProcessChessEngine::ProcessChessEngine(const std::string& exePath, const std::st
     startEngine();
 }
 
+void ProcessChessEngine::setEngineID(const std::string& engineID){
+    auto command = "set id " + engineID;
+    sendCommand(command);
+}
+
 bool ProcessChessEngine::startEngine(){
     SECURITY_ATTRIBUTES saAttr;
     saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);

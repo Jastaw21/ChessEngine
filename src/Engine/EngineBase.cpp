@@ -13,6 +13,12 @@ float MATE_SCORE = 10000;
 EngineBase::EngineBase() : ChessPlayer(ENGINE),
                            rng(std::chrono::system_clock::now().time_since_epoch().count()){
     evaluator_ = std::make_shared<EvaluatorBase>(&internalBoardManager_);
+
+    auto path = std::filesystem::current_path();
+    std::string suffix = "";
+    suffix += rng() % 26 + 65;
+    path += "/searchLog" + suffix + ".txt";
+    searchLogStream = std::ofstream(path);
 }
 
 void EngineBase::go(const int depth){
@@ -31,6 +37,11 @@ void EngineBase::parseUCI(const std::string& uci){
 }
 
 Move EngineBase::search(const int depth){
+    std::string lastMove = internalBoardManager_.getMoveHistory().size() > 0
+                               ? internalBoardManager_.getMoveHistory().top().toUCI()
+                               : "New";
+    searchLogStream << "Fen:" << internalBoardManager_.getFullFen() << " " << lastMove << std::endl;
+
     auto moves = generateMoveList();
     if (moves.empty()) { return Move(); }
 
@@ -48,6 +59,8 @@ Move EngineBase::search(const int depth){
             bestEval = eval;
             bestMove = move;
         }
+
+        searchLogStream << move.toUCI() << " " << eval << std::endl;
     }
 
     return bestMove;

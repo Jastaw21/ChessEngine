@@ -24,6 +24,9 @@ enum class TokenType {
     INT_LITERAL, STRING_LITERAL, DASH,
     // parser utilities
     EOF_TOKEN, UNKNOWN,
+
+    // option setting
+    SET, SET_OPTION, SET_VALUE
 };
 
 struct Token {
@@ -35,7 +38,7 @@ class Tokeniser {
 public:
 
     explicit Tokeniser(const std::string& input);
-    std::vector<Token> &getTokens(){ return tokens; }
+    std::vector<Token>& getTokens(){ return tokens; }
 
     static bool isMove(const std::string& token);
     static bool isPosition(const std::string& token);

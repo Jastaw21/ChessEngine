@@ -31,6 +31,8 @@ std::optional<Command> UCIParser::parse(const std::string& inString){
         if (liveToken.type == TokenType::POSITION_CMD) { return parsePosition(); }
 
         if (liveToken.type == TokenType::BESTMOVE) { return parseBestMove(); }
+
+        if (liveToken.type == TokenType::SET) { return parseSetIDCommand(); }
     }
 
     return std::nullopt; // no valid command found
@@ -92,4 +94,11 @@ std::optional<Command> UCIParser::parseBestMove(){
     return std::nullopt;
 }
 
+std::optional<Command> UCIParser::parseSetIDCommand(){
+    if (peek().type == TokenType::ID && peek().value == "id") {
+        consume();
+        if (peek().type == TokenType::STRING_LITERAL) { return SetIDCommand{consume().value}; }
+    }
 
+    return std::nullopt;
+}

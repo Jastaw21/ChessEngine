@@ -35,3 +35,8 @@ void CommandHandlerBase::operator()(const BestMoveCommand& cmd, EngineBase* engi
 void CommandHandlerBase::operator()(const NewGameCommand& cmd, EngineBase* engine){ engine->reset(); }
 
 void CommandHandlerBase::operator()(const IDCommand& cmd, EngineBase* engine){ return; }
+
+void CommandHandlerBase::operator()(const SetIDCommand& cmd, EngineBase* engine){
+    // spacing comment for breakpoint
+    engine->setEngineID(cmd.id);
+}

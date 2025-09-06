@@ -34,6 +34,8 @@ public:
     void stopProcess();
     ProcessChessEngine(const std::string& exePath, const std::string& commsLog);
 
+    virtual void setEngineID(const std::string& engineID) override;
+
     std::filesystem::path path;
     std::string pathSuffix = "";
     std::ofstream outStream;

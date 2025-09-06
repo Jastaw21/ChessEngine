@@ -6,6 +6,9 @@
 #include <gtest/gtest.h>
 #include "Engine/MainEngine.h"
 #include "Engine/Evaluation.h"
+
+#include "EngineShared/ProcessChessEngine.h"
+
 #include "Utility/Fen.h"
 
 TEST(EngineTests, BasicEvaluation){
@@ -51,6 +54,17 @@ TEST(EngineTests, ObviousChecksWork){
     auto bestMove3 = engine.searchWithResult(3);
 
     std::cout << bestMove3.score;
+
+    engine.reset();
+    engine.setFullFen("3q1kr1/r7/8/8/4K3/3Q4/B7/q1q3qR b - - 1 46");
+    auto bestMove4 = engine.searchWithResult(1);
+    EXPECT_EQ(bestMove4.bestMove.toUCI(), "g1g4");
+
+    engine.parseUCI(
+        "position rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 moves a2a3 a7a5 b2b3 a5a4 c2c3 a4b3 d1b3 b7b6 d2d3 c7c5 e2e3 e7e5 g2g3 f7f5 b3d5 b8c6 f2f3 b6b5 h2h3 b5b4 a3a4 b4b3 c3c4 b3b2 d3d4 b2a1q e3e4 c5d4 f3f4 d4d3 g3g4 d3d2 b1d2 e5f4 h3h4 f4f3 a4a5 f3f2 e1d1 f2g1q c4c5 f5e4 g4g5 e4e3 h4h5 e3d2 a5a6 d2c1q d1e2 d7d6 c5d6 g7g6 h5g6 h7h5 g5h6 c6b4 a6a7 b4a2 d6d7 c8d7 g6g7 a2c3 e2d3 c3b1 h6h7 b1d2 g7f8Q e8f8 h7g8Q h8g8 f1e2 d2b1 e2d1 b1d2 d1c2 d2b1 c2b1 d7h3 b1a2 h3f1 d3e4");
+
+    bestMove4 = engine.searchWithResult(1);
+    EXPECT_EQ(bestMove4.bestMove.toUCI(), "g1g4");
 }
 
 TEST(EngineTests, FindsMateInTwoSteps){
@@ -139,4 +153,11 @@ TEST(EngineTests, DoesntGenerateIllegalMoves){
     auto moveResult = engine.generateMoveList();
 
     EXPECT_EQ(moveResult.size(), 2);
+}
+
+TEST(EngineTests, CanSetID){
+    MainEngine whiteEngine;
+
+    whiteEngine.parseUCI("set id white");
+    EXPECT_EQ(whiteEngine.engineID(), "white");
 }

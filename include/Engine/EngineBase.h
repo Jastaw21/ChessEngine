@@ -6,12 +6,13 @@
 #define ENGINEBASE_H
 
 #include <filesystem>
+#include <fstream>
 #include <random>
 
 #include "ChessPlayer.h"
 #include "Evaluation.h"
-#include "BoardManager/BoardManager.h"
 
+#include "BoardManager/BoardManager.h"
 
 #include "EngineShared/PerftResults.h"
 
@@ -95,6 +96,8 @@ private:
     int searchDepth_ = 4;
 
     std::mt19937 rng; // used for randomising the moves if no best move found;
+
+    std::ofstream searchLogStream;
 };
 
 

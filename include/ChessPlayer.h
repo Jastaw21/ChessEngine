@@ -30,8 +30,8 @@ public:
 
     PlayerType playerType;
 
-    [[nodiscard]] std::string &engineID(){ return engineID_; }
-    void setEngineID(const std::string& engineID){ engineID_ = engineID; }
+    [[nodiscard]] std::string& engineID(){ return engineID_; }
+    virtual void setEngineID(const std::string& engineID){ engineID_ = engineID; }
 
 protected:
 

@@ -25,11 +25,11 @@ MatchManager::~MatchManager(){
     blackPlayer->sendCommand("quit");
 
     if (whitePlayer->playerType == ENGINE) {
-        auto enginePlayer = dynamic_cast<ProcessChessEngine*>(whitePlayer);
+        const auto enginePlayer = dynamic_cast<ProcessChessEngine*>(whitePlayer);
         if (enginePlayer) enginePlayer->stopProcess();
     }
     if (blackPlayer->playerType == ENGINE) {
-        auto enginePlayer = dynamic_cast<ProcessChessEngine*>(blackPlayer);
+        const auto enginePlayer = dynamic_cast<ProcessChessEngine*>(blackPlayer);
         if (enginePlayer) enginePlayer->stopProcess();
     }
 }
@@ -45,7 +45,7 @@ void MatchManager::startGame(){
 }
 
 void MatchManager::processGameResult(){
-    auto result = boardManager.getGameResult();
+    const auto result = boardManager.getGameResult();
     std::string gameResult = "";
     if (result & DRAW) { draws++; }
     if (result & WHITE_WINS) { whiteWins++; }
@@ -70,9 +70,9 @@ void MatchManager::tick(){
 }
 
 void MatchManager::parseUCI(const std::string& uci){
-    size_t start = uci.find_first_not_of("\t\r\n");
-    size_t end = uci.find_last_not_of("\t\r\n");
-    auto adjustedCommand = uci.substr(start, end - start + 1);
+    const size_t start = uci.find_first_not_of("\t\r\n");
+    const size_t end = uci.find_last_not_of("\t\r\n");
+    const auto adjustedCommand = uci.substr(start, end - start + 1);
     auto command = parser.parse(adjustedCommand);
 
     if (!command.has_value()) {

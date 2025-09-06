@@ -67,6 +67,8 @@ void Tokeniser::handleToken(std::string& builtToken){
     else if (builtToken == "-") { type = TokenType::DASH; }
     // search depth
     else if (builtToken == "depth") { type = TokenType::DEPTH; }
+    // set token
+    else if (builtToken == "set") { type = TokenType::SET; }
     //unknown token
     else { type = getUnknownTokenType(builtToken); }
 

@@ -23,6 +23,7 @@ public:
     virtual void operator()(const BestMoveCommand& cmd, EngineBase* engine);
     virtual void operator()(const NewGameCommand& cmd, EngineBase* engine);
     void operator()(const IDCommand& cmd, EngineBase* engine);
+    void operator()(const SetIDCommand& cmd, EngineBase* engine);
 };
 
 

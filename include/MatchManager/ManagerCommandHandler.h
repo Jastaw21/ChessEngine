@@ -19,10 +19,13 @@ public:
     void operator()(const QuitCommand& cmd, MatchManager* matchManager);
     void operator()(const GoCommand& cmd, MatchManager* matchManager);
     void operator()(const PositionCommand& cmd, MatchManager* matchManager);
-    static void generateFullPositionCommand(MatchManager* matchManager, std::string& fullPositionCommand);
     void operator()(const BestMoveCommand& cmd, MatchManager* matchManager);
     void operator()(const NewGameCommand& cmd, MatchManager* matchManager);
     void operator()(const IDCommand& cmd, MatchManager* matchManager);
+    void operator()(const SetIDCommand& cmd, MatchManager* matchManager);
+
+
+    static void generateFullPositionCommand(MatchManager* matchManager, std::string& fullPositionCommand);
 };
 
 

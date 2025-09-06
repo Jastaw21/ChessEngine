@@ -130,3 +130,11 @@ TEST(Parsing, BestMoveCommandWorks){
     EXPECT_TRUE(std::holds_alternative<BestMoveCommand>(*result));
     EXPECT_EQ(std::get<BestMoveCommand>(*result).move, "a1a2");
 }
+
+TEST(Parsing, SetIDWorks){
+    auto parser = UCIParser{};
+    const auto result = parser.parse("set id white");
+    ASSERT_TRUE(result.has_value());
+    EXPECT_TRUE(std::holds_alternative<SetIDCommand>(*result));
+    EXPECT_EQ(std::get<SetIDCommand>(*result).id, "white");
+}
