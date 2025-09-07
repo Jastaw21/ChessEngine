@@ -76,7 +76,7 @@ void ManagerCommandHandler::operator()(const BestMoveCommand& cmd, MatchManager*
     matchManager->swapPlayers();
 
     matchManager->currentPlayer()->sendCommand(fullPositionCommand); // send to engine
-    matchManager->currentPlayer()->sendCommand("go depth 3");
+    matchManager->currentPlayer()->sendCommand("go");
 }
 
 void ManagerCommandHandler::operator()(const NewGameCommand& cmd, MatchManager* matchManager){}

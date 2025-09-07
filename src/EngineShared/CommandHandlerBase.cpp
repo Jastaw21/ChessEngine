@@ -31,7 +31,7 @@ void CommandHandlerBase::operator()(const PositionCommand& cmd, EngineBase* engi
     for (auto& move: cmd.moves) {
         if (bool result = engine->boardManager()->tryMove(move); !result) {
             engine->logError("Invalid move: " + move + "\n");
-        } else { engine->logError("MoveOK"); }
+        }
     }
 }
 

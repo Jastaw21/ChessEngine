@@ -1180,7 +1180,7 @@ TEST(BoardManager, ThreeFoldRepetition){
     auto reverseWhiteMove = createMove(WN, "c3b1");
     auto reverseBlackMove = createMove(BN, "c6b8");
 
-    for (int attempt = 0; attempt < 2; attempt++) {
+    for (int attempt = 0; attempt < 3; attempt++) {
         EXPECT_NE(manager.getGameResult(), GameResult::REPETITION | GameResult::DRAW);
         ASSERT_TRUE(manager.tryMove(whiteMove));
         ASSERT_TRUE(manager.tryMove(blackMove));

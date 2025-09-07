@@ -259,11 +259,15 @@ void BoardManager::makeMove(Move& move){
     else
         bitboards.setOne(move.promotedPiece, move.rankTo, move.fileTo);
 
-    swapTurns();
+    swapTurns(); // need to swap
+
+    zobristHash_.addMove(move);
+    repetitionTable2[zobristHash_.getHash()]++;
+    if (repetitionTable2[zobristHash_.getHash()] >= 3) { repetitionFlag = true; }
 
     moveHistory.emplace(move);
-    if (!repetitionTable.empty() && repetitionTable.size() >= 8) { repetitionTable.pop_front(); }
-    repetitionTable.push_back(move);
+    // if (!repetitionTable.empty() && repetitionTable.size() >= 8) { repetitionTable.pop_front(); }
+    // repetitionTable.push_back(move);
 }
 
 void BoardManager::undoCastling(const Move& move){
@@ -318,16 +322,17 @@ void BoardManager::undoMove(const Move& move){
     // set the "to" bit back to zero for this piece
     const auto squareTo = rankAndFileToSquare(move.rankTo, move.fileTo);
     if (move.resultBits & PROMOTION) {
-        bitboards[move.promotedPiece] &= ~(1ULL << squareTo); // what ever we promoted to is gone
+        bitboards[move.promotedPiece] &= ~(1ULL << squareTo); // whatever we promoted to is gone
     }
 
     bitboards[move.piece] &= ~(1ULL << squareTo);
 
     moveHistory.pop();
-    if (!repetitionTable.empty())
-        repetitionTable.pop_back();
 
     swapTurns();
+    repetitionTable2[zobristHash_.getHash()]--; // remove the board state before undoing
+    zobristHash_.undoMove(move);
+    repetitionFlag = false;
 }
 
 void BoardManager::undoMove(){
@@ -336,22 +341,7 @@ void BoardManager::undoMove(){
     undoMove(moveHistory.top());
 }
 
-bool BoardManager::threefoldRepetition(){
-    if (repetitionTable.size() < 8)
-        return false;
-
-    const bool lastMoverRepeats =
-            repetitionTable.at(7).isInverseOf(repetitionTable.at(5))
-            && repetitionTable.at(5).isInverseOf(repetitionTable.at(3))
-            && repetitionTable.at(3).isInverseOf(repetitionTable.at(1));
-
-    const bool otherMoverRepeats =
-            repetitionTable.at(6).isInverseOf(repetitionTable.at(4))
-            && repetitionTable.at(4).isInverseOf(repetitionTable.at(2))
-            && repetitionTable.at(2).isInverseOf(repetitionTable.at(0));
-
-    return lastMoverRepeats && otherMoverRepeats;
-}
+bool BoardManager::threefoldRepetition(){ return repetitionFlag; }
 
 bool BoardManager::isGameOver(){
     if (moveHistory.size() >= 100) { return true; }
@@ -406,6 +396,7 @@ void BoardManager::setFullFen(const FenString& fen){
 
     bitboards.setFenPositionOnly(fenPiecePlacement);
     setCurrentTurn(fenActiveColour == "w" ? WHITE : BLACK);
+    zobristHash_.setFen(fen);
 }
 
 bool BoardManager::opponentKingInCheck(Move& move){

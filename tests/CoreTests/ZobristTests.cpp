@@ -4,7 +4,7 @@
 
 #include  <gtest/gtest.h>
 #include  "EngineShared/ZobristHash.h"
-
+#include "BoardManager/BoardManager.h"
 
 TEST(Zobrist, BasicInitAndUpdateState){
     auto zob = ZobristHash(Fen::FULL_STARTING_FEN);

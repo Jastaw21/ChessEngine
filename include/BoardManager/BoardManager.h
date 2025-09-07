@@ -10,6 +10,9 @@
 #include "BitBoards.h"
 #include "Rules.h"
 #include "Engine/Piece.h"
+
+#include "EngineShared/ZobristHash.h"
+
 #include "MagicBitboards/MagicBitBoards.h"
 #include "Utility/Fen.h"
 
@@ -111,14 +114,14 @@ public:
     void resetGame(){
         setFullFen(Fen::FULL_STARTING_FEN);
         while (!moveHistory.empty()) { moveHistory.pop(); }
-        repetitionTable.clear();
+        repetitionTable2.clear();
         enPassantSquare = -1;
     };
 
     void resetGame(const FenString& fen){
         setFullFen(fen);
         while (!moveHistory.empty()) { moveHistory.pop(); }
-        while (!repetitionTable.empty()) { repetitionTable.pop_back(); }
+        repetitionTable2.clear();
     };
 
     void setFullFen(const FenString& fen);
@@ -152,8 +155,10 @@ private:
     // data
     BitBoards bitboards{};
     std::stack<Move> moveHistory;
-    std::deque<Move> repetitionTable;
+    std::unordered_map<uint64_t, int> repetitionTable2;
+    bool repetitionFlag = false;
     Colours currentTurn = WHITE;
+    ZobristHash zobristHash_;
 
     Rules rules;
     MagicBitBoards magicBitBoards;

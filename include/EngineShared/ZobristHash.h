@@ -7,14 +7,24 @@
 #include <array>
 #include <random>
 
-#include "BoardManager/BoardManager.h"
+
 #include "Utility/Fen.h"
+struct Move;
+
+struct RepetitionTableEntry {
+    uint64_t hash;
+    int count;
+};
 
 
 class ZobristHash {
 public:
 
-    explicit ZobristHash(FenString fenString);
+    ZobristHash(){ initZobrist(); }
+    void initializeHashFromFen(FenString fenString);
+    explicit ZobristHash(const FenString& fenString);
+
+    void setFen(const FenString& fenString);
     const uint64_t& getHash() const{ return hashValue; }
     void addMove(const Move& move);
     void undoMove(const Move& move);

@@ -87,6 +87,8 @@ add_executable(StandaloneEngine src/CLIEngine/CLIEngine.cpp)
 target_link_libraries(StandaloneEngine chess_lib)
 target_include_directories(StandaloneEngine PRIVATE include)
 
+# === FORCE REBUILD OF STANDALONE ENGINE ===
+add_dependencies(Chess StandaloneEngine)
 
 set(RESOURCE_DIR_VAR "${CMAKE_CURRENT_SOURCE_DIR}/resources")
 add_compile_definitions(RESOURCE_DIR=\"${RESOURCE_DIR_VAR}\")

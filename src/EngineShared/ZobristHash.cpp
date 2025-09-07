@@ -4,11 +4,9 @@
 
 #include "../../include/EngineShared/ZobristHash.h"
 #include <chrono>
+#include "BoardManager/BoardManager.h"
 
-
-ZobristHash::ZobristHash(FenString fenString){
-    initZobrist();
-
+void ZobristHash::initializeHashFromFen(FenString fenString){
     std::istringstream fenStream(fenString);
 
     std::string line;
@@ -46,6 +44,13 @@ ZobristHash::ZobristHash(FenString fenString){
 
     if (fenActiveColour == "b") { hashValue ^= blackToMove; }
 }
+
+ZobristHash::ZobristHash(const FenString& fenString){
+    initZobrist();
+    initializeHashFromFen(fenString);
+}
+
+void ZobristHash::setFen(const FenString& fenString){ initializeHashFromFen(fenString); }
 
 void ZobristHash::addMove(const Move& move){
     // we'll use these all the way down
