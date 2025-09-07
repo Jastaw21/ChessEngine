@@ -10,6 +10,7 @@
 #include <bitset>
 #include "BitBoards.h"
 #include "Utility/math.h"
+#include <bit>
 
 constexpr void buildRankAttacks(const int square, Bitboard& inBoard){
     const int rank = square / 8 + 1;
