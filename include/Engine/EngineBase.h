@@ -69,6 +69,8 @@ public:
     float negamaxWithPV(int depth, int ply, std::vector<Move>& pv);
     SearchResults searchWithResult(int depth = 3);
 
+    void logError(const std::string& error){ searchLogStream << error << std::endl; };
+
 protected:
 
     // Move Generation Interface

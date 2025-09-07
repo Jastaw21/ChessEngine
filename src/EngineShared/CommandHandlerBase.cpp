@@ -26,8 +26,13 @@ void CommandHandlerBase::operator()(const GoCommand& cmd, EngineBase* engine){
 }
 
 void CommandHandlerBase::operator()(const PositionCommand& cmd, EngineBase* engine){
+    engine->reset();
     engine->boardManager()->setFullFen(cmd.fen);
-    for (auto& move: cmd.moves) { engine->boardManager()->tryMove(move); }
+    for (auto& move: cmd.moves) {
+        if (bool result = engine->boardManager()->tryMove(move); !result) {
+            engine->logError("Invalid move: " + move + "\n");
+        } else { engine->logError("MoveOK"); }
+    }
 }
 
 void CommandHandlerBase::operator()(const BestMoveCommand& cmd, EngineBase* engine){}
