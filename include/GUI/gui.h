@@ -12,7 +12,7 @@
 #include "MatchManager/MatchManager.h"
 
 
-class GoodEvaluator;
+class Evaluator;
 class VisualPiece;
 class DrawableEntity;
 class VisualBoard;
@@ -91,7 +91,7 @@ private:
 
     int clickedSquare = -1;
 
-    std::shared_ptr<GoodEvaluator> evaluator_;
+    std::shared_ptr<Evaluator> evaluator_;
 
     bool bMouseHeld = false;
 

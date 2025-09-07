@@ -42,7 +42,7 @@ void VisualPiece::draw(SDL_Renderer* renderer, const SDL_FRect& destRect) const{
 }
 
 
-const std::shared_ptr<VisualPiece> &VisualPieceSet::operator[](Piece pieceToGet){
+const std::shared_ptr<VisualPiece>& VisualPieceSet::operator[](Piece pieceToGet){
     const auto result = std::ranges::find_if(pieces_, [&](auto& visualPiece) {
         return visualPiece->piece() == pieceToGet;
     });
@@ -57,7 +57,7 @@ void VisualPieceSet::buildPieces(Vec2D squareSize, ChessGui* gui){
         auto concretePiece = std::make_shared<ConcretePiece>(pieceType, 0, 0);
 
         const bool isWhite = pieceColours[pieceType] == WHITE;
-        char fenStyleString = tolower(reversePieceMap.at(pieceType));
+        char fenStyleString = tolower(PIECE_TO_CHAR_MAP.at(pieceType));
         // where is the piece saved?
         std::string path = source_path +
                            (isWhite ? "white" : "black") +
@@ -68,10 +68,9 @@ void VisualPieceSet::buildPieces(Vec2D squareSize, ChessGui* gui){
         auto uniqueTexture = std::shared_ptr<SDL_Texture>(rawPieceTexture, SDL_DestroyTexture);
 
         // construct the piece
-        auto visualPiece = std::make_shared<VisualPiece>(uniqueTexture, squareSize, pieceType);
+        auto visualPiece = std::make_shared < VisualPiece > (uniqueTexture, squareSize, pieceType);
 
         // add it and move on
         pieces_.push_back(visualPiece);
     }
 }
-

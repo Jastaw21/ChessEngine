@@ -8,7 +8,6 @@
 
 int main(){
     auto engine = MainEngine();
-    engine.setEvaluator(std::make_shared<GoodEvaluator>(engine.boardManager()));
     while (!engine.shouldQuit()) {
         char input[1024];
         std::cin.getline(input, 1024);

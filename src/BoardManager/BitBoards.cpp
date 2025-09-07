@@ -70,7 +70,7 @@ void BitBoards::setFenPositionOnly(const FenString& fen){
         else if (isdigit(c))
             file += c - '0'; // Skip that many empty squares
         else {
-            if (auto it = pieceMap.find(c); it != pieceMap.end()) {
+            if (auto it = CHAR_TO_PIECE_MAP.find(c); it != CHAR_TO_PIECE_MAP.end()) {
                 const int square = rankAndFileToSquare(rank, file);
                 bitboards[it->second] |= 1ULL << square;
             }
@@ -159,7 +159,7 @@ std::string& BitBoards::toFEN(){
             bool isPieceHere = false;
 
             // check each piece
-            for (const auto& [key, value]: pieceMap) {
+            for (const auto& [key, value]: CHAR_TO_PIECE_MAP) {
                 // if the bit is in the bitboard, and-ed with the square, then we have a piece here
                 if (bitboards[value] & 1ULL << square) {
                     if (numEmpty > 0) {

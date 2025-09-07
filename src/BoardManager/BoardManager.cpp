@@ -18,7 +18,7 @@ std::string Move::toUCI() const{
 
     if (promotedPiece == PIECE_N) { return coreMoveString; }
 
-    const auto promotionString = reversePieceMap[promotedPiece];
+    const auto promotionString = PIECE_TO_CHAR_MAP[promotedPiece];
     return coreMoveString + promotionString;
 }
 

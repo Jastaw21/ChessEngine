@@ -8,6 +8,16 @@
 #include <unordered_map>
 #include <array>
 
+enum PieceType {
+    PAWN,
+    KNIGHT,
+    BISHOP,
+    ROOK,
+    QUEEN,
+    KING,
+    NO_PIECE,
+};
+
 enum Piece {
     WP, //0
     WN, //1
@@ -29,16 +39,16 @@ enum Colours {
     BLACK,
 };
 
-inline std::unordered_map<char, Piece> pieceMap = {
+inline std::unordered_map<char, Piece> CHAR_TO_PIECE_MAP = {
             {'P', WP}, {'N', WN}, {'B', WB}, {'R', WR}, {'Q', WQ}, {'K', WK},
             {'p', BP}, {'n', BN}, {'b', BB}, {'r', BR}, {'q', BQ}, {'k', BK},
         };
-inline std::unordered_map<Piece, char> reversePieceMap = {
+inline std::unordered_map<Piece, char> PIECE_TO_CHAR_MAP = {
             {WP, 'P'}, {WN, 'N'}, {WB, 'B'}, {WR, 'R'}, {WQ, 'Q'}, {WK, 'K'},
             {BP, 'p'}, {BN, 'n'}, {BB, 'b'}, {BR, 'r'}, {BQ, 'q'}, {BK, 'k'},
         };
 
-// Fix: Replace `Piece[6]` with `std::array<Piece, 6>` to resolve the error.
+
 inline std::unordered_map<Colours, std::array<Piece, 6> > filteredPieces = {
             {WHITE, {WP, WN, WB, WR, WQ, WK}},
             {BLACK, {BP, BN, BB, BR, BQ, BK}}
@@ -72,6 +82,22 @@ inline std::unordered_map<Piece, Colours> pieceColours = {
             {BR, BLACK},
             {BQ, BLACK},
             {BK, BLACK},
+        };
+
+
+inline std::unordered_map<Piece, PieceType> pieceTypes = {
+            {WP, PieceType::PAWN},
+            {WR, PieceType::ROOK},
+            {WN, PieceType::KNIGHT},
+            {WB, PieceType::BISHOP},
+            {WQ, PieceType::QUEEN},
+            {WK, PieceType::KING},
+            {BP, PieceType::PAWN},
+            {BR, PieceType::ROOK},
+            {BN, PieceType::KNIGHT},
+            {BB, PieceType::BISHOP},
+            {BQ, PieceType::QUEEN},
+            {BK, PieceType::KING},
         };
 
 class ConcretePiece {

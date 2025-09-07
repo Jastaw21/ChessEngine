@@ -30,9 +30,6 @@ public:
     // Constructor
     explicit EngineBase();
 
-    explicit EngineBase(std::shared_ptr<EvaluatorBase> evaluator) : ChessPlayer(ENGINE),
-                                                                    evaluator_(std::move(evaluator)){};
-
     // Core Engine Interface
     virtual Move search(int depth = 5);
 
@@ -63,13 +60,11 @@ public:
     virtual std::vector<PerftResults> runDivideTest(const std::string& Fen, int depth);
     virtual std::vector<PerftResults> runDivideTest(int depth);
 
-    void setEvaluator(std::shared_ptr<EvaluatorBase> evaluator){ evaluator_ = evaluator; }
-    std::shared_ptr<EvaluatorBase> getEvaluator() const{ return evaluator_; }
-
     float negamaxWithPV(int depth, int ply, std::vector<Move>& pv);
     SearchResults searchWithResult(int depth = 3);
 
     void logError(const std::string& error){ searchLogStream << error << std::endl; };
+    Evaluator* getEvaluator(){ return &evaluator_; }
 
 protected:
 
@@ -87,18 +82,16 @@ protected:
 
     // Internal State
     BoardManager internalBoardManager_;
-    std::shared_ptr<EvaluatorBase> evaluator_;
+    Evaluator evaluator_{};
     bool shouldQuit_ = false;
 
 private:
 
     // Engine Control Flags
     bool shouldStop = false;
-
     int searchDepth_ = 4;
 
     std::mt19937 rng; // used for randomising the moves if no best move found;
-
     std::ofstream searchLogStream;
 };
 

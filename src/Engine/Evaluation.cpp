@@ -6,7 +6,8 @@
 #include "Engine/Evaluation.h"
 #include <math.h>
 
-float EvaluatorBase::evaluateMove(Move& move){
+
+float Evaluator::evaluateMove(Move& move){
     const float scoreBefore = evaluate();
     boardManager_->tryMove(move);
     const float scoreAfter = evaluate();
@@ -19,133 +20,57 @@ float EvaluatorBase::evaluateMove(Move& move){
     return result;
 }
 
-float EvaluatorBase::materialScore(){
-    int currentPlayerTurn = 0;
-    int otherPlayerTurn = 0;
+float Evaluator::materialScore(){
+    int playerToMoveScore = 0;
+    int otherPlayerScore = 0;
 
     for (int piece = 0; piece < PIECE_N; ++piece) {
         auto pieceName = static_cast<Piece>(piece);
         const int pieceCount = boardManager_->getBitboards()->countPiece(pieceName);
-        const int pieceValue = pieceValues[pieceName];
+        auto pieceValue = pieceScoresArray[pieceName];
 
         if (pieceColours[pieceName] == boardManager_->getCurrentTurn()) {
-            currentPlayerTurn += pieceValue * pieceCount;
-        } else { otherPlayerTurn += pieceValue * pieceCount; }
+            playerToMoveScore += pieceValue * pieceCount;
+        } else { otherPlayerScore += pieceValue * pieceCount; }
     }
-    return currentPlayerTurn - otherPlayerTurn;
+    return playerToMoveScore - otherPlayerScore;
 }
 
-float EvaluatorBase::pieceSquareScore(){ return 0; }
+float Evaluator::pieceSquareScore(){
+    int playerToMoveScore = 0;
+    int otherPlayerTurn = 0;
 
+    for (int piece = 0; piece < PIECE_N; ++piece) {
+        auto pieceName = static_cast<Piece>(piece);
 
-GoodEvaluator::GoodEvaluator(BoardManager* manager) : EvaluatorBase(manager){
-    pieceValues = {
-                {WP, 100},
-                {BP, 100},
+        // where are these pieces
+        Bitboard locations = boardManager_->getBitboards()->getOccupancy(pieceName);
 
-                {WR, 500},
-                {BR, 500},
+        while (locations) {
+            const auto location = std::countr_zero(locations); // bottom set bit
+            locations &= ~(1ULL << location); // pop the bit
 
-                {WN, 310},
-                {BN, 310},
+            int lookupIndex = pieceColours[pieceName] == BLACK ? flipBoard(location) : location;
 
-                {WB, 320},
-                {BB, 320},
+            auto scoresForThisPiece = getPieceScores(pieceTypes[pieceName]);
+            auto pieceScore = scoresForThisPiece[lookupIndex];
 
-                {WK, 1000},
-                {BK, 1000},
+            if (pieceColours[pieceName] == boardManager_->getCurrentTurn()) { playerToMoveScore += pieceScore; } else {
+                otherPlayerTurn += pieceScore;
+            }
+        }
+    }
 
-                {WQ, 900},
-                {BQ, 900}
-            };
-
-    std::copy(std::begin({
-                      0, 0, 0, 0, 0, 0, 0, 0,
-                      0, 0, 0, 0, 0, 0, 0, 0,
-                      2, 2, 2, 2, 2, 2, 2, 2,
-                      3, 3, 3, 3, 3, 3, 3, 3,
-                      3, 3, 3, 3, 3, 3, 3, 3,
-                      2, 2, 2, 2, 2, 2, 2, 2,
-                      0, 0, 0, 0, 0, 0, 0, 0,
-                      0, 0, 0, 0, 0, 0, 0, 0
-                  }), std::end({0}), pawnScores);
-
-    // Initialize knightScores array
-    std::copy(std::begin({
-                      -1, 0, 0, 0, 0, 0, 0, -1,
-                      -1, 0, 4, 4, 4, 4, 0, -1,
-                      0, 2, 4, 4, 4, 4, 2, 0,
-                      0, 2, 4, 5, 5, 4, 2, 0,
-                      0, 3, 4, 5, 5, 4, 3, 0,
-                      0, 2, 4, 4, 4, 4, 2, 0,
-                      -1, 0, 4, 4, 4, 4, 0, -1,
-                      -1, 0, 0, 0, 0, 0, 0, -1
-                  }), std::end({0}), knightScores);
+    return playerToMoveScore - otherPlayerTurn;
 }
 
-float GoodEvaluator::evaluate(){
+
+float Evaluator::evaluate(){
     auto score = materialScore() + pieceSquareScore();
 
     // centipawns
-    return score / (pieceValues[WP] / 100.f);
+    return score / (pieceScoresArray[WP] / 100.f);
 }
 
-float GoodEvaluator::kingSafety(){ return EvaluatorBase::kingSafety(); }
 
 
-BadEvaluator::BadEvaluator(BoardManager* manager) : EvaluatorBase(manager){
-    pieceValues = {
-                {WP, 99},
-                {BP, 99},
-
-                {WR, 1},
-                {BR, 1},
-
-                {WN, 1},
-                {BN, 1},
-
-                {WB, 1},
-                {BB, 1},
-
-                {WK, 1},
-                {BK, 1},
-
-                {WQ, 1},
-                {BQ, 1}
-            };
-
-    std::copy(std::begin({
-                      90, 0, 0, 10, 0, 0, 0, 0,
-                      0, 0, 10, 0, 0, 10, 0, 0,
-                      2, 2, 2, 2, 2, 2, 2, 2,
-                      3, 3, 3, 3, 3, 3, 3, 3,
-                      3, 3, 3, 3, 3, 3, 3, 3,
-                      2, 2, 2, 2, 2, 2, 2, 2,
-                      0, 10, 0, 0, 0, 0, 0, 0,
-                      0, 0, 0, 90, 0, 0, 0, 0
-                  }), std::end({0}), pawnScores);
-
-    // Initialize knightScores array
-    std::copy(std::begin({
-                      -1, 0, 0, 0, 0, 0, 0, -1,
-                      -1, 0, 4, 4, 4, 4, 0, -1,
-                      90, 2, 4, 4, 4, 4, 2, 90,
-                      90, 2, 4, 5, 5, 4, 2, 90,
-                      90, 3, 4, 5, 5, 4, 3, 90,
-                      90, 2, 4, 4, 4, 4, 2, 90,
-                      -1, 0, 4, 4, 4, 4, 0, -1,
-                      -1, 0, 0, 0, 0, 0, 0, -1
-                  }), std::end({0}), knightScores);
-}
-
-float BadEvaluator::evaluate(){
-    const auto result = boardManager_->getGameResult();
-    bool wasCheckmate = result & GameResult::CHECKMATE;
-
-    if (!boardManager_->getMoveHistory().empty() && boardManager_->getMoveHistory().top().resultBits &
-        MoveResult::CHECK_MATE) { wasCheckmate = true; }
-
-    if (wasCheckmate) { return -INFINITY; }
-
-    return 0;
-}

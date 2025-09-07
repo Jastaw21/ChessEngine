@@ -45,6 +45,7 @@ add_library(
         include/GUI/PromotionPiecePicker.h
         src/Engine/ProcessChessEngine.cpp
         include/EngineShared/ProcessChessEngine.h
+        include/Engine/EvaluationValues.h
 )
 
 target_include_directories(chess_lib PUBLIC include)

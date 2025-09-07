@@ -49,7 +49,7 @@ ZobristHash::ZobristHash(FenString fenString){
 
 void ZobristHash::addMove(const Move& move){
     // we'll use these all the way down
-    auto pieceReversed = reversePieceMap[move.piece];
+    auto pieceReversed = PIECE_TO_CHAR_MAP[move.piece];
     auto squareFrom = rankAndFileToSquare(move.rankFrom, move.fileFrom);
     auto squareTo = rankAndFileToSquare(move.rankTo, move.fileTo);
 
@@ -73,7 +73,7 @@ void ZobristHash::addMove(const Move& move){
     // treat pure capture separately
     else if (move.resultBits & MoveResult::CAPTURE) {
         // toggle the captured piece off
-        auto capturedArray = getArray(reversePieceMap[move.capturedPiece]);
+        auto capturedArray = getArray(PIECE_TO_CHAR_MAP[move.capturedPiece]);
         hashValue ^= capturedArray[squareTo];
     }
 
@@ -99,7 +99,7 @@ void ZobristHash::addMove(const Move& move){
     }
     if (move.resultBits & MoveResult::PROMOTION) {
         shouldMoveTo = false; // we don't want to move our moving piece here
-        auto promotedArray = getArray(reversePieceMap[move.promotedPiece]);
+        auto promotedArray = getArray(PIECE_TO_CHAR_MAP[move.promotedPiece]);
         hashValue ^= promotedArray[squareTo]; // switch to the new piece
     }
 

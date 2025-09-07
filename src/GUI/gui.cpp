@@ -89,7 +89,7 @@ void ChessGui::initSDLStuff(){
 void ChessGui::initChessStuff(ChessPlayer* whitePlayer, ChessPlayer* blackPlayer){
     matchManager_ = std::make_shared<MatchManager>(whitePlayer, blackPlayer);
     matchManager_->setGUI(this);
-    evaluator_ = std::make_shared<GoodEvaluator>(&matchManager_.get()->getBoardManager());
+    evaluator_ = std::make_shared<Evaluator>(&matchManager_.get()->getBoardManager());
 }
 
 ChessGui::ChessGui(){

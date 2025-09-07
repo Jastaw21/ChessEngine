@@ -12,8 +12,7 @@
 class MainEngine final : public EngineBase {
 public:
 
-    MainEngine() = default;
-    explicit MainEngine(const std::shared_ptr<EvaluatorBase>& evaluator) : EngineBase(evaluator){}
+    explicit MainEngine() : EngineBase(){}
 
     virtual std::vector<Move> generateMoveList() override;
     void setFullFen(const std::string& fen);

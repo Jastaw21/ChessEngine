@@ -12,13 +12,13 @@ float MATE_SCORE = 10000;
 
 EngineBase::EngineBase() : ChessPlayer(ENGINE),
                            rng(std::chrono::system_clock::now().time_since_epoch().count()){
-    evaluator_ = std::make_shared<EvaluatorBase>(&internalBoardManager_);
-
     auto path = std::filesystem::current_path();
     std::string suffix = "";
     suffix += rng() % 26 + 65;
     path += "/searchLog" + suffix + ".txt";
     searchLogStream = std::ofstream(path);
+
+    evaluator_.setBoardManager(&internalBoardManager_);
 }
 
 void EngineBase::go(const int depth){
@@ -32,7 +32,7 @@ void EngineBase::parseUCI(const std::string& uci){
     // Create a visitor lambda that captures 'this' and forwards to the command handler
     auto visitor = [this](const auto& cmd) { this->commandHandler(cmd, this); };
 
-    if (!command.has_value()) { return; } // no command was parsed
+    if (!command.has_value()) { return; } // no valid command was parsed
     std::visit(visitor, *command);
 }
 
@@ -186,10 +186,10 @@ int EngineBase::simplePerft(const int depth){
 float EngineBase::negamax(const int depth, const int ply){
     if (internalBoardManager_.getGameResult() & GameResult::CHECKMATE) { return -MATE_SCORE + ply; }
     if (internalBoardManager_.getGameResult() & GameResult::DRAW) { return 0.0f; }
-    if (depth == 0) { return evaluator_->evaluate(); }
+    if (depth == 0) { return evaluator_.evaluate(); }
 
     auto moves = generateMoveList();
-    if (moves.empty()) { return evaluator_->evaluate(); }
+    if (moves.empty()) { return evaluator_.evaluate(); }
 
     float bestScore = -MATE_SCORE - 1;
     for (auto& move: moves) {
@@ -210,11 +210,11 @@ float EngineBase::negamaxWithPV(int depth, int ply, std::vector<Move>& pv){
     // Base case: leaf node or game over
     if (internalBoardManager_.getGameResult() & GameResult::CHECKMATE) { return -MATE_SCORE + ply; }
     if (internalBoardManager_.getGameResult() & GameResult::DRAW) { return 0.0f; }
-    if (depth == 0) { return evaluator_->evaluate(); }
+    if (depth == 0) { return evaluator_.evaluate(); }
 
     auto moves = generateMoveList();
     if (moves.empty()) {
-        return evaluator_->evaluate(); // includes stalemate or mate
+        return evaluator_.evaluate(); // includes stalemate or mate
     }
 
     float bestScore = -MATE_SCORE - 1;
