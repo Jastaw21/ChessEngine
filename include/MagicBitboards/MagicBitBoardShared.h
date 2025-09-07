@@ -15,7 +15,7 @@ public:
     Bitboard getBishopAttacks(int square, const Bitboard& occupancy);
 
 
-    Bitboard getOccupancyFromIndex(const int index, Bitboard mask);
+    Bitboard getOccupancyFromIndex(int index, Bitboard mask);
 };
 
 #endif //MAGICBITBOARDSHARED_H

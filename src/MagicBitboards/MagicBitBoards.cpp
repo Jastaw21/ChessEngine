@@ -178,7 +178,25 @@ void MagicBitBoards::getMoves(const int square, const Piece& piece, const BitBoa
     }
 }
 
-Bitboard MagicBitBoards::getSimpleAttacks(const int square, const Piece& piece, const BitBoards& boards){
+// Bitboard MagicBitBoards::getAttackersToSquare(int square, const Colours& colourToGetAttackersFor,
+//                                               const BitBoards& boards){
+//     for (int piece = 0; piece < PIECE_N; ++piece) {
+//         const auto pieceToSearch = static_cast<Piece>(piece);
+//
+//         if (pieceColours[pieceToSearch] == colourToGetAttackersFor) {
+//             Bitboard occupancy = boards.getOccupancy(pieceToSearch);
+//             while (occupancy) {
+//                 const int attackingSquare = popLowestSetBit(occupancy);
+//
+//                 if ()
+//
+//
+//             }
+//         }
+//     }
+// }
+
+Bitboard MagicBitBoards::calculateAttacksForPiece(const int square, const Piece& piece, const BitBoards& boards){
     switch (piece) {
         case WR:
         case BR:
@@ -204,7 +222,7 @@ Bitboard MagicBitBoards::getSimpleAttacks(const int square, const Piece& piece, 
     return 0ULL;
 }
 
-Bitboard MagicBitBoards::getAllAttacks(const Colours& colourToGetAttacksFor, const BitBoards& boards){
+Bitboard MagicBitBoards::findAttacksForColour(const Colours& colourToGetAttacksFor, const BitBoards& boards){
     Bitboard attacks = 0ULL;
     for (int piece = 0; piece < PIECE_N; ++piece) {
         const auto pieceToSearch = static_cast<Piece>(piece);
@@ -213,7 +231,7 @@ Bitboard MagicBitBoards::getAllAttacks(const Colours& colourToGetAttacksFor, con
 
             while (occupancy) {
                 const int square = popLowestSetBit(occupancy);
-                attacks |= getSimpleAttacks(square, pieceToSearch, boards);
+                attacks |= calculateAttacksForPiece(square, pieceToSearch, boards);
             }
         }
     }
@@ -256,7 +274,7 @@ Bitboard MagicBitBoards::getCastling(const int square, const Piece& piece, const
 
         // now take file c out of the equation, as it doesn't matter if that's attacked
         castlingMask &= ~Constants::FILE_B;
-        const auto attacks = getAllAttacks((pieceColours[piece] == WHITE ? BLACK : WHITE), boards);
+        const auto attacks = findAttacksForColour((pieceColours[piece] == WHITE ? BLACK : WHITE), boards);
         if (attacks & castlingMask)
             continue;
 

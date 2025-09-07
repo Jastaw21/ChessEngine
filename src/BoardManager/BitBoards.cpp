@@ -145,6 +145,7 @@ Bitboard BitBoards::getOccupancy(const Colours& colour) const{
     return result;
 }
 
+
 std::string& BitBoards::toFEN(){
     fen_ = "";
     // rank by rank

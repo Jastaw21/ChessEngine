@@ -97,8 +97,8 @@ public:
     std::stack<Move>& getMoveHistory(){ return moveHistory; }
     MagicBitBoards* getMagicBitBoards(){ return &magicBitBoards; }
 
-    bool opponentKingInCheck(Move& move);
-    bool opponentKingInCheck();
+    bool turnToMoveInCheck(Move& move);
+    bool turnToMoveInCheck();
     bool checkMove(Move& move);
     bool tryMove(Move& move);
     bool tryMove(const std::string& moveUCI);
@@ -137,9 +137,9 @@ private:
 
     bool handleCapture(Move& move) const;
     void handleEnPassant(Move& move);
-    bool prelimCheckMove(Move& move);
+    bool validateMove(Move& move);
 
-    bool friendlyKingInCheck(const Move& move);
+    bool lastTurnInCheck(const Move& move);
 
     // do the move
     void makeMove(Move& move);

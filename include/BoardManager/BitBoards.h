@@ -141,10 +141,10 @@ public:
     BitBoards();
 
     void setFenPositionOnly(const FenString& fen);
-    std::string &toFEN();
+    std::string& toFEN();
 
     [[nodiscard]] Bitboard getBitboard(const Piece& piece) const;
-    Bitboard &operator[](const Piece piece){ return bitboards[piece]; }
+    Bitboard& operator[](const Piece piece){ return bitboards[piece]; }
 
     std::optional<Piece> getPiece(int rank, int file) const;
     std::optional<Piece> getPiece(int square) const;
