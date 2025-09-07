@@ -1095,7 +1095,7 @@ TEST(BoardManagerLegality, OpponentKingInCheck){
     auto move = createMove(WR, "d7d8");
     ASSERT_TRUE(manager.tryMove(move));
     EXPECT_TRUE(move.resultBits & CHECK);
-    EXPECT_TRUE(manager.opponentKingInCheck());
+    EXPECT_TRUE(manager.turnToMoveInCheck());
 }
 
 TEST(BoardManagerAdvancedRules, CheckMateWorks){
@@ -1308,4 +1308,13 @@ TEST(BoardManager, CantPromoteInCheck){
     manager.setFullFen("r2qkbnr/P2b2P1/7P/3Q4/8/2n5/4K3/q1q2BqR w kq - 0 1");
     auto attemptedPromotion = createMove(WP, "g7f8Q");
     EXPECT_FALSE(manager.tryMove(attemptedPromotion));
+}
+
+TEST(BoardManager, DiscoveredChecksGiveCorrectResult){
+    auto manager = BoardManager();
+    manager.setFullFen("rnbqkbnr/ppp1pp1p/6p1/1P1p4/Q7/2P5/P2PPPPP/RNB1KBNR w KQkq - 0 1");
+    auto discoveredCheckMove = createMove(WP, "b5b6");
+
+    ASSERT_TRUE(manager.tryMove(discoveredCheckMove));
+    EXPECT_TRUE(discoveredCheckMove.resultBits & CHECK);
 }

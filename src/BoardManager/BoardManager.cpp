@@ -71,7 +71,7 @@ Move createMove(const Piece& piece, const std::string& moveUCI){
 
 BoardManager::BoardManager() = default;
 
-bool BoardManager::prelimCheckMove(Move& move){
+bool BoardManager::validateMove(Move& move){
     move.resultBits = 0; // reset the move result tracker
     const int fromSquare = rankAndFileToSquare(move.rankFrom, move.fileFrom);
     const int toSquare = rankAndFileToSquare(move.rankTo, move.fileTo);
@@ -152,14 +152,16 @@ bool BoardManager::prelimCheckMove(Move& move){
 }
 
 bool BoardManager::checkMove(Move& move){
-    if (!prelimCheckMove(move)) { return false; }
+    if (!validateMove(move)) { return false; }
     makeMove(move);
-    if (friendlyKingInCheck(move)) {
+
+    // if the move results in, or leaves our king in check we can't do it.
+    if (lastTurnInCheck(move)) {
         undoMove(move);
         move.resultBits |= ILLEGAL_MOVE;
         return false;
     }
-    if (opponentKingInCheck(move)) {
+    if (turnToMoveInCheck(move)) {
         move.resultBits |= CHECK;
         move.resultBits &= ~PUSH; // undo the push bit
         if (isNowCheckMate()) { move.resultBits |= CHECK_MATE; }
@@ -399,18 +401,14 @@ void BoardManager::setFullFen(const FenString& fen){
     zobristHash_.setFen(fen);
 }
 
-bool BoardManager::opponentKingInCheck(Move& move){
-    const auto& opponentKing = pieceColours[move.piece] == WHITE ? BK : WK;
-    const auto& opponentKingLocation = bitboards[opponentKing];
+bool BoardManager::turnToMoveInCheck(Move& move){
+    const auto kingToMove = getCurrentTurn() == WHITE ? WK : BK;
+    const auto kingToMoveLocation = bitboards[kingToMove];
 
-    if (opponentKingLocation == 0) {
-        return false; // No king on board
-    }
+    const auto colourToSearch = getCurrentTurn() == WHITE ? BLACK : WHITE;
 
-    const auto attacks = RulesCheck::getAttackMoves(rankAndFileToSquare(move.rankTo, move.fileTo), move.piece,
-                                                    &bitboards);
-
-    if ((attacks & opponentKingLocation) != 0) {
+    const auto possibleAttacks = magicBitBoards.findAttacksForColour(colourToSearch, bitboards);
+    if (possibleAttacks & kingToMoveLocation) {
         move.resultBits |= CHECK;
         move.resultBits &= ~PUSH; // undo the push bit
         return true;
@@ -419,29 +417,18 @@ bool BoardManager::opponentKingInCheck(Move& move){
     return false;
 }
 
-bool BoardManager::opponentKingInCheck(){
-    const auto& opponentKing = currentTurn == WHITE ? WK : BK;
+bool BoardManager::turnToMoveInCheck(){
+    const auto kingToMove = getCurrentTurn() == WHITE ? WK : BK;
+    const auto kingToMoveLocation = bitboards[kingToMove];
 
-    const auto& opponentKingLocation = bitboards[opponentKing];
+    const auto colourToSearch = getCurrentTurn() == WHITE ? BLACK : WHITE;
 
-    if (opponentKingLocation == 0) {
-        return false; // No king on board
-    }
-
-    const auto piecesToCheck = currentTurn == WHITE ? filteredPieces[BLACK] : filteredPieces[WHITE];
-
-    for (const auto& attacker: piecesToCheck) {
-        auto boardOfPiece = bitboards[attacker];
-        while (boardOfPiece) {
-            const auto setBit = std::countr_zero(boardOfPiece);
-            boardOfPiece &= ~(1ULL << setBit);
-            const auto attacks = RulesCheck::getAttackMoves(setBit, attacker, &bitboards);
-            if ((attacks & opponentKingLocation) != 0) { return true; }
-        }
-    }
+    const auto possibleAttacks = magicBitBoards.findAttacksForColour(colourToSearch, bitboards);
+    if (possibleAttacks & kingToMoveLocation) { return true; }
 
     return false;
 }
+
 
 bool BoardManager::isNowCheckMate(){ return !hasLegalMoveToEscapeCheck(); }
 
@@ -490,10 +477,14 @@ bool BoardManager::hasValidMoveFromSquare(const Piece pieceName, const int start
 
 bool BoardManager::isValidEscapeMove(Move& move){
     const bool moveSuccess = tryMove(move);
-    const bool isValidEscape = !friendlyKingInCheck(move);
-    if (moveSuccess)
+
+    // don't think I need to double check?
+    // const bool isValidEscape = !lastTurnInCheck(move);
+    if (moveSuccess) {
         undoMove(move);
-    return isValidEscape;
+        return true;
+    }
+    return false;
 }
 
 bool BoardManager::handleCapture(Move& move) const{
@@ -520,7 +511,7 @@ void BoardManager::handleEnPassant(Move& move){
 }
 
 
-bool BoardManager::friendlyKingInCheck(const Move& move){
+bool BoardManager::lastTurnInCheck(const Move& move){
     const Colours friendlyColor = pieceColours[move.piece];
     const Piece friendlyKing = friendlyColor == BLACK ? BK : WK;
     const Bitboard& kingLocation = bitboards[friendlyKing];

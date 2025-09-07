@@ -172,19 +172,21 @@ public:
         initBishopMagics();
     }
 
-    Bitboard getRookAttacks(const int square, Bitboard occupancy) const;
-    Bitboard getBishopAttacks(const int square, Bitboard occupancy) const;
+    Bitboard getRookAttacks(int square, Bitboard occupancy) const;
+    Bitboard getBishopAttacks(int square, Bitboard occupancy) const;
 
-    Bitboard getMoves(const int square, const Piece& piece, const BitBoards& boards);
-    void getMoves(const int square, const Piece& piece, const BitBoards& boards, Bitboard& resultMoves);
+    Bitboard getMoves(int square, const Piece& piece, const BitBoards& boards);
+    void getMoves(int square, const Piece& piece, const BitBoards& boards, Bitboard& resultMoves);
 
     Rules rules;
+    Bitboard findAttacksForColour(const Colours& colourToGetAttacksFor, const BitBoards& boards);
+    //Bitboard getAttackersToSquare(int square, const Colours& colourToGetAttackersFor, const BitBoards& boards);
 
 private:
 
-    Bitboard getSimpleAttacks(const int square, const Piece& piece, const BitBoards& boards);
-    Bitboard getAllAttacks(const Colours& colourToGetAttacksFor, const BitBoards& boards);
-    Bitboard getCastling(const int square, const Piece& piece, const BitBoards& boards);
+    Bitboard calculateAttacksForPiece(int square, const Piece& piece, const BitBoards& boards);
+
+    Bitboard getCastling(int square, const Piece& piece, const BitBoards& boards);
 };
 
 
