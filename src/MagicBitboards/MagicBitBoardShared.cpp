@@ -5,6 +5,7 @@
 #include "MagicBitboards/MagicBitBoardShared.h"
 
 #include <iostream>
+#include <bit>
 
 Bitboard MBBHelpers::generateRookMask(int square){
     Bitboard attacks = 0ULL;
