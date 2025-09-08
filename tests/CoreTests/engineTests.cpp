@@ -170,3 +170,47 @@ TEST(EngineTests, CanSetID){
     whiteEngine.parseUCI("set id white");
     EXPECT_EQ(whiteEngine.engineID(), "white");
 }
+
+TEST(EngineTests, DoesntGeneratePromotionsForOpponent){
+    auto engine = MainEngine();
+    engine.setFullFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/P1N2Q2/1PPBBPpP/R3K2R w KQkq - 0 1");
+
+    auto moves = engine.generateMoveList();
+
+    auto matchedMove = std::ranges::count_if(moves, [&](const Move& move) {
+        return move.resultBits & MoveResult::PROMOTION;
+    });
+
+    EXPECT_EQ(matchedMove, 0);
+}
+
+TEST(EngineTests, BoardStateRestoresInSearch){
+    auto engine = MainEngine();
+    engine.setFullFen(Fen::FULL_STARTING_FEN);
+    auto preFen = engine.boardManager()->getFullFen();
+
+    engine.search(3);
+    auto postFen = engine.boardManager()->getFullFen();
+    const bool eq = preFen == postFen;
+    EXPECT_TRUE(eq);
+}
+
+TEST(EngineTests, RefinedUndoState){
+    auto engine = MainEngine();
+    engine.setFullFen(Fen::FULL_STARTING_FEN);
+
+    auto move = createMove(WP, "a2a3");
+    engine.boardManager()->tryMove(move);
+    auto secondMove = createMove(BP, "a7a5");
+    engine.boardManager()->tryMove(secondMove);
+    auto thirdMove = createMove(WP, "a3a4");
+    engine.boardManager()->tryMove(thirdMove);
+
+    engine.boardManager()->undoMove(thirdMove);
+    std::cout << engine.boardManager()->getFullFen() << std::endl;
+    engine.boardManager()->undoMove(secondMove);
+    std::cout << engine.boardManager()->getFullFen() << std::endl;
+    engine.boardManager()->undoMove(move);
+
+    EXPECT_EQ(engine.boardManager()->getFullFen(), Fen::FULL_STARTING_FEN);
+}

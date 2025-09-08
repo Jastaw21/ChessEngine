@@ -1,3 +1,4 @@
+
 ; //
 // Created by jacks on 21/06/2025.
 //
@@ -1257,7 +1258,7 @@ TEST(BoardManager, EnPassantSquareUpdated){
     // the en passant vulnerable square appears
     EXPECT_EQ(manager.getFullFen(), "rnbqkbnr/pp1pp1pp/2p5/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 1");
 
-    // then dissapears if we make anpther move
+    // then disappears if we make another move
     auto whiteMove3 = createMove(WP, "e5e6");
     ASSERT_TRUE(manager.tryMove(whiteMove3));
     EXPECT_EQ(manager.getFullFen(), "rnbqkbnr/pp1pp1pp/2p1P3/5p2/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1");
@@ -1269,7 +1270,7 @@ TEST(BoardManager, EnPassantSquareUndone){
     // so this scenario works for a move that gets out of en passant. What about one that goes into it?
     manager.setFullFen("rnbqkbnr/pp1p1ppp/2p5/4pP2/8/8/PPPPP1PP/RNBQKBNR w KQkq e6 0 1");
     auto move = createMove(WP, "f5f6");
-    manager.tryMove(move);
+    ASSERT_TRUE(manager.tryMove(move));
     EXPECT_EQ(manager.getFullFen(), "rnbqkbnr/pp1p1ppp/2p2P2/4p3/8/8/PPPPP1PP/RNBQKBNR b KQkq - 0 1");
     manager.undoMove(move);
     EXPECT_EQ(manager.getFullFen(), "rnbqkbnr/pp1p1ppp/2p5/4pP2/8/8/PPPPP1PP/RNBQKBNR w KQkq e6 0 1");
@@ -1317,4 +1318,132 @@ TEST(BoardManager, DiscoveredChecksGiveCorrectResult){
 
     ASSERT_TRUE(manager.tryMove(discoveredCheckMove));
     EXPECT_TRUE(discoveredCheckMove.resultBits & CHECK);
+}
+
+TEST(BoardManager, CheckMatesRegisteredInAVarietyOfSituations){
+    auto manager = BoardManager();
+    manager.setFullFen("5k2/4pp1p/p5pN/1p1q4/4b3/P1Q4P/1PP3P1/7K w - - 0 1");
+
+    auto attemptedCheckMate = createMove(WQ, "c3h8");
+    ASSERT_TRUE(manager.tryMove(attemptedCheckMate));
+    EXPECT_TRUE(attemptedCheckMate.resultBits & CHECK_MATE);
+    EXPECT_TRUE(manager.getGameResult() & GameResult::CHECKMATE);
+}
+
+TEST(BoardManager, EnPassantUndone){
+    auto manager = BoardManager();
+    manager.setFullFen("rnbqkbnr/pppppppp/8/8/8/P7/1PPPPPPP/RNBQKBNR b KQkq - 0 1");
+    auto move = createMove(BP, "a7a5");
+    ASSERT_TRUE(manager.tryMove(move));
+    EXPECT_EQ(manager.getFullFen(), "rnbqkbnr/1ppppppp/8/p7/8/P7/1PPPPPPP/RNBQKBNR w KQkq a6 0 1");
+    manager.undoMove(move);
+    EXPECT_EQ(manager.getFullFen(), "rnbqkbnr/pppppppp/8/8/8/P7/1PPPPPPP/RNBQKBNR b KQkq - 0 1");
+
+    auto move2 = createMove(BP, "b7b6");
+    ASSERT_TRUE(manager.tryMove(move2));
+    EXPECT_EQ(manager.getFullFen(), "rnbqkbnr/p1pppppp/1p6/8/8/P7/1PPPPPPP/RNBQKBNR w KQkq - 0 1");
+    manager.undoMove(move2);
+    EXPECT_EQ(manager.getFullFen(), "rnbqkbnr/pppppppp/8/8/8/P7/1PPPPPPP/RNBQKBNR b KQkq - 0 1");
+}
+
+TEST(BoardManager, SetEnPassantSquareOnDoublePawnPush){
+    BoardManager manager;
+    manager.setFullFen("3p4/8/8/8/8/8/P7/RNBQKBNR w KQkq - 0 1");
+
+    Move pawnPush = createMove(WP, "a2a4");
+
+    ASSERT_TRUE(manager.tryMove(pawnPush));
+    EXPECT_EQ(manager.getFullFen(), "3p4/8/8/8/P7/8/8/RNBQKBNR b KQkq a3 0 1");
+}
+
+TEST(BoardManager, UnsetSetEnPassantSquareOnDoublePawnPushIfOtherMoveMade){
+    BoardManager manager;
+    manager.setFullFen("3p4/8/8/8/8/8/P7/RNBQKBNR w KQkq - 0 1");
+
+    Move pawnPush = createMove(WP, "a2a4");
+
+    ASSERT_TRUE(manager.tryMove(pawnPush));
+    EXPECT_EQ(manager.getFullFen(), "3p4/8/8/8/P7/8/8/RNBQKBNR b KQkq a3 0 1");
+
+    // make other move
+    Move otherMove = createMove(BP, "d8d7");
+    ASSERT_TRUE(manager.tryMove(otherMove));
+    EXPECT_EQ(manager.getFullFen(), "8/3p4/8/8/P7/8/8/RNBQKBNR w KQkq - 0 1");
+}
+
+TEST(BoardManager, RestoreEnPassantAfterUndoingOtherMove){
+    BoardManager manager;
+    manager.setFullFen("3p4/8/8/8/8/8/P7/RNBQKBNR w KQkq - 0 1");
+
+    Move pawnPush = createMove(WP, "a2a4");
+
+    ASSERT_TRUE(manager.tryMove(pawnPush));
+    EXPECT_EQ(manager.getFullFen(), "3p4/8/8/8/P7/8/8/RNBQKBNR b KQkq a3 0 1");
+
+    // make other move
+    Move otherMove = createMove(BP, "d8d7");
+    ASSERT_TRUE(manager.tryMove(otherMove));
+    EXPECT_EQ(manager.getFullFen(), "8/3p4/8/8/P7/8/8/RNBQKBNR w KQkq - 0 1");
+
+    manager.undoMove(otherMove);
+    EXPECT_EQ(manager.getFullFen(), "3p4/8/8/8/P7/8/8/RNBQKBNR b KQkq a3 0 1");
+}
+
+TEST(BoardManager, InvalidEnPassantCapture){
+    BoardManager manager;
+    manager.setFullFen("8/8/8/8/pP6/8/8/RNBQKBNR w KQkq - 0 1");
+
+    Move enPassantMove = createMove(WP, "b5a6");
+    EXPECT_FALSE(manager.checkMove(enPassantMove));
+}
+
+TEST(BoardManager, EnPassantSquareIntegrityAfterDeepMoves){
+    BoardManager manager;
+    manager.setFullFen("8/8/8/8/1p6/8/P7/RNBQKBNR w KQkq - 0 1");
+
+    Move pawnPush = createMove(WP, "a2a4");
+    Move pawnPush2 = createMove(BP, "b4b3");
+
+    manager.tryMove(pawnPush);
+    EXPECT_EQ(manager.getEnPassantSquare(), rankAndFileToSquare(3, 1)); // "a3"
+    EXPECT_EQ(manager.getFullFen(), "8/8/8/8/Pp6/8/8/RNBQKBNR b KQkq a3 0 1");
+
+    manager.tryMove(pawnPush2);
+    EXPECT_EQ(manager.getEnPassantSquare(), -1); // undoes ep square
+    EXPECT_EQ(manager.getFullFen(), "8/8/8/8/P7/1p6/8/RNBQKBNR w KQkq - 0 1");
+
+    manager.undoMove(pawnPush2);
+    EXPECT_EQ(manager.getEnPassantSquare(), rankAndFileToSquare(3, 1)); // "a3"
+    EXPECT_EQ(manager.getFullFen(), "8/8/8/8/Pp6/8/8/RNBQKBNR b KQkq a3 0 1");
+}
+
+TEST(BoardManager, FenGenerationWithEnPassant){
+    BoardManager manager;
+    manager.setFullFen("8/8/8/8/8/8/P7/RNBQKBNR w KQkq - 0 1");
+
+    Move pawnPush = createMove(WP, "a2a4");
+    manager.tryMove(pawnPush);
+
+    std::string fen = manager.getFullFen();
+    EXPECT_NE(fen.find("a3"), std::string::npos); // en passant square "a3" should exist in FEN
+}
+
+TEST(BoardManager, EnPassantCaptureValidation){
+    BoardManager manager;
+    manager.setFullFen("8/8/8/8/pP6/8/8/RNBQKBNR w KQkq a5 0 1");
+
+    Move enPassantMove = createMove(WP, "b4a5");
+    EXPECT_TRUE(manager.checkMove(enPassantMove));
+}
+
+TEST(BoardManager, RestoreEnPassantAfterUndo){
+    BoardManager manager;
+    manager.setFullFen("8/8/8/8/8/8/P7/RNBQKBNR w KQkq - 0 1");
+
+    Move pawnPush = createMove(WP, "a2a4");
+    manager.tryMove(pawnPush);
+    EXPECT_EQ(manager.getEnPassantSquare(), rankAndFileToSquare(3, 1)); // "a3"
+
+    manager.undoMove();
+    EXPECT_EQ(manager.getEnPassantSquare(), -1);
 }

@@ -50,10 +50,19 @@ Move EngineBase::search(const int depth){
 
     float bestEval = -MATE_SCORE - 1;
     for (auto& move: moves) {
-        internalBoardManager_.forceMove(move);
+        // std::cout << "Searching move: " << move.toUCI() << std::endl;
+        // auto preFen = internalBoardManager_.getFullFen();
+        const bool worked = internalBoardManager_.tryMove(move);
+        if (!worked) { continue; }
         float eval = -negamax(depth - 1, 1);
 
         internalBoardManager_.undoMove();
+
+        auto postFen = internalBoardManager_.getFullFen();
+        //
+        // if (preFen != postFen) {
+        //     std::cout << "Fen changed after move: " << move.toUCI() << " " << preFen << " -> " << postFen << std::endl;
+        // }
 
         if (eval > bestEval) {
             bestEval = eval;
@@ -88,7 +97,7 @@ SearchResults EngineBase::searchWithResult(int depth){
     bestResult.score = -MATE_SCORE - 1;
 
     for (auto& move: moves) {
-        internalBoardManager_.forceMove(move);
+        internalBoardManager_.tryMove(move);
 
         std::vector<Move> thisPV;
         float eval = -negamaxWithPV(depth - 1, 1, thisPV);
@@ -122,7 +131,7 @@ PerftResults EngineBase::perft(const int depth){
 
     for (auto& move: moves) {
         // moves should be checked for legality already at this point so don't even worry
-        internalBoardManager_.forceMove(move);
+        internalBoardManager_.tryMove(move);
         const PerftResults child = perft(depth - 1);
 
         if (depth == 1) {
@@ -133,7 +142,10 @@ PerftResults EngineBase::perft(const int depth){
             if (move.resultBits & CAPTURE) { result.captures++; }
             if (move.resultBits & CASTLING) { result.castling++; }
             if (move.resultBits & CHECK_MATE) { result.checkMate++; }
-            if (move.resultBits & PROMOTION) { result.promotions++; }
+            if (move.resultBits & PROMOTION) {
+                // spacing comment
+                result.promotions++;
+            }
         } else { result += child; }
 
         internalBoardManager_.undoMove();
@@ -148,7 +160,7 @@ std::vector<PerftResults> EngineBase::perftDivide(const int depth){
     for (auto& move: moves) {
         auto result = PerftResults();
         result.fen = move.toUCI();
-        internalBoardManager_.forceMove(move);
+        internalBoardManager_.tryMove(move);
 
         if (depth == 1) {
             result.nodes = 1;
@@ -174,7 +186,7 @@ int EngineBase::simplePerft(const int depth){
     int nodes = 0;
     auto moves = generateMoveList();
     for (Move& move: moves) {
-        internalBoardManager_.forceMove(move);
+        internalBoardManager_.tryMove(move);
         nodes += simplePerft(depth - 1);
         internalBoardManager_.undoMove();
     }
@@ -193,10 +205,17 @@ float EngineBase::negamax(const int depth, const int ply){
 
     float bestScore = -MATE_SCORE - 1;
     for (auto& move: moves) {
-        internalBoardManager_.forceMove(move);
+        // auto preFen = internalBoardManager_.getFullFen();
+        const bool worked = internalBoardManager_.tryMove(move);
+
+        if (!worked) { continue; }
         float score = -negamax(depth - 1, ply + 1);
         internalBoardManager_.undoMove();
-
+        // auto postFen = internalBoardManager_.getFullFen();
+        // if (preFen != postFen) {
+        //     std::cout << "Fen changed after move: " << move.toUCI() << " at depth " << depth << preFen << " -> " <<
+        //             postFen << std::endl;
+        // }
         bestScore = std::max(bestScore, score);
 
         if (score >= MATE_SCORE - ply) { break; }
@@ -222,7 +241,7 @@ float EngineBase::negamaxWithPV(int depth, int ply, std::vector<Move>& pv){
     std::vector<Move> bestPV;
 
     for (auto& move: moves) {
-        internalBoardManager_.forceMove(move);
+        internalBoardManager_.tryMove(move);
         std::vector<Move> thisPV;
         float score = -negamaxWithPV(depth - 1, ply + 1, thisPV);
 

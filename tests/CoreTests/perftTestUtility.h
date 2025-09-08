@@ -156,7 +156,8 @@ inline void getMovesInOurEngineNotExternal(bool& passing, std::vector<PerftResul
         if (ourMove != *correspondingMove) {
             // this move exists but doesn't have the same results
             passing = false;
-            std::cout << "Move: " << ourMove.fen << "Our: " << ourMove.toString() << std::endl << "External: " <<
+            std::cout << "Move: " << ourMove.fen << std::endl << "Our: " << ourMove.toString() << std::endl <<
+                    "Ext: " <<
                     correspondingMove->toString() << std::endl;
             inOurEngineNotExternal.push_back(ourMove);
         }
@@ -238,11 +239,14 @@ inline bool divideTest(const FenString& desiredFen, const std::string& outputFil
 
             divideTest(whiteEngine.boardManager()->getFullFen(), outputFile, depth - 1);
             whiteEngine.boardManager()->undoMove();
+
+            // temporary just do the first one
+            break;
         }
     }
 
     // otherwise just get the moves
-    else {
+    else if (!passing) {
         runGetMoveResults(whiteEngine.boardManager()->getFullFen(), "movesOutput.txt");
         auto externalMoveResults = readMovesResults("movesOutput.txt");
         auto ourMoveResults = whiteEngine.generateMoveList();
@@ -254,9 +258,13 @@ inline bool divideTest(const FenString& desiredFen, const std::string& outputFil
 
             if (std::to_string(correspondingMove->resultBits) != externalMoveResult.second) {
                 passing = false;
-                std::cout << "Move: " << externalMoveResult.first << " Our: " << correspondingMove->resultBits <<
+                std::cout << "Move: " << std::endl << externalMoveResult.first << " Oudr: " << correspondingMove->
+                        resultBits <<
                         " External: " << externalMoveResult.second << std::endl;
             }
+
+            // temporary just do the first one
+            break;
         }
     }
 

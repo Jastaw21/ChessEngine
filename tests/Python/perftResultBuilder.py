@@ -60,6 +60,7 @@ def perft_complex(board, depth):
         is_check = board.gives_check(move)
         board.push(move)
         is_checkmate = board.is_checkmate()
+        is_promote = len(move.uci()) == 5
 
         if depth == 1:
             perft_result.nodes += 1
@@ -74,6 +75,8 @@ def perft_complex(board, depth):
                 perft_result.captures += 1
             elif is_castle:
                 perft_result.castling += 1
+            if is_promote:
+                perft_result.promotion += 1
 
 
         else:

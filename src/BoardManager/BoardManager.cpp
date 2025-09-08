@@ -152,7 +152,9 @@ bool BoardManager::validateMove(Move& move){
 }
 
 bool BoardManager::checkMove(Move& move){
-    if (!validateMove(move)) { return false; }
+    if (!validateMove(move)) { return false; } // move not even pseudolegal
+
+    // now we need to check the board state for check mates etc
     makeMove(move);
 
     // if the move results in, or leaves our king in check we can't do it.
@@ -161,11 +163,7 @@ bool BoardManager::checkMove(Move& move){
         move.resultBits |= ILLEGAL_MOVE;
         return false;
     }
-    if (turnToMoveInCheck(move)) {
-        move.resultBits |= CHECK;
-        move.resultBits &= ~PUSH; // undo the push bit
-        if (isNowCheckMate()) { move.resultBits |= CHECK_MATE; }
-    }
+
     undoMove(move);
     return true;
 }
@@ -173,6 +171,19 @@ bool BoardManager::checkMove(Move& move){
 bool BoardManager::tryMove(Move& move){
     if (!checkMove(move)) { return false; }
     makeMove(move);
+
+    // if we give check - see if it's checkmate
+    if (turnToMoveInCheck(move)) {
+        // update the move result
+        move.resultBits |= CHECK;
+        move.resultBits &= ~PUSH;
+
+        // should also check if its mate now
+        if (isNowCheckMate()) {
+            checkMateFlag = true;
+            move.resultBits |= CHECK_MATE;
+        }
+    }
     return true;
 }
 
@@ -223,13 +234,18 @@ void BoardManager::applyCastlingMove(Move& move){
 }
 
 void BoardManager::makeMove(Move& move){
-    previousEnPassantSquare = enPassantSquare;
     // handle the EP square
     if ((move.piece == WP || move.piece == BP) && move.fileTo == move.fileFrom && abs(move.rankTo - move.rankFrom) ==
         2) {
         auto targetRank = move.piece == WP ? move.rankTo - 1 : move.rankTo + 1;
+
+        // if a pawn moved two ranks, expose the en passant square
         enPassantSquare = rankAndFileToSquare(targetRank, move.fileFrom);
-    } else { enPassantSquare = -1; }
+    } else {
+        // otherwise it's cleared store the previous state though, in case it's undone
+        previousEnPassantSquare = enPassantSquare;
+        enPassantSquare = -1;
+    }
 
     // set the "from" square of the moving piece to zero
     bitboards.setZero(move.rankFrom, move.fileFrom);
@@ -268,8 +284,6 @@ void BoardManager::makeMove(Move& move){
     if (repetitionTable2[zobristHash_.getHash()] >= 3) { repetitionFlag = true; }
 
     moveHistory.emplace(move);
-    // if (!repetitionTable.empty() && repetitionTable.size() >= 8) { repetitionTable.pop_front(); }
-    // repetitionTable.push_back(move);
 }
 
 void BoardManager::undoCastling(const Move& move){
@@ -298,9 +312,16 @@ void BoardManager::undoCastling(const Move& move){
 }
 
 void BoardManager::undoMove(const Move& move){
-    // reset en passant
-    enPassantSquare = previousEnPassantSquare;
+    if ((move.piece == WP || move.piece == BP) && move.fileTo == move.fileFrom && abs(move.rankTo - move.rankFrom) ==
+        2) {
+        // move exposed an en passant square - this has cleared it
+        enPassantSquare = -1;
+    }
 
+    if (previousEnPassantSquare != -1) {
+        enPassantSquare = previousEnPassantSquare;
+        previousEnPassantSquare = -1;
+    }
     // set the "from" bit back to one
     const auto squareFrom = rankAndFileToSquare(move.rankFrom, move.fileFrom);
     bitboards[move.piece] |= 1ULL << squareFrom;
@@ -335,6 +356,7 @@ void BoardManager::undoMove(const Move& move){
     repetitionTable2[zobristHash_.getHash()]--; // remove the board state before undoing
     zobristHash_.undoMove(move);
     repetitionFlag = false;
+    checkMateFlag = false; // can never undo into a checkmate position
 }
 
 void BoardManager::undoMove(){
@@ -347,7 +369,7 @@ bool BoardManager::threefoldRepetition(){ return repetitionFlag; }
 
 bool BoardManager::isGameOver(){
     if (moveHistory.size() >= 100) { return true; }
-    if (isNowCheckMate()) { return true; }
+    if (checkMateFlag) { return true; }
     if (threefoldRepetition()) { return true; }
 
     return false;
@@ -367,7 +389,7 @@ int BoardManager::getGameResult(){
         resultBits |= GameResult::REPETITION;
         return resultBits;
     }
-    if (isNowCheckMate()) {
+    if (checkMateFlag) {
         resultBits |= GameResult::CHECKMATE;
         const auto lastMoveColour = pieceColours[moveHistory.top().piece];
 

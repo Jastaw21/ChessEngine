@@ -116,7 +116,9 @@ public:
         while (!moveHistory.empty()) { moveHistory.pop(); }
         repetitionTable2.clear();
         enPassantSquare = -1;
-    };
+    }
+
+    int getEnPassantSquare(){ return enPassantSquare; };
 
     void resetGame(const FenString& fen){
         setFullFen(fen);
@@ -165,6 +167,7 @@ private:
 
     int enPassantSquare = -1;
     int previousEnPassantSquare = -1;
+    bool checkMateFlag = false;
 };
 
 

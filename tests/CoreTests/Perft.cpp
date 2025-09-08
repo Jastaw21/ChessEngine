@@ -24,9 +24,37 @@ TEST(Divide, kiwiPeteDivide2){
 TEST(Divide, kiwiPeteDivide3){
     constexpr int depth = 3;
     // get the moves the actual engine think are possible
-    const std::string outputFile = "startPos.txt";
+    const std::string outputFile = "kp.txt";
     EXPECT_TRUE(divideTest(Fen::FULL_KIWI_PETE_FEN, outputFile, depth));
-    compareMoveList(Fen::FULL_KIWI_PETE_FEN, WHITE, "startPos.txt");
+}
+
+TEST(Divide, kiwiPeteDivide3FromRoot){
+    constexpr int depth = 3;
+    // get the moves the actual engine think are possible
+    const std::string outputFile = "kp.txt";
+
+    auto Engine = MainEngine();
+    Engine.setFullFen(Fen::FULL_KIWI_PETE_FEN);
+
+    auto moves = Engine.generateMoveList();
+
+    for (auto& move: moves) {
+        std::cout << "Testing: " << move.toUCI() << std::endl;
+        Engine.boardManager()->tryMove(move);
+        auto fenNow = Engine.boardManager()->getFullFen();
+        bool result = divideTest(fenNow, outputFile, depth);
+        EXPECT_TRUE(result);
+        Engine.boardManager()->undoMove();
+        if (result) { std::cout << "Passed: " << move.toUCI() << std::endl; }
+    }
+}
+
+
+TEST(Divide, kiwipeteDiveAtLeafInErrorCase){
+    constexpr int depth = 1;
+    // get the moves the actual engine think are possible
+    const std::string outputFile = "kp.txt";
+    EXPECT_TRUE(divideTest("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/PPN2Q2/2PBBPpP/R3K2R b KQkq - 0 1", outputFile, depth));
 }
 
 TEST(Divide, perft1Divide){
@@ -126,6 +154,7 @@ TEST(Perft, kiwiPete3){
     EXPECT_EQ(perftResults.enPassant, 45);
     EXPECT_EQ(perftResults.checks, 993);
     EXPECT_EQ(perftResults.checkMate, 1);
+    EXPECT_EQ(perftResults.promotions, 0);
 }
 
 TEST(Perft, position3Depth1){

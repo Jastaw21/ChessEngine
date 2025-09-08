@@ -163,7 +163,9 @@ def main(argv):
             f.write(move
                     + ' ' + str(moves[move].nodes) + ' ' + str(moves[move].captures)
                     + ' ' + str(moves[move].en_passant) + ' ' + str(moves[move].castling)
-                    + ' ' + str(moves[move].check) + ' ' + str(moves[move].checkmate) + "\n")
+                    + ' ' + str(moves[move].check) + ' ' + str(moves[move].checkmate)
+                    + ' ' + str(moves[move].promotion)
+                    + "\n")
 
 
 # move n c ep ca ch chm
