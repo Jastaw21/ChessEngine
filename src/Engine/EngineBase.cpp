@@ -50,19 +50,11 @@ Move EngineBase::search(const int depth){
 
     float bestEval = -MATE_SCORE - 1;
     for (auto& move: moves) {
-        // std::cout << "Searching move: " << move.toUCI() << std::endl;
-        // auto preFen = internalBoardManager_.getFullFen();
         const bool worked = internalBoardManager_.tryMove(move);
         if (!worked) { continue; }
         float eval = -negamax(depth - 1, 1);
 
         internalBoardManager_.undoMove();
-
-        auto postFen = internalBoardManager_.getFullFen();
-        //
-        // if (preFen != postFen) {
-        //     std::cout << "Fen changed after move: " << move.toUCI() << " " << preFen << " -> " << postFen << std::endl;
-        // }
 
         if (eval > bestEval) {
             bestEval = eval;
@@ -205,17 +197,12 @@ float EngineBase::negamax(const int depth, const int ply){
 
     float bestScore = -MATE_SCORE - 1;
     for (auto& move: moves) {
-        // auto preFen = internalBoardManager_.getFullFen();
         const bool worked = internalBoardManager_.tryMove(move);
 
         if (!worked) { continue; }
         float score = -negamax(depth - 1, ply + 1);
         internalBoardManager_.undoMove();
-        // auto postFen = internalBoardManager_.getFullFen();
-        // if (preFen != postFen) {
-        //     std::cout << "Fen changed after move: " << move.toUCI() << " at depth " << depth << preFen << " -> " <<
-        //             postFen << std::endl;
-        // }
+
         bestScore = std::max(bestScore, score);
 
         if (score >= MATE_SCORE - ply) { break; }

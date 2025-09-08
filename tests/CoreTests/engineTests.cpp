@@ -214,3 +214,13 @@ TEST(EngineTests, RefinedUndoState){
 
     EXPECT_EQ(engine.boardManager()->getFullFen(), Fen::FULL_STARTING_FEN);
 }
+
+TEST(EngineTests, GeneratingMovesDoesntResetENPassant){
+    auto engine = MainEngine();
+    engine.setFullFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/Pp2P3/2N2Q1p/1PPBBPPP/R3K2R b KQkq a3 0 1");
+
+    auto moves = engine.generateMoveList();
+
+    EXPECT_EQ(engine.boardManager()->getFullFen(),
+              "r3k2r/p1ppqpb1/bn2pnp1/3PN3/Pp2P3/2N2Q1p/1PPBBPPP/R3K2R b KQkq a3 0 1");
+}

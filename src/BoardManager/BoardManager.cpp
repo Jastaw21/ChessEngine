@@ -417,6 +417,7 @@ void BoardManager::setFullFen(const FenString& fen){
             fenFullMoveNumber;
 
     enPassantSquare = fenEnPassant == "-" ? -1 : Fen::FenToSquare(fenEnPassant);
+    previousEnPassantSquare = enPassantSquare;
 
     bitboards.setFenPositionOnly(fenPiecePlacement);
     setCurrentTurn(fenActiveColour == "w" ? WHITE : BLACK);
