@@ -20,6 +20,11 @@
 class BitBoards;
 class MagicBitBoards;
 
+struct BoardState{
+    int enPassantSquare = -1;
+    std::string castlingRights = "";
+}
+
 enum MoveResult {
     // successes
     PUSH = 1 << 0, // 0000 0001 - 1
@@ -96,30 +101,28 @@ public:
     BitBoards* getBitboards(){ return &bitboards; }
     std::stack<Move>& getMoveHistory(){ return moveHistory; }
     MagicBitBoards* getMagicBitBoards(){ return &magicBitBoards; }
+    int getEnPassantSquare(){ return enPassantSquare; };
+
+    bool tryMove(Move& move);
+    bool tryMove(const std::string& moveUCI);
+    bool checkMove(Move& move);
+    bool forceMove(Move& move);
+    void undoMove(const Move& move);
+    void undoMove();
 
     bool turnToMoveInCheck(Move& move);
     bool turnToMoveInCheck();
-    bool checkMove(Move& move);
-    bool tryMove(Move& move);
-    bool tryMove(const std::string& moveUCI);
-    bool forceMove(Move& move);
-    void swapTurns();
-    void applyCastlingMove(Move& move);
-    void undoMove(const Move& move);
-    void undoMove();
-    bool threefoldRepetition();
+    
     bool isGameOver();
     int getGameResult();
+
+    bool threefoldRepetition();
 
     void resetGame(){
         setFullFen(Fen::FULL_STARTING_FEN);
         while (!moveHistory.empty()) { moveHistory.pop(); }
         repetitionTable2.clear();
-        enPassantSquare = -1;
-    }
-
-    int getEnPassantSquare(){ return enPassantSquare; };
-
+        enPassantSquare = -1;    }
     void resetGame(const FenString& fen){
         setFullFen(fen);
         while (!moveHistory.empty()) { moveHistory.pop(); }
@@ -145,6 +148,7 @@ private:
 
     // do the move
     void makeMove(Move& move);
+    void applyCastlingMove(Move& move);
     void undoCastling(const Move& move);
 
     bool hasLegalMoveToEscapeCheck();
@@ -154,9 +158,15 @@ private:
     bool hasValidMoveFromSquare(Piece pieceName, int startSquare,
                                 const std::bitset<64>& destinationSquares);
 
+
+                    
+
+    void swapTurns();
+
     // data
     BitBoards bitboards{};
     std::stack<Move> moveHistory;
+    std::stack<BoardState> boardStateHistory;
     std::unordered_map<uint64_t, int> repetitionTable2;
     bool repetitionFlag = false;
     Colours currentTurn = WHITE;
@@ -165,8 +175,6 @@ private:
     Rules rules;
     MagicBitBoards magicBitBoards;
 
-    int enPassantSquare = -1;
-    int previousEnPassantSquare = -1;
     bool checkMateFlag = false;
 };
 

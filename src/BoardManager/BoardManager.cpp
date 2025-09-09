@@ -71,7 +71,14 @@ Move createMove(const Piece& piece, const std::string& moveUCI){
 
 BoardManager::BoardManager() = default;
 
+/** 
+* Checks if a move is legal - in all elements other than if it leaves the moving king in check
+* @param Move - the move to be checked. This will be edited to reflect the outcome of the move
+* @return boolean success
+**/
 bool BoardManager::validateMove(Move& move){
+
+
     move.resultBits = 0; // reset the move result tracker
     const int fromSquare = rankAndFileToSquare(move.rankFrom, move.fileFrom);
     const int toSquare = rankAndFileToSquare(move.rankTo, move.fileTo);
@@ -110,7 +117,7 @@ bool BoardManager::validateMove(Move& move){
 
     // ep
     if (move.piece == WP || move.piece == BP) {
-        if (enPassantSquare == toSquare) {
+        if (boardStateHistory.top().enPassantSquare == toSquare) {
             handleEnPassant(move);
             return true;
         }
@@ -151,6 +158,12 @@ bool BoardManager::validateMove(Move& move){
     return true;
 }
 
+
+/** 
+* Checks if a move is completely legal - including checkmate/check tests
+* @param Move - the move to be checked. This will be edited to reflect the outcome of the move
+* @return boolean success
+**/
 bool BoardManager::checkMove(Move& move){
     if (!validateMove(move)) { return false; } // move not even pseudolegal
 
@@ -167,6 +180,12 @@ bool BoardManager::checkMove(Move& move){
     undoMove(move);
     return true;
 }
+
+/** 
+* Checks and applies a move if legal. Updates internal board state
+* @param Move - the move to be checked. This will be edited to reflect the outcome of the move
+* @return boolean success
+**/
 
 bool BoardManager::tryMove(Move& move){
     if (!checkMove(move)) { return false; }
@@ -187,6 +206,11 @@ bool BoardManager::tryMove(Move& move){
     return true;
 }
 
+/** 
+* Constructs a move object from a UCI move string. Then checks and applies a move if legal. Updates internal board state
+* @param moveUCI - the move to be checked in UCI string format. This will be edited to reflect the outcome of the move
+* @return boolean success
+**/
 bool BoardManager::tryMove(const std::string& moveUCI){
     const auto fromSquare = Fen::FenToSquare(moveUCI);
     const auto optionalPiece = bitboards.getPiece(fromSquare);
@@ -199,10 +223,83 @@ bool BoardManager::tryMove(const std::string& moveUCI){
     return tryMove(move);
 }
 
+/** 
+* Forces a move to happen without legality check. Intended for use when moves have been checked during generation
+* @param Move - the move to be checked. This will be edited to reflect the outcome of the move
+* @return boolean success
+**/
 bool BoardManager::forceMove(Move& move){
     makeMove(move);
     return true;
 }
+
+/** 
+* Applies a move, updating the relevant elements of the board state
+* @param Move - the move to be applied. This should have been checked before.
+**/
+void BoardManager::makeMove(Move& move){
+    
+    int enPassantSquareState;
+    BoardState newBoardState;
+
+    // handle the EP square
+    if ((move.piece == WP || move.piece == BP) 
+        && move.fileTo == move.fileFrom 
+        && abs(move.rankTo - move.rankFrom) == 2
+    )   {
+    // a pawn has moved 2 ranks - and exposed an en passant square - update our state tracker
+    auto targetRank = move.piece == WP ? move.rankTo - 1 : move.rankTo + 1;        
+    enPassantSquareState = rankAndFileToSquare(targetRank, move.fileFrom);
+    } 
+    
+    else {
+       // any other move means the en passant square is now invalid       
+        enPassantSquareState = -1;
+    }
+
+    // always set the "from" square of the moving piece to zero
+    bitboards.setZero(move.rankFrom, move.fileFrom);
+
+    // castling needs special stuff doing
+    if (move.resultBits & CASTLING) { applyCastlingMove(move); }
+
+    // check to see if discovered capture - think this is an old carry over
+    if (const auto discoveredPiece = bitboards.getPiece(move.rankTo, move.fileTo);
+        discoveredPiece.has_value() && pieceColours[discoveredPiece.value()] != pieceColours[move.piece]) {
+        move.resultBits |= CAPTURE;
+        move.capturedPiece = discoveredPiece.value();
+    }
+
+    // if it was a normal capture, set the piece to zero
+    if (move.resultBits & CAPTURE && !(move.resultBits & EN_PASSANT))
+        bitboards.setZero(move.rankTo, move.fileTo);
+
+    // if it was an en_passant capture, set the correct square to zero
+    if (move.resultBits & EN_PASSANT) {
+        const auto rankOffset = pieceColours[move.piece] == WHITE ? -1 : 1;
+        bitboards.setZero(move.rankTo + rankOffset, move.fileTo);
+    }
+
+    // if it's not a promotion, set the to square of the moving piece to one
+    if (!(move.resultBits & PROMOTION))
+        {bitboards.setOne(move.piece, move.rankTo, move.fileTo);}
+
+        // otherwise, need to toggle on the bit for the piece it chose
+    else
+        {bitboards.setOne(move.promotedPiece, move.rankTo, move.fileTo);}
+
+    swapTurns(); // need to swap
+
+    // check for repetition
+    zobristHash_.addMove(move);
+    repetitionTable2[zobristHash_.getHash()]++;
+    if (repetitionTable2[zobristHash_.getHash()] >= 3) { repetitionFlag = true; }
+
+    moveHistory.emplace(move);
+    boardStateHistory.emplace(BoardState{.enPassantSquare, .castlingRights = ""});
+}
+
+
 
 void BoardManager::swapTurns(){
     if (currentTurn == WHITE)
@@ -233,58 +330,7 @@ void BoardManager::applyCastlingMove(Move& move){
     bitboards.setZero(move.rankTo, movedRookFileFrom);
 }
 
-void BoardManager::makeMove(Move& move){
-    // handle the EP square
-    if ((move.piece == WP || move.piece == BP) && move.fileTo == move.fileFrom && abs(move.rankTo - move.rankFrom) ==
-        2) {
-        auto targetRank = move.piece == WP ? move.rankTo - 1 : move.rankTo + 1;
 
-        // if a pawn moved two ranks, expose the en passant square
-        enPassantSquare = rankAndFileToSquare(targetRank, move.fileFrom);
-    } else {
-        // otherwise it's cleared store the previous state though, in case it's undone
-        previousEnPassantSquare = enPassantSquare;
-        enPassantSquare = -1;
-    }
-
-    // set the "from" square of the moving piece to zero
-    bitboards.setZero(move.rankFrom, move.fileFrom);
-
-    if (move.resultBits & CASTLING) { applyCastlingMove(move); }
-
-    // check to see if discovered capture
-    if (const auto discoveredPiece = bitboards.getPiece(move.rankTo, move.fileTo);
-        discoveredPiece.has_value() && pieceColours[discoveredPiece.value()] != pieceColours[move.piece]) {
-        move.resultBits |= CAPTURE;
-        move.capturedPiece = discoveredPiece.value();
-    }
-
-    // if it was a normal capture, set that piece to zero
-    if (move.resultBits & CAPTURE && !(move.resultBits & EN_PASSANT))
-        bitboards.setZero(move.rankTo, move.fileTo);
-
-    // if it was an en_passant capture, set the correct square to zero
-    if (move.resultBits & EN_PASSANT) {
-        const auto rankOffset = pieceColours[move.piece] == WHITE ? -1 : 1;
-        bitboards.setZero(move.rankTo + rankOffset, move.fileTo);
-    }
-
-    // if it's not a promotion, set the to square of the moving piece to one
-    if (!(move.resultBits & PROMOTION))
-        bitboards.setOne(move.piece, move.rankTo, move.fileTo);
-
-        // otherwise, need to toggle on the bit for the piece it chose
-    else
-        bitboards.setOne(move.promotedPiece, move.rankTo, move.fileTo);
-
-    swapTurns(); // need to swap
-
-    zobristHash_.addMove(move);
-    repetitionTable2[zobristHash_.getHash()]++;
-    if (repetitionTable2[zobristHash_.getHash()] >= 3) { repetitionFlag = true; }
-
-    moveHistory.emplace(move);
-}
 
 void BoardManager::undoCastling(const Move& move){
     bitboards.setZero(move.rankTo, move.fileTo);
@@ -312,16 +358,8 @@ void BoardManager::undoCastling(const Move& move){
 }
 
 void BoardManager::undoMove(const Move& move){
-    if ((move.piece == WP || move.piece == BP) && move.fileTo == move.fileFrom && abs(move.rankTo - move.rankFrom) ==
-        2) {
-        // move exposed an en passant square - this has cleared it
-        enPassantSquare = -1;
-    }
-
-    if (previousEnPassantSquare != -1) {
-        enPassantSquare = previousEnPassantSquare;
-        previousEnPassantSquare = -1;
-    }
+    
+    
     // set the "from" bit back to one
     const auto squareFrom = rankAndFileToSquare(move.rankFrom, move.fileFrom);
     bitboards[move.piece] |= 1ULL << squareFrom;
@@ -351,6 +389,7 @@ void BoardManager::undoMove(const Move& move){
     bitboards[move.piece] &= ~(1ULL << squareTo);
 
     moveHistory.pop();
+    boardStateHistory.pop();
 
     swapTurns();
     repetitionTable2[zobristHash_.getHash()]--; // remove the board state before undoing
@@ -416,9 +455,12 @@ void BoardManager::setFullFen(const FenString& fen){
     fenStream >> fenPiecePlacement >> fenActiveColour >> fenCastling >> fenEnPassant >> fenHalfMoveClock >>
             fenFullMoveNumber;
 
-    enPassantSquare = fenEnPassant == "-" ? -1 : Fen::FenToSquare(fenEnPassant);
-    previousEnPassantSquare = enPassantSquare;
+    
+    
+    
 
+    const auto enPassantSquare = fenEnPassant == "-" ? -1 : Fen::FenToSquare(fenEnPassant);
+    boardStateHistory.emplace(BoardState{.enPassantSquare =enPassantSquare });
     bitboards.setFenPositionOnly(fenPiecePlacement);
     setCurrentTurn(fenActiveColour == "w" ? WHITE : BLACK);
     zobristHash_.setFen(fen);
@@ -583,7 +625,7 @@ std::vector<int> BoardManager::getStartingSquaresOfPiece(const Piece& piece){
 
 std::string BoardManager::getFullFen(){
     auto baseFen = bitboards.toFEN();
-    auto enPassantSquareString = (enPassantSquare == -1) ? "-" : Fen::squareToFen(enPassantSquare);
+    auto enPassantSquareString = (boardStateHistory.top().enPassantSquare == -1) ? "-" : Fen::squareToFen(boardStateHistory.top().enPassantSquare);
     auto resultFen = baseFen + (currentTurn == WHITE ? " w" : " b") + " KQkq " + enPassantSquareString + " 0 1";
     return resultFen;
 }
