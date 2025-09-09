@@ -175,6 +175,18 @@ bool BoardManager::checkMove(Move& move){
         move.resultBits |= ILLEGAL_MOVE;
         return false;
     }
+    // if we give check - see if it's checkmate
+    if (turnToMoveInCheck(move)) {
+        // update the move result
+        move.resultBits |= CHECK;
+        move.resultBits &= ~PUSH;
+
+        // should also check if its mate now
+        if (isNowCheckMate()) {
+            checkMateFlag = true;
+            move.resultBits |= CHECK_MATE;
+        }
+    }
 
     undoMove(move);
     return true;
@@ -189,19 +201,6 @@ bool BoardManager::checkMove(Move& move){
 bool BoardManager::tryMove(Move& move){
     if (!checkMove(move)) { return false; }
     makeMove(move);
-
-    // if we give check - see if it's checkmate
-    if (turnToMoveInCheck(move)) {
-        // update the move result
-        move.resultBits |= CHECK;
-        move.resultBits &= ~PUSH;
-
-        // should also check if its mate now
-        if (isNowCheckMate()) {
-            checkMateFlag = true;
-            move.resultBits |= CHECK_MATE;
-        }
-    }
     return true;
 }
 

@@ -7,39 +7,39 @@ Rules::Rules(){
     for (int square = 0; square < 64; square++) {
         Bitboard rankResult = 0ULL;
         buildRankAttacks(square, rankResult);
-        rankAttacks.insert({square, rankResult});
+        rankAttacks2[square] = rankResult;
 
         Bitboard fileResult = 0ULL;
         buildFileAttacks(square, fileResult);
-        fileAttacks.insert({square, fileResult});
+        fileAttacks2[square] = fileResult;
 
         Bitboard diagResult = 0ULL;
         buildDiagonalAttacks(square, diagResult);
-        diagAttacks.insert({square, diagResult});
+        diagAttacks2[square] = diagResult;
 
         Bitboard knightResult = 0ULL;
         buildKnightAttacks(square, knightResult);
-        knightAttacks.insert({square, knightResult});
+        knightAttacks2[square] = knightResult;
 
         Bitboard whitePawnPushResult = 0ULL;
         buildWhitePawnPushes(square, whitePawnPushResult);
-        whitePawnPushes.insert({square, whitePawnPushResult});
+        whitePawnPushes2[square] = whitePawnPushResult;
 
         Bitboard blackPawnPushResult = 0ULL;
         buildBlackPawnPushes(square, blackPawnPushResult);
-        blackPawnPushes.insert({square, blackPawnPushResult});
+        blackPawnPushes2[square] = blackPawnPushResult;
 
         Bitboard whitePawnAttackResult = 0ULL;
         buildWhitePawnAttacks(square, whitePawnAttackResult);
-        whitePawnAttacks.insert({square, whitePawnAttackResult});
+        whitePawnAttacks2[square] = whitePawnAttackResult;
 
         Bitboard blackPawnAttackResult = 0ULL;
         buildBlackPawnAttacks(square, blackPawnAttackResult);
-        blackPawnAttacks.insert({square, blackPawnAttackResult});
+        blackPawnAttacks2[square] = blackPawnAttackResult;
 
         Bitboard kingPushResult = 0ULL;
         buildKingMoves(square, kingPushResult);
-        kingMoves.insert({square, kingPushResult});
+        kingMoves2[square] = kingPushResult;
     }
 }
 
@@ -69,8 +69,8 @@ Bitboard Rules::getPseudoCastlingMoves(const Piece& piece, const int fromSquare,
 
         Bitboard passingSquares = 0ULL;
         const int deltaFile = file - fileFrom;
-        for (int intermediateFile = fileFrom +MathUtility::sign(deltaFile); intermediateFile != file;
-             intermediateFile +=MathUtility::sign(deltaFile)) {
+        for (int intermediateFile = fileFrom + MathUtility::sign(deltaFile); intermediateFile != file;
+             intermediateFile += MathUtility::sign(deltaFile)) {
             passingSquares |= 1ULL << rankAndFileToSquare(rankFrom, intermediateFile);
         }
 

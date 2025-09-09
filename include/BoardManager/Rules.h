@@ -5,7 +5,6 @@
 #define RULES_H
 
 #include <algorithm>
-#include <cstdint>
 
 #include <bitset>
 #include "BitBoards.h"
@@ -178,14 +177,14 @@ public:
     }
 
     Bitboard getPseudoPawnPushes(const Piece& piece, const int fromSquare){
-        if (piece == WP) { return whitePawnPushes[fromSquare]; }
-        if (piece == BP) { return blackPawnPushes[fromSquare]; }
+        if (piece == WP) { return whitePawnPushes2[fromSquare]; }
+        if (piece == BP) { return blackPawnPushes2[fromSquare]; }
         return 0ULL;
     }
 
     Bitboard getPseudoPawnAttacks(const Piece& piece, const int fromSquare){
-        if (piece == WP) { return whitePawnAttacks[fromSquare]; }
-        if (piece == BP) { return blackPawnAttacks[fromSquare]; }
+        if (piece == WP) { return whitePawnAttacks2[fromSquare]; }
+        if (piece == BP) { return blackPawnAttacks2[fromSquare]; }
         return 0ULL;
     }
 
@@ -196,20 +195,20 @@ public:
                 return getPseudoPawnAttacks(piece, fromSquare);
             case WN:
             case BN:
-                return knightAttacks[fromSquare];
+                return knightAttacks2[fromSquare];
             case WQ:
             case BQ:
-                return rankAttacks[fromSquare] | fileAttacks[fromSquare] | diagAttacks[fromSquare];
+                return rankAttacks2[fromSquare] | fileAttacks2[fromSquare] | diagAttacks2[fromSquare];
             case WB:
             case BB:
-                return diagAttacks[fromSquare];
+                return diagAttacks2[fromSquare];
             case WR:
             case BR:
-                return rankAttacks[fromSquare] | fileAttacks[fromSquare];
+                return rankAttacks2[fromSquare] | fileAttacks2[fromSquare];
 
             case WK:
             case BK:
-                return kingMoves[fromSquare];
+                return kingMoves2[fromSquare];
             default:
                 return 0ULL;
         }
@@ -224,28 +223,28 @@ public:
             }
             case WN:
             case BN: {
-                inBoard |= knightAttacks[fromSquare];
+                inBoard |= knightAttacks2[fromSquare];
                 break;
             }
             case WQ:
             case BQ: {
-                inBoard |= (rankAttacks[fromSquare] | fileAttacks[fromSquare] | diagAttacks[fromSquare]);
+                inBoard |= (rankAttacks2[fromSquare] | fileAttacks2[fromSquare] | diagAttacks2[fromSquare]);
                 break;
             }
             case WB:
             case BB: {
-                inBoard |= diagAttacks[fromSquare];
+                inBoard |= diagAttacks2[fromSquare];
                 break;
             }
             case WR:
             case BR: {
-                inBoard |= (rankAttacks[fromSquare] | fileAttacks[fromSquare]);
+                inBoard |= (rankAttacks2[fromSquare] | fileAttacks2[fromSquare]);
                 break;
             }
 
             case WK:
             case BK: {
-                inBoard |= kingMoves[fromSquare];
+                inBoard |= kingMoves2[fromSquare];
                 break;
             }
             default: {
@@ -257,15 +256,15 @@ public:
 
     Bitboard getPseudoCastlingMoves(const Piece& piece, const int fromSquare, const BitBoards& boards);
 
-    std::unordered_map<int, Bitboard> rankAttacks;
-    std::unordered_map<int, Bitboard> fileAttacks;
-    std::unordered_map<int, Bitboard> diagAttacks;
-    std::unordered_map<int, Bitboard> knightAttacks;
-    std::unordered_map<int, Bitboard> whitePawnPushes;
-    std::unordered_map<int, Bitboard> whitePawnAttacks;
-    std::unordered_map<int, Bitboard> blackPawnPushes;
-    std::unordered_map<int, Bitboard> blackPawnAttacks;
-    std::unordered_map<int, Bitboard> kingMoves;
+    std::array<Bitboard, 64> rankAttacks2;
+    std::array<Bitboard, 64> fileAttacks2;
+    std::array<Bitboard, 64> diagAttacks2;
+    std::array<Bitboard, 64> knightAttacks2;
+    std::array<Bitboard, 64> whitePawnPushes2;
+    std::array<Bitboard, 64> whitePawnAttacks2;
+    std::array<Bitboard, 64> blackPawnPushes2;
+    std::array<Bitboard, 64> blackPawnAttacks2;
+    std::array<Bitboard, 64> kingMoves2;
 };
 
 namespace SingleMoves {
@@ -959,8 +958,8 @@ namespace RulesCheck {
             const int deltaFile = file - fileFrom;
             bool canCastle = true;
 
-            for (int intermediateFile = fileFrom +MathUtility::sign(deltaFile); intermediateFile != file;
-                 intermediateFile +=MathUtility::sign(deltaFile)) {
+            for (int intermediateFile = fileFrom + MathUtility::sign(deltaFile); intermediateFile != file;
+                 intermediateFile += MathUtility::sign(deltaFile)) {
                 if (boards->testSquare(rankAndFileToSquare(rankFrom, intermediateFile))) {
                     canCastle = false;
                     break; // if we cross anything on the way, break out and don't continue checking the others

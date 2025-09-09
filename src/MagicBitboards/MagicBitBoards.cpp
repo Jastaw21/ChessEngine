@@ -1,4 +1,3 @@
-
 //
 // Created by jacks on 10/07/2025.
 //
@@ -76,11 +75,11 @@ Bitboard MagicBitBoards::getMoves(const int square, const Piece& piece, const Bi
             return getRookAttacks(square, boards.getOccupancy()) | getBishopAttacks(square, boards.getOccupancy());
         case WN:
         case BN:
-            return rules.knightAttacks[square] & ~boards.getOccupancy(pieceColours[piece]); // cant go to own square
+            return rules.knightAttacks2[square] & ~boards.getOccupancy(pieceColours[piece]); // cant go to own square
         case WK:
         case BK: {
             const Bitboard castling = getCastling(square, piece, boards);
-            return (castling | rules.kingMoves[square]) & ~boards.getOccupancy(pieceColours[piece]);
+            return (castling | rules.kingMoves2[square]) & ~boards.getOccupancy(pieceColours[piece]);
             break;
         }
         // cant go to own square
@@ -136,13 +135,13 @@ void MagicBitBoards::getMoves(const int square, const Piece& piece, const BitBoa
         }
         case WN:
         case BN: {
-            resultMoves |= rules.knightAttacks[square] & ~boards.getOccupancy(pieceColours[piece]);
+            resultMoves |= rules.knightAttacks2[square] & ~boards.getOccupancy(pieceColours[piece]);
             break;
         } // cant go to own square
         case WK:
         case BK: {
             const Bitboard castling = getCastling(square, piece, boards);
-            resultMoves |= (castling | rules.kingMoves[square]) & ~boards.getOccupancy(pieceColours[piece]);
+            resultMoves |= (castling | rules.kingMoves2[square]) & ~boards.getOccupancy(pieceColours[piece]);
             break;
         }
         // cant go to own square
@@ -191,13 +190,13 @@ Bitboard MagicBitBoards::calculateAttacksForPiece(const int square, const Piece&
         case BQ:
             return getRookAttacks(square, boards.getOccupancy()) | getBishopAttacks(square, boards.getOccupancy());
         case WN:
-            return rules.knightAttacks[square] & ~boards.getOccupancy(WHITE); // cant go to own square
+            return rules.knightAttacks2[square] & ~boards.getOccupancy(WHITE); // cant go to own square
         case BN:
-            return rules.knightAttacks[square] & ~boards.getOccupancy(BLACK); // cant go to own square
+            return rules.knightAttacks2[square] & ~boards.getOccupancy(BLACK); // cant go to own square
         case WK:
-            return rules.kingMoves[square] & ~boards.getOccupancy(WHITE); // cant go to own square
+            return rules.kingMoves2[square] & ~boards.getOccupancy(WHITE); // cant go to own square
         case BK:
-            return rules.kingMoves[square] & ~boards.getOccupancy(BLACK); // cant go to own square
+            return rules.kingMoves2[square] & ~boards.getOccupancy(BLACK); // cant go to own square
         case WP:
             return rules.getPseudoPawnAttacks(piece, square) & ~boards.getOccupancy(WHITE);
         case BP:
@@ -210,15 +209,26 @@ Bitboard MagicBitBoards::calculateAttacksForPiece(const int square, const Piece&
 
 Bitboard MagicBitBoards::findAttacksForColour(const Colours& colourToGetAttacksFor, const BitBoards& boards){
     Bitboard attacks = 0ULL;
-    for (int piece = 0; piece < PIECE_N; ++piece) {
-        const auto pieceToSearch = static_cast<Piece>(piece);
-        if (pieceColours[pieceToSearch] == colourToGetAttacksFor) {
-            Bitboard occupancy = boards.getOccupancy(pieceToSearch);
+
+    if (colourToGetAttacksFor == WHITE) {
+        const auto relevantPieces = {WP, WR, WB, WQ, WN, WK};
+        for (const auto& piece: relevantPieces) {
+            Bitboard occupancy = boards.getOccupancy(piece);
 
             while (occupancy) {
                 const int square = popLowestSetBit(occupancy);
-                attacks |= calculateAttacksForPiece(square, pieceToSearch, boards);
+                attacks |= calculateAttacksForPiece(square, piece, boards);
             }
+        }
+        return attacks;
+    }
+    const auto relevantPieces = {BP, BR, BB, BQ, BN, BK};
+    for (const auto& piece: relevantPieces) {
+        Bitboard occupancy = boards.getOccupancy(piece);
+
+        while (occupancy) {
+            const int square = popLowestSetBit(occupancy);
+            attacks |= calculateAttacksForPiece(square, piece, boards);
         }
     }
     return attacks;

@@ -50,7 +50,7 @@ Move EngineBase::search(const int depth){
 
     float bestEval = -MATE_SCORE - 1;
     for (auto& move: moves) {
-        const bool worked = internalBoardManager_.tryMove(move);
+        const bool worked = internalBoardManager_.forceMove(move);
         if (!worked) { continue; }
         float eval = -negamax(depth - 1, 1);
 
@@ -89,7 +89,7 @@ SearchResults EngineBase::searchWithResult(int depth){
     bestResult.score = -MATE_SCORE - 1;
 
     for (auto& move: moves) {
-        internalBoardManager_.tryMove(move);
+        internalBoardManager_.forceMove(move);
 
         std::vector<Move> thisPV;
         float eval = -negamaxWithPV(depth - 1, 1, thisPV);
@@ -123,7 +123,7 @@ PerftResults EngineBase::perft(const int depth){
 
     for (auto& move: moves) {
         // moves should be checked for legality already at this point so don't even worry
-        internalBoardManager_.tryMove(move);
+        internalBoardManager_.forceMove(move);
         const PerftResults child = perft(depth - 1);
 
         if (depth == 1) {
@@ -152,7 +152,7 @@ std::vector<PerftResults> EngineBase::perftDivide(const int depth){
     for (auto& move: moves) {
         auto result = PerftResults();
         result.fen = move.toUCI();
-        internalBoardManager_.tryMove(move);
+        internalBoardManager_.forceMove(move);
 
         if (depth == 1) {
             result.nodes = 1;
@@ -178,7 +178,7 @@ int EngineBase::simplePerft(const int depth){
     int nodes = 0;
     auto moves = generateMoveList();
     for (Move& move: moves) {
-        internalBoardManager_.tryMove(move);
+        internalBoardManager_.forceMove(move);
         nodes += simplePerft(depth - 1);
         internalBoardManager_.undoMove();
     }
@@ -197,7 +197,7 @@ float EngineBase::negamax(const int depth, const int ply){
 
     float bestScore = -MATE_SCORE - 1;
     for (auto& move: moves) {
-        const bool worked = internalBoardManager_.tryMove(move);
+        const bool worked = internalBoardManager_.forceMove(move);
 
         if (!worked) { continue; }
         float score = -negamax(depth - 1, ply + 1);
@@ -228,7 +228,7 @@ float EngineBase::negamaxWithPV(int depth, int ply, std::vector<Move>& pv){
     std::vector<Move> bestPV;
 
     for (auto& move: moves) {
-        internalBoardManager_.tryMove(move);
+        internalBoardManager_.forceMove(move);
         std::vector<Move> thisPV;
         float score = -negamaxWithPV(depth - 1, ply + 1, thisPV);
 
