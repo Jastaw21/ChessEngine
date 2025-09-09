@@ -20,10 +20,10 @@
 class BitBoards;
 class MagicBitBoards;
 
-struct BoardState{
+struct BoardState {
     int enPassantSquare = -1;
     std::string castlingRights = "";
-}
+};
 
 enum MoveResult {
     // successes
@@ -101,7 +101,7 @@ public:
     BitBoards* getBitboards(){ return &bitboards; }
     std::stack<Move>& getMoveHistory(){ return moveHistory; }
     MagicBitBoards* getMagicBitBoards(){ return &magicBitBoards; }
-    int getEnPassantSquare(){ return enPassantSquare; };
+    int getEnPassantSquare(){ return boardStateHistory.top().enPassantSquare; };
 
     bool tryMove(Move& move);
     bool tryMove(const std::string& moveUCI);
@@ -112,7 +112,7 @@ public:
 
     bool turnToMoveInCheck(Move& move);
     bool turnToMoveInCheck();
-    
+
     bool isGameOver();
     int getGameResult();
 
@@ -122,7 +122,9 @@ public:
         setFullFen(Fen::FULL_STARTING_FEN);
         while (!moveHistory.empty()) { moveHistory.pop(); }
         repetitionTable2.clear();
-        enPassantSquare = -1;    }
+        while (!boardStateHistory.empty()) { boardStateHistory.pop(); }
+    }
+
     void resetGame(const FenString& fen){
         setFullFen(fen);
         while (!moveHistory.empty()) { moveHistory.pop(); }
@@ -158,8 +160,6 @@ private:
     bool hasValidMoveFromSquare(Piece pieceName, int startSquare,
                                 const std::bitset<64>& destinationSquares);
 
-
-                    
 
     void swapTurns();
 

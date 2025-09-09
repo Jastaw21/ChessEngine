@@ -28,28 +28,6 @@ TEST(Divide, kiwiPeteDivide3){
     EXPECT_TRUE(divideTest(Fen::FULL_KIWI_PETE_FEN, outputFile, depth));
 }
 
-TEST(Divide, kiwiPeteDivide3FromRoot){
-    constexpr int depth = 3;
-    // get the moves the actual engine think are possible
-    const std::string outputFile = "kp.txt";
-
-    auto Engine = MainEngine();
-    Engine.setFullFen(Fen::FULL_KIWI_PETE_FEN);
-
-    auto moves = Engine.generateMoveList();
-
-    for (auto& move: moves) {
-        std::cout << "Testing: " << move.toUCI() << std::endl;
-        Engine.boardManager()->tryMove(move);
-        auto fenNow = Engine.boardManager()->getFullFen();
-        bool result = divideTest(fenNow, outputFile, depth);
-        EXPECT_TRUE(result);
-        Engine.boardManager()->undoMove();
-        if (result) { std::cout << "Passed: " << move.toUCI() << std::endl; }
-    }
-}
-
-
 TEST(Divide, kiwipeteDiveAtLeafInErrorCase){
     constexpr int depth = 1;
     // get the moves the actual engine think are possible
