@@ -15,7 +15,7 @@
 #include "Utility/Fen.h"
 #include "Utility/Vec2D.h"
 
-typedef uint64_t Bitboard;
+using Bitboard = uint64_t;
 
 struct Move;
 
@@ -55,7 +55,7 @@ int popLowestSetBit(Bitboard& inBoard);
 
 namespace Comparisons {
     constexpr Bitboard buildFileBoard(const char file){
-        const int index = (file) - 'a';
+        const int index = file - 'a';
         Bitboard result = 0ULL;
         for (int i = 0; i < 8; ++i) { result |= 1ULL << (index + 8 * i); }
         return result;

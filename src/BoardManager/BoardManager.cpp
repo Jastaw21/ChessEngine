@@ -527,11 +527,7 @@ bool BoardManager::hasValidMoveFromSquare(const Piece pieceName, const int start
 }
 
 bool BoardManager::isValidEscapeMove(Move& move){
-    const bool moveSuccess = tryMove(move);
-
-    // don't think I need to double check?
-    // const bool isValidEscape = !lastTurnInCheck(move);
-    if (moveSuccess) {
+    if (tryMove(move)) {
         undoMove(move);
         return true;
     }

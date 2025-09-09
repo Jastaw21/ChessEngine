@@ -178,23 +178,6 @@ void MagicBitBoards::getMoves(const int square, const Piece& piece, const BitBoa
     }
 }
 
-// Bitboard MagicBitBoards::getAttackersToSquare(int square, const Colours& colourToGetAttackersFor,
-//                                               const BitBoards& boards){
-//     for (int piece = 0; piece < PIECE_N; ++piece) {
-//         const auto pieceToSearch = static_cast<Piece>(piece);
-//
-//         if (pieceColours[pieceToSearch] == colourToGetAttackersFor) {
-//             Bitboard occupancy = boards.getOccupancy(pieceToSearch);
-//             while (occupancy) {
-//                 const int attackingSquare = popLowestSetBit(occupancy);
-//
-//                 if ()
-//
-//
-//             }
-//         }
-//     }
-// }
 
 Bitboard MagicBitBoards::calculateAttacksForPiece(const int square, const Piece& piece, const BitBoards& boards){
     switch (piece) {
@@ -208,14 +191,17 @@ Bitboard MagicBitBoards::calculateAttacksForPiece(const int square, const Piece&
         case BQ:
             return getRookAttacks(square, boards.getOccupancy()) | getBishopAttacks(square, boards.getOccupancy());
         case WN:
+            return rules.knightAttacks[square] & ~boards.getOccupancy(WHITE); // cant go to own square
         case BN:
-            return rules.knightAttacks[square] & ~boards.getOccupancy(pieceColours[piece]); // cant go to own square
+            return rules.knightAttacks[square] & ~boards.getOccupancy(BLACK); // cant go to own square
         case WK:
+            return rules.kingMoves[square] & ~boards.getOccupancy(WHITE); // cant go to own square
         case BK:
-            return rules.kingMoves[square] & ~boards.getOccupancy(pieceColours[piece]); // cant go to own square
-        case BP:
+            return rules.kingMoves[square] & ~boards.getOccupancy(BLACK); // cant go to own square
         case WP:
-            return rules.getPseudoPawnAttacks(piece, square) & ~boards.getOccupancy(pieceColours[piece]);
+            return rules.getPseudoPawnAttacks(piece, square) & ~boards.getOccupancy(WHITE);
+        case BP:
+            return rules.getPseudoPawnAttacks(piece, square) & ~boards.getOccupancy(BLACK);
         default: ;
     }
 

@@ -180,7 +180,6 @@ public:
 
     Rules rules;
     Bitboard findAttacksForColour(const Colours& colourToGetAttacksFor, const BitBoards& boards);
-    //Bitboard getAttackersToSquare(int square, const Colours& colourToGetAttackersFor, const BitBoards& boards);
 
 private:
 

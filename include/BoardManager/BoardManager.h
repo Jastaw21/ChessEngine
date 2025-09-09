@@ -18,7 +18,6 @@
 
 
 class BitBoards;
-class MagicBitBoards;
 
 struct BoardState {
     int enPassantSquare = -1;

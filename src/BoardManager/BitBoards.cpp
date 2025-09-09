@@ -2,6 +2,7 @@
 // Created by jacks on 16/06/2025.
 //
 
+
 #include "BoardManager/BitBoards.h"
 
 #include <algorithm>
@@ -141,8 +142,16 @@ Bitboard BitBoards::getOccupancy(const Piece& piece) const{ return bitboards[pie
 
 Bitboard BitBoards::getOccupancy(const Colours& colour) const{
     Bitboard result = 0ULL;
-    for (const auto& piece: filteredPieces[colour]) { result |= bitboards[piece]; }
-    return result;
+    if (colour == WHITE) {
+        for (const auto& piece: {WP, WN, WB, WR, WQ, WK}) { result |= bitboards[piece]; }
+        return result;
+    }
+    if (colour == BLACK) {
+        for (const auto& piece: {BP, BN, BB, BR, BQ, BK}) { result |= bitboards[piece]; }
+        return result;
+    }
+
+    return result; //
 }
 
 
