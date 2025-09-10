@@ -32,6 +32,7 @@ public:
 
     // Core Engine Interface
     virtual Move search(int depth = 5);
+    SearchResults searchWithResult(int depth = 3);
 
     // Board State Management
     [[nodiscard]] BoardManager* boardManager(){ return &internalBoardManager_; }
@@ -44,9 +45,11 @@ public:
     // UCI Protocol Interface
     virtual void parseUCI(const std::string& uci);
     void go(int depth);
+
+
     void stop(){ shouldStop = true; }
     void quit(){ shouldQuit_ = true; }
-    Move getBestMove(int depth){ return search(depth); }
+    Move getBestMove(int depth){ return searchWithResult(depth).bestMove; }
 
     void reset(){
         // spacing comment
@@ -60,8 +63,9 @@ public:
     virtual std::vector<PerftResults> runDivideTest(const std::string& Fen, int depth);
     virtual std::vector<PerftResults> runDivideTest(int depth);
 
-    float negamaxWithPV(int depth, int ply, std::vector<Move>& pv);
-    SearchResults searchWithResult(int depth = 3);
+
+    float alphaBetaWithResult(int depth, float alpha, float beta, int ply, std::vector<Move>& pv);
+
 
     void logError(const std::string& error){ searchLogStream << error << std::endl; };
     Evaluator* getEvaluator(){ return &evaluator_; }
@@ -78,7 +82,7 @@ protected:
     virtual PerftResults perft(int depth);
     virtual int simplePerft(int depth);
     virtual std::vector<PerftResults> perftDivide(int depth);
-    float negamax(int depth, int ply);
+
 
     // Internal State
     BoardManager internalBoardManager_;

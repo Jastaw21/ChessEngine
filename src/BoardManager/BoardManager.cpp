@@ -494,7 +494,10 @@ bool BoardManager::canPieceEscapeCheck(const Piece& pieceName){
         const int startSquare = std::countr_zero(startingBoard);
         startingBoard &= ~(1ULL << startSquare);
         const auto possibleMoves = magicBitBoards.getMoves(startSquare, pieceName, bitboards);
-        if (hasValidMoveFromSquare(pieceName, startSquare, possibleMoves)) { return true; }
+        if (hasValidMoveFromSquare(pieceName, startSquare, possibleMoves)) {
+            // spacing
+            return true;
+        }
     }
     return false;
 }

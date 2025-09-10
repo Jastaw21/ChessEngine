@@ -5,6 +5,7 @@
 #include "Engine/EngineBase.h"
 
 #include <cmath>
+#include <future>
 
 #include "Engine/Evaluation.h"
 
@@ -22,10 +23,9 @@ EngineBase::EngineBase() : ChessPlayer(ENGINE),
 }
 
 void EngineBase::go(const int depth){
-    const auto bestMove = search(depth);
+    const auto bestMove = searchWithResult(depth).bestMove;
     std::cout << "bestmove " << bestMove.toUCI() << std::endl;
 }
-
 
 void EngineBase::parseUCI(const std::string& uci){
     auto command = parser.parse(uci);
@@ -37,34 +37,37 @@ void EngineBase::parseUCI(const std::string& uci){
 }
 
 Move EngineBase::search(const int depth){
-    std::string lastMove = internalBoardManager_.getMoveHistory().size() > 0
-                               ? internalBoardManager_.getMoveHistory().top().toUCI()
-                               : "New";
-    searchLogStream << "Fen:" << internalBoardManager_.getFullFen() << " " << lastMove << std::endl;
-
+    SearchResults bestResult;
     auto moves = generateMoveList();
-    if (moves.empty()) { return Move(); }
+    if (moves.empty()) { return bestResult.bestMove; }
 
-    int randomIndex = rng() % moves.size();
-    Move bestMove = moves[randomIndex];
+    bestResult.bestMove = moves[0];
+    bestResult.score = -MATE_SCORE - 1;
 
-    float bestEval = -MATE_SCORE - 1;
+    float alpha = -INFINITY;
+    float beta = INFINITY;
+
     for (auto& move: moves) {
-        const bool worked = internalBoardManager_.forceMove(move);
-        if (!worked) { continue; }
-        float eval = -negamax(depth - 1, 1);
+        internalBoardManager_.forceMove(move);
+
+        std::vector<Move> thisPV;
+        float eval = -alphaBetaWithResult(depth - 1, alpha, beta, 1, thisPV);
 
         internalBoardManager_.undoMove();
 
-        if (eval > bestEval) {
-            bestEval = eval;
-            bestMove = move;
-        }
+        if (eval > bestResult.score) {
+            bestResult.score = eval;
+            bestResult.bestMove = move;
 
-        searchLogStream << move.toUCI() << " " << eval << std::endl;
+            bestResult.variation.clear();
+            bestResult.variation.push_back(move);
+            bestResult.variation.insert(bestResult.variation.end(),
+                                        thisPV.begin(), thisPV.end());
+        }
     }
 
-    return bestMove;
+    bestResult.depth = depth;
+    return bestResult.bestMove;
 }
 
 PerftResults EngineBase::runPerftTest(const std::string& Fen, const int depth){
@@ -88,11 +91,14 @@ SearchResults EngineBase::searchWithResult(int depth){
     bestResult.bestMove = moves[0];
     bestResult.score = -MATE_SCORE - 1;
 
+    float alpha = -INFINITY;
+    float beta = INFINITY;
+
     for (auto& move: moves) {
         internalBoardManager_.forceMove(move);
 
         std::vector<Move> thisPV;
-        float eval = -negamaxWithPV(depth - 1, 1, thisPV);
+        float eval = -alphaBetaWithResult(depth - 1, alpha, beta, 1, thisPV);
 
         internalBoardManager_.undoMove();
 
@@ -187,41 +193,16 @@ int EngineBase::simplePerft(const int depth){
 }
 
 
-float EngineBase::negamax(const int depth, const int ply){
+float EngineBase::alphaBetaWithResult(int depth, float alpha, float beta, int ply, std::vector<Move>& pv){
+    pv.clear();
     if (internalBoardManager_.getGameResult() & GameResult::CHECKMATE) { return -MATE_SCORE + ply; }
+    if (internalBoardManager_.getMoveHistory().size() > 0 && internalBoardManager_.getMoveHistory().top().resultBits &
+        MoveResult::CHECK_MATE) { return -MATE_SCORE + ply; }
     if (internalBoardManager_.getGameResult() & GameResult::DRAW) { return 0.0f; }
     if (depth == 0) { return evaluator_.evaluate(); }
 
     auto moves = generateMoveList();
     if (moves.empty()) { return evaluator_.evaluate(); }
-
-    float bestScore = -MATE_SCORE - 1;
-    for (auto& move: moves) {
-        const bool worked = internalBoardManager_.forceMove(move);
-
-        if (!worked) { continue; }
-        float score = -negamax(depth - 1, ply + 1);
-        internalBoardManager_.undoMove();
-
-        bestScore = std::max(bestScore, score);
-
-        if (score >= MATE_SCORE - ply) { break; }
-    }
-    return bestScore;
-}
-
-float EngineBase::negamaxWithPV(int depth, int ply, std::vector<Move>& pv){
-    pv.clear();
-
-    // Base case: leaf node or game over
-    if (internalBoardManager_.getGameResult() & GameResult::CHECKMATE) { return -MATE_SCORE + ply; }
-    if (internalBoardManager_.getGameResult() & GameResult::DRAW) { return 0.0f; }
-    if (depth == 0) { return evaluator_.evaluate(); }
-
-    auto moves = generateMoveList();
-    if (moves.empty()) {
-        return evaluator_.evaluate(); // includes stalemate or mate
-    }
 
     float bestScore = -MATE_SCORE - 1;
     Move bestMove;
@@ -230,18 +211,22 @@ float EngineBase::negamaxWithPV(int depth, int ply, std::vector<Move>& pv){
     for (auto& move: moves) {
         internalBoardManager_.forceMove(move);
         std::vector<Move> thisPV;
-        float score = -negamaxWithPV(depth - 1, ply + 1, thisPV);
+
+        float eval = -alphaBetaWithResult(depth - 1, -beta, -alpha, ply + 1, thisPV);
 
         internalBoardManager_.undoMove();
 
-        if (score > bestScore) {
-            bestScore = score;
+        if (eval > bestScore) {
+            bestScore = eval;
             bestMove = move;
             bestPV = thisPV;
         }
+        alpha = std::max(alpha, eval);
+
+        if (alpha >= beta) { break; }
     }
 
-    if (boardManager()->checkMove(bestMove)) {
+    if (bestScore > -MATE_SCORE - 1) {
         pv.push_back(bestMove);
         pv.insert(pv.end(), bestPV.begin(), bestPV.end());
     }

@@ -85,7 +85,7 @@ TEST(EngineTests, FindsMateInTwoSteps){
 
     engine.setFullFen("6k1/4pp1p/p5p1/1p1q4/4b1N1/P1Q4P/1PP3P1/7K w - - 0 1");
 
-    const auto bestMove = engine.getBestMove(3);
+    const auto bestMove = engine.search(3);
     EXPECT_EQ(bestMove.toUCI(), "g4h6");
 
     auto result = engine.searchWithResult(3);
@@ -96,9 +96,9 @@ TEST(EngineTests, FindsMateInTwoSteps){
 TEST(EngineTests, FindsMateInOneStep){
     auto engine = MainEngine();
 
-    engine.setFullFen("5k2/4pp1p/p5pN/1p1q4/4b3/P1Q4P/1PP3P1/7K w - - 0 1");
+    engine.setFullFen("5k2/4pp1p/p5pN/1p6/8/PPQ4P/2P5/7K w KQkq - 0 1");
 
-    const auto bestMove = engine.getBestMove(1);
+    const auto bestMove = engine.search(1);
     EXPECT_EQ(bestMove.toUCI(), "c3h8");
 }
 
@@ -224,3 +224,5 @@ TEST(EngineTests, GeneratingMovesDoesntResetENPassant){
     EXPECT_EQ(engine.boardManager()->getFullFen(),
               "r3k2r/p1ppqpb1/bn2pnp1/3PN3/Pp2P3/2N2Q1p/1PPBBPPP/R3K2R b KQkq a3 0 1");
 }
+
+

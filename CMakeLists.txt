@@ -46,6 +46,8 @@ add_library(
         src/Engine/ProcessChessEngine.cpp
         include/EngineShared/ProcessChessEngine.h
         include/Engine/EvaluationValues.h
+        src/Engine/TranspositionTable.cpp
+        include/Engine/TranspositionTable.h
 )
 
 target_include_directories(chess_lib PUBLIC include)
