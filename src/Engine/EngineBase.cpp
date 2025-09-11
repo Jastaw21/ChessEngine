@@ -202,6 +202,11 @@ float EngineBase::alphaBetaWithResult(int depth, float alpha, float beta, int pl
     if (depth == 0) { return evaluator_.evaluate(); }
 
     auto moves = generateMoveList();
+
+    // really basic move ordering --- huuuuuuuuuuge improvement (4sec to 612ms at depth 5)
+    std::ranges::sort(moves, [&](const auto& moveToSort, const auto& moveToSort2) {
+        return (moveToSort.resultBits & CAPTURE) > (moveToSort2.resultBits & CAPTURE);
+    });
     if (moves.empty()) { return evaluator_.evaluate(); }
 
     float bestScore = -MATE_SCORE - 1;

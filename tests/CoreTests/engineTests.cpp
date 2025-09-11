@@ -225,4 +225,9 @@ TEST(EngineTests, GeneratingMovesDoesntResetENPassant){
               "r3k2r/p1ppqpb1/bn2pnp1/3PN3/Pp2P3/2N2Q1p/1PPBBPPP/R3K2R b KQkq a3 0 1");
 }
 
+TEST(EngineTests, PerformanceTest){
+    auto engine = MainEngine();
+    engine.setFullFen(Fen::FULL_STARTING_FEN);
+    engine.search(6);
+}
 
