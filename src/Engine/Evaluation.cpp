@@ -39,6 +39,7 @@ float Evaluator::materialScore(){
 float Evaluator::pieceSquareScore(){
     int playerToMoveScore = 0;
     int otherPlayerTurn = 0;
+    const auto currentTurn = boardManager_->getCurrentTurn();
 
     for (int piece = 0; piece < PIECE_N; ++piece) {
         auto pieceName = static_cast<Piece>(piece);
@@ -50,12 +51,19 @@ float Evaluator::pieceSquareScore(){
             const auto location = std::countr_zero(locations); // bottom set bit
             locations &= ~(1ULL << location); // pop the bit
 
-            int lookupIndex = pieceColours[pieceName] == BLACK ? flipBoard(location) : location;
+            int lookupIndex;
+            // manual check to avoid looking up colours - black need the board flipping
+            if (pieceName == BP || pieceName == BB ||
+                pieceName == BN || pieceName == BQ ||
+                pieceName == BR || pieceName == BK) { lookupIndex = flipBoard(location); }
+
+            // must be white - don't need to flip
+            else { lookupIndex = location; }
 
             auto scoresForThisPiece = getPieceScores(pieceTypes[pieceName]);
             auto pieceScore = scoresForThisPiece[lookupIndex];
 
-            if (pieceColours[pieceName] == boardManager_->getCurrentTurn()) { playerToMoveScore += pieceScore; } else {
+            if (pieceColours[pieceName] == currentTurn) { playerToMoveScore += pieceScore; } else {
                 otherPlayerTurn += pieceScore;
             }
         }
