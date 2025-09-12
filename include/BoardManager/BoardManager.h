@@ -100,7 +100,8 @@ public:
     BitBoards* getBitboards(){ return &bitboards; }
     std::stack<Move>& getMoveHistory(){ return moveHistory; }
     MagicBitBoards* getMagicBitBoards(){ return &magicBitBoards; }
-    int getEnPassantSquare(){ return boardStateHistory.top().enPassantSquare; };
+    int getEnPassantSquare(){ return boardStateHistory.top().enPassantSquare; }
+    ZobristHash* getZobristHash(){ return &zobristHash_; }
 
     bool tryMove(Move& move);
     bool tryMove(const std::string& moveUCI);

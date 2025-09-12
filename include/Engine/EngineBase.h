@@ -11,6 +11,7 @@
 
 #include "ChessPlayer.h"
 #include "Evaluation.h"
+#include "TranspositionTable.h"
 
 #include "BoardManager/BoardManager.h"
 
@@ -31,7 +32,8 @@ public:
     explicit EngineBase();
 
     // Core Engine Interface
-    virtual Move search(int depth = 5);
+    virtual Move searchWithTT(int depth = 5);
+    Move search(int depth);
     SearchResults searchWithResult(int depth = 3);
 
     // Board State Management
@@ -64,6 +66,7 @@ public:
     virtual std::vector<PerftResults> runDivideTest(int depth);
 
 
+    float alphaBetaWithResultAndTT(int depth, float alpha, float beta, int ply, std::vector<Move>& pv);
     float alphaBetaWithResult(int depth, float alpha, float beta, int ply, std::vector<Move>& pv);
 
 
@@ -88,6 +91,7 @@ protected:
     BoardManager internalBoardManager_;
     Evaluator evaluator_{};
     bool shouldQuit_ = false;
+    TranspositionTable transpositionTable_;
 
 private:
 

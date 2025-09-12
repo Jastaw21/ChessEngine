@@ -85,7 +85,7 @@ TEST(EngineTests, FindsMateInTwoSteps){
 
     engine.setFullFen("6k1/4pp1p/p5p1/1p1q4/4b1N1/P1Q4P/1PP3P1/7K w - - 0 1");
 
-    const auto bestMove = engine.search(3);
+    const auto bestMove = engine.searchWithTT(3);
     EXPECT_EQ(bestMove.toUCI(), "g4h6");
 
     auto result = engine.searchWithResult(3);
@@ -98,7 +98,7 @@ TEST(EngineTests, FindsMateInOneStep){
 
     engine.setFullFen("5k2/4pp1p/p5pN/1p6/8/PPQ4P/2P5/7K w KQkq - 0 1");
 
-    const auto bestMove = engine.search(1);
+    const auto bestMove = engine.searchWithTT(1);
     EXPECT_EQ(bestMove.toUCI(), "c3h8");
 }
 
@@ -189,7 +189,7 @@ TEST(EngineTests, BoardStateRestoresInSearch){
     engine.setFullFen(Fen::FULL_STARTING_FEN);
     auto preFen = engine.boardManager()->getFullFen();
 
-    engine.search(3);
+    engine.searchWithTT(3);
     auto postFen = engine.boardManager()->getFullFen();
     const bool eq = preFen == postFen;
     EXPECT_TRUE(eq);
@@ -228,6 +228,58 @@ TEST(EngineTests, GeneratingMovesDoesntResetENPassant){
 TEST(EngineTests, PerformanceTest){
     auto engine = MainEngine();
     engine.setFullFen(Fen::FULL_STARTING_FEN);
+    engine.searchWithTT(5);
+}
+
+TEST(EngineTests, PerformanceTestNoTT){
+    auto engine = MainEngine();
+    engine.setFullFen(Fen::FULL_STARTING_FEN);
     engine.search(5);
 }
 
+TEST(EngineTests, DeeperPerformanceTest){
+    auto engine = MainEngine();
+    engine.setFullFen(Fen::FULL_STARTING_FEN);
+    engine.searchWithTT(7);
+}
+
+TEST(EngineTests, DeeperPerformanceTestNoTT){
+    auto engine = MainEngine();
+    engine.setFullFen(Fen::FULL_STARTING_FEN);
+    engine.search(7);
+}
+
+
+TEST(TranspositionTests, Eviction){
+    auto tt = TranspositionTable();
+
+    auto expectedEntries = tt.maxSize / sizeof(TTEntry);
+
+    // we should be able to add a decen amount of entries before it starts evicting
+    for (int i = 0; i < expectedEntries; i++) {
+        TTEntry entry = {
+                    .key = static_cast<uint16_t>(i),
+                    .eval = 1,
+                    .bestMove = createMove(WP, "a2a3"),
+                    .depth = 1,
+                    .age = i,
+                };
+        tt.store(entry);
+        EXPECT_EQ(tt.entries(), i + 1);
+    }
+
+    // the next entries should all evict some
+
+    for (int j = 0; j < 10; j++) {
+        TTEntry entryAfterfilling = {
+                    .key = static_cast<uint16_t>(12),
+                    .eval = 1,
+                    .bestMove = createMove(WP, "a2a3"),
+                    .depth = 1,
+                    .age = 1,
+                };
+        tt.store(entryAfterfilling);
+
+        EXPECT_EQ(tt.entries(), expectedEntries -1);
+    }
+}

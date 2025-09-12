@@ -40,7 +40,13 @@ void runEngineGame(){
     gui.loop();
 }
 
+void searchTest(){
+    auto engine = MainEngine();
+    engine.setFullFen(Fen::FULL_STARTING_FEN);
+    engine.searchWithTT(5);
+}
+
 int main(int argc, char** argv){
-    runEngineStandaloneGame();
+    searchTest();
     return 0;
 }

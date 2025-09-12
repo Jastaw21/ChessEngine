@@ -36,6 +36,40 @@ void EngineBase::parseUCI(const std::string& uci){
     std::visit(visitor, *command);
 }
 
+Move EngineBase::searchWithTT(const int depth){
+    SearchResults bestResult;
+    auto moves = generateMoveList();
+    if (moves.empty()) { return bestResult.bestMove; }
+
+    bestResult.bestMove = moves[0];
+    bestResult.score = -MATE_SCORE - 1;
+
+    float alpha = -INFINITY;
+    float beta = INFINITY;
+
+    for (auto& move: moves) {
+        internalBoardManager_.forceMove(move);
+
+        std::vector<Move> thisPV;
+        float eval = -alphaBetaWithResultAndTT(depth - 1, alpha, beta, 1, thisPV);
+
+        internalBoardManager_.undoMove();
+
+        if (eval > bestResult.score) {
+            bestResult.score = eval;
+            bestResult.bestMove = move;
+
+            bestResult.variation.clear();
+            bestResult.variation.push_back(move);
+            bestResult.variation.insert(bestResult.variation.end(),
+                                        thisPV.begin(), thisPV.end());
+        }
+    }
+
+    bestResult.depth = depth;
+    return bestResult.bestMove;
+}
+
 Move EngineBase::search(const int depth){
     SearchResults bestResult;
     auto moves = generateMoveList();
@@ -98,7 +132,7 @@ SearchResults EngineBase::searchWithResult(int depth){
         internalBoardManager_.forceMove(move);
 
         std::vector<Move> thisPV;
-        float eval = -alphaBetaWithResult(depth - 1, alpha, beta, 1, thisPV);
+        float eval = -alphaBetaWithResultAndTT(depth - 1, alpha, beta, 1, thisPV);
 
         internalBoardManager_.undoMove();
 
@@ -192,6 +226,70 @@ int EngineBase::simplePerft(const int depth){
     return nodes;
 }
 
+
+float EngineBase::alphaBetaWithResultAndTT(int depth, float alpha, float beta, int ply, std::vector<Move>& pv){
+    pv.clear();
+    if (internalBoardManager_.getGameResult() & GameResult::CHECKMATE) { return -MATE_SCORE + ply; }
+    if (internalBoardManager_.getMoveHistory().size() > 0 && internalBoardManager_.getMoveHistory().top().resultBits &
+        MoveResult::CHECK_MATE) { return -MATE_SCORE + ply; }
+    if (internalBoardManager_.getGameResult() & GameResult::DRAW) { return 0.0f; }
+    if (depth == 0) { return evaluator_.evaluate(); }
+
+    auto moves = generateMoveList();
+
+    // really basic move ordering --- huuuuuuuuuuge improvement (4sec to 612ms at depth 5)
+    std::ranges::sort(moves, [&](const auto& moveToSort, const auto& moveToSort2) {
+        return (moveToSort.resultBits & CAPTURE) > (moveToSort2.resultBits & CAPTURE);
+    });
+
+    if (moves.empty()) { return evaluator_.evaluate(); }
+
+    float bestScore = -MATE_SCORE - 1;
+    Move bestMove;
+    std::vector<Move> bestPV;
+
+    for (auto& move: moves) {
+        // push the move onto the board
+        internalBoardManager_.forceMove(move);
+        std::vector<Move> thisPV;
+        float eval = 0.f;
+
+        // check if we've seen the state
+        auto hash = boardManager()->getZobristHash()->getHash();
+        auto precachedResult = transpositionTable_.retrieveVector(hash);
+
+        // if we haven't seen the state, searchWithTT it
+        if (!precachedResult.has_value()) {
+            eval = -alphaBetaWithResultAndTT(depth - 1, -beta, -alpha, ply + 1, thisPV);
+            // need to then store it
+            TTEntry newEntry{
+                        .key = hash,
+                        .eval = eval,
+                        .depth = depth,
+                        .age = ply
+                    };
+            transpositionTable_.storeVector(newEntry);
+        } else { eval = precachedResult->eval; }
+
+        internalBoardManager_.undoMove();
+
+        if (eval > bestScore) {
+            bestScore = eval;
+            bestMove = move;
+            bestPV = thisPV;
+        }
+        alpha = std::max(alpha, eval);
+
+        if (alpha >= beta) { break; }
+    }
+
+    if (bestScore > -MATE_SCORE - 1) {
+        pv.push_back(bestMove);
+        pv.insert(pv.end(), bestPV.begin(), bestPV.end());
+    }
+
+    return bestScore;
+}
 
 float EngineBase::alphaBetaWithResult(int depth, float alpha, float beta, int ply, std::vector<Move>& pv){
     pv.clear();
