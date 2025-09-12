@@ -258,13 +258,6 @@ void BoardManager::makeMove(Move& move){
     // castling needs special stuff doing
     if (move.resultBits & CASTLING) { applyCastlingMove(move); }
 
-    // check to see if discovered capture - think this is an old carry over
-    if (const auto discoveredPiece = bitboards.getPiece(move.rankTo, move.fileTo);
-        discoveredPiece.has_value() && pieceColours[discoveredPiece.value()] != pieceColours[move.piece]) {
-        move.resultBits |= CAPTURE;
-        move.capturedPiece = discoveredPiece.value();
-    }
-
     // if it was a normal capture, set the piece to zero
     if (move.resultBits & CAPTURE && !(move.resultBits & EN_PASSANT))
         bitboards.setZero(move.rankTo, move.fileTo);
@@ -285,8 +278,12 @@ void BoardManager::makeMove(Move& move){
 
     // check for repetition
     zobristHash_.addMove(move);
+    auto hash = zobristHash_.getHash();
+    // avoid double ref.
+    auto& count = repetitionTable2[hash];
+    ++count;
+    if (count >= 3) { repetitionFlag = true; }
     repetitionTable2[zobristHash_.getHash()]++;
-    if (repetitionTable2[zobristHash_.getHash()] >= 3) { repetitionFlag = true; }
 
     moveHistory.emplace(move);
     boardStateHistory.emplace(BoardState{.enPassantSquare = enPassantSquareState, .castlingRights = ""});

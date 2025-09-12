@@ -54,12 +54,41 @@ void ZobristHash::setFen(const FenString& fenString){ initializeHashFromFen(fenS
 
 void ZobristHash::addMove(const Move& move){
     // we'll use these all the way down
-    auto pieceReversed = PIECE_TO_CHAR_MAP[move.piece];
-    auto squareFrom = rankAndFileToSquare(move.rankFrom, move.fileFrom);
-    auto squareTo = rankAndFileToSquare(move.rankTo, move.fileTo);
+    char pieceChar;
+    switch (move.piece) {
+        case WP:
+            pieceChar = 'P';
+        case WN:
+            pieceChar = 'N';
+        case WB:
+            pieceChar = 'B';
+        case WR:
+            pieceChar = 'R';
+        case WQ:
+            pieceChar = 'Q';
+        case WK:
+            pieceChar = 'K';
+        case BP:
+            pieceChar = 'p';
+        case BN:
+            pieceChar = 'n';
+        case BB:
+            pieceChar = 'b';
+        case BR:
+            pieceChar = 'r';
+        case BQ:
+            pieceChar = 'q';
+        case BK:
+            pieceChar = 'k';
+        default:
+            pieceChar = 'x';
+    }
+
+    const auto squareFrom = rankAndFileToSquare(move.rankFrom, move.fileFrom);
+    const auto squareTo = rankAndFileToSquare(move.rankTo, move.fileTo);
 
     // XOR out where we moved from - this is true in any move.
-    auto movingPieceArray = getArray(pieceReversed);
+    const auto movingPieceArray = getArray(pieceChar);
     hashValue ^= movingPieceArray[squareFrom];
 
     // used to avoid getting the wrong piece set in edge special moves
@@ -67,7 +96,7 @@ void ZobristHash::addMove(const Move& move){
 
     if (move.resultBits & MoveResult::EN_PASSANT) {
         const auto rankOffset = pieceColours[move.piece] == WHITE ? -1 : 1;
-        auto enPassantCapturedSquare = rankAndFileToSquare(move.rankTo + rankOffset, move.fileTo);
+        const auto enPassantCapturedSquare = rankAndFileToSquare(move.rankTo + rankOffset, move.fileTo);
 
         // white - take off the black piece the rank behind where we're moving to
         if (move.piece == WP) { hashValue ^= blackPawn[enPassantCapturedSquare]; }
@@ -78,13 +107,13 @@ void ZobristHash::addMove(const Move& move){
     // treat pure capture separately
     else if (move.resultBits & MoveResult::CAPTURE) {
         // toggle the captured piece off
-        auto capturedArray = getArray(PIECE_TO_CHAR_MAP[move.capturedPiece]);
+        const auto capturedArray = getArray(PIECE_TO_CHAR_MAP[move.capturedPiece]);
         hashValue ^= capturedArray[squareTo];
     }
 
     if (move.resultBits & MoveResult::CASTLING) {
         const auto relevantRook = move.piece == WK ? 'R' : 'r'; // what is the rook we also need to move?
-        auto relevantArray = getArray(relevantRook);
+        const auto relevantArray = getArray(relevantRook);
 
         int movedRookFileTo = 0;
         int movedRookFileFrom = 0;
@@ -104,7 +133,7 @@ void ZobristHash::addMove(const Move& move){
     }
     if (move.resultBits & MoveResult::PROMOTION) {
         shouldMoveTo = false; // we don't want to move our moving piece here
-        auto promotedArray = getArray(PIECE_TO_CHAR_MAP[move.promotedPiece]);
+        const auto promotedArray = getArray(PIECE_TO_CHAR_MAP[move.promotedPiece]);
         hashValue ^= promotedArray[squareTo]; // switch to the new piece
     }
 

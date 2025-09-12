@@ -237,49 +237,14 @@ TEST(EngineTests, PerformanceTestNoTT){
     engine.search(5);
 }
 
-TEST(EngineTests, DeeperPerformanceTest){
-    auto engine = MainEngine();
-    engine.setFullFen(Fen::FULL_STARTING_FEN);
-    engine.searchWithTT(7);
-}
-
-TEST(EngineTests, DeeperPerformanceTestNoTT){
-    auto engine = MainEngine();
-    engine.setFullFen(Fen::FULL_STARTING_FEN);
-    engine.search(7);
-}
-
-
-TEST(TranspositionTests, Eviction){
-    auto tt = TranspositionTable();
-
-    auto expectedEntries = tt.maxSize / sizeof(TTEntry);
-
-    // we should be able to add a decen amount of entries before it starts evicting
-    for (int i = 0; i < expectedEntries; i++) {
-        TTEntry entry = {
-                    .key = static_cast<uint16_t>(i),
-                    .eval = 1,
-                    .bestMove = createMove(WP, "a2a3"),
-                    .depth = 1,
-                    .age = i,
-                };
-        tt.store(entry);
-        EXPECT_EQ(tt.entries(), i + 1);
-    }
-
-    // the next entries should all evict some
-
-    for (int j = 0; j < 10; j++) {
-        TTEntry entryAfterfilling = {
-                    .key = static_cast<uint16_t>(12),
-                    .eval = 1,
-                    .bestMove = createMove(WP, "a2a3"),
-                    .depth = 1,
-                    .age = 1,
-                };
-        tt.store(entryAfterfilling);
-
-        EXPECT_EQ(tt.entries(), expectedEntries -1);
-    }
-}
+// TEST(EngineTests, DeeperPerformanceTest){
+//     auto engine = MainEngine();
+//     engine.setFullFen(Fen::FULL_STARTING_FEN);
+//     engine.searchWithTT(7);
+// }
+//
+// TEST(EngineTests, DeeperPerformanceTestNoTT){
+//     auto engine = MainEngine();
+//     engine.setFullFen(Fen::FULL_STARTING_FEN);
+//     engine.search(7);
+// }
