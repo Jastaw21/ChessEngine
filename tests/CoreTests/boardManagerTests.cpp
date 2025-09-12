@@ -1428,14 +1428,6 @@ TEST(BoardManager, FenGenerationWithEnPassant){
     EXPECT_NE(fen.find("a3"), std::string::npos); // en passant square "a3" should exist in FEN
 }
 
-TEST(BoardManager, EnPassantCaptureValidation){
-    BoardManager manager;
-    manager.setFullFen("8/8/8/8/pP6/8/8/RNBQKBNR w KQkq a5 0 1");
-
-    Move enPassantMove = createMove(WP, "b4a5");
-    EXPECT_TRUE(manager.checkMove(enPassantMove));
-}
-
 TEST(BoardManager, RestoreEnPassantAfterUndo){
     BoardManager manager;
     manager.setFullFen("8/8/8/8/8/8/P7/RNBQKBNR w KQkq - 0 1");

@@ -48,3 +48,11 @@ TEST(MoveUtility, InverseOf){
     EXPECT_FALSE(move3.isInverseOf(move));
     EXPECT_FALSE(move3.isInverseOf(move2));
 }
+
+TEST(Math, GetXBits){
+    // first 4 set then some other stuff
+    Bitboard testNumber = 0x3e00000000000f;
+
+    auto result = MathUtility::getXBits(testNumber, 4);
+    EXPECT_EQ(result, 15);
+}

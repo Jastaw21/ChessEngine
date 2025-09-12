@@ -417,14 +417,27 @@ int BoardManager::getGameResult(){
         resultBits |= GameResult::REPETITION;
         return resultBits;
     }
+
+    const auto lastMoveColour = currentTurn == WHITE ? BLACK : WHITE;
     if (checkMateFlag) {
         resultBits |= GameResult::CHECKMATE;
-        const auto lastMoveColour = pieceColours[moveHistory.top().piece];
 
         if (lastMoveColour == WHITE)
             resultBits |= WHITE_WINS;
         else
             resultBits |= BLACK_WINS;
+
+        return resultBits;
+    }
+    if (moveHistory.size() > 0 && moveHistory.top().resultBits & MoveResult::CHECK_MATE) {
+        resultBits |= GameResult::CHECKMATE;
+
+        if (lastMoveColour == WHITE)
+            resultBits |= WHITE_WINS;
+        else
+            resultBits |= BLACK_WINS;
+
+        return resultBits;
     }
 
     return resultBits;

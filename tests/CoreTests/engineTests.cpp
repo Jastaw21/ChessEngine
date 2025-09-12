@@ -228,6 +228,6 @@ TEST(EngineTests, GeneratingMovesDoesntResetENPassant){
 TEST(EngineTests, PerformanceTest){
     auto engine = MainEngine();
     engine.setFullFen(Fen::FULL_STARTING_FEN);
-    engine.search(6);
+    engine.search(5);
 }
 

@@ -26,6 +26,8 @@ namespace MathUtility {
         float inRange = (value - min) / (max - min);
         return newMin + inRange * (newMax - newMin);
     }
+
+    inline uint64_t getXBits(uint64_t& number, int bits){ return (1 << bits) - 1 & number; }
 }
 
 
