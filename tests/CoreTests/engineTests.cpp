@@ -237,14 +237,3 @@ TEST(EngineTests, PerformanceTestNoTT){
     engine.search(5);
 }
 
-// TEST(EngineTests, DeeperPerformanceTest){
-//     auto engine = MainEngine();
-//     engine.setFullFen(Fen::FULL_STARTING_FEN);
-//     engine.searchWithTT(7);
-// }
-//
-// TEST(EngineTests, DeeperPerformanceTestNoTT){
-//     auto engine = MainEngine();
-//     engine.setFullFen(Fen::FULL_STARTING_FEN);
-//     engine.search(7);
-// }
