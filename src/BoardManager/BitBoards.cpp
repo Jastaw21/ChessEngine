@@ -8,7 +8,6 @@
 #include <algorithm>
 #include <iostream>
 #include <numeric>
-#include <bit>
 
 #include "Engine/Piece.h"
 #include <functional>
