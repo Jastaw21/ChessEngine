@@ -278,8 +278,8 @@ void BoardManager::makeMove(Move& move){
 
     // check for repetition
     zobristHash_.addMove(move);
-    repetitionTable2[zobristHash_.getHash()]++;
-    if (repetitionTable2[zobristHash_.getHash()] >= 3) { repetitionFlag = true; }
+    auto countOfRepetitions = ++repetitionTable2[zobristHash_.getHash()];
+    if (countOfRepetitions >= 3) { repetitionFlag = true; }
 
     moveHistory.emplace(move);
     boardStateHistory.emplace(BoardState{.enPassantSquare = enPassantSquareState, .castlingRights = ""});

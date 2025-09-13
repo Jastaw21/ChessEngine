@@ -24,14 +24,39 @@ float Evaluator::materialScore(){
     int playerToMoveScore = 0;
     int otherPlayerScore = 0;
 
-    for (int piece = 0; piece < PIECE_N; ++piece) {
-        auto pieceName = static_cast<Piece>(piece);
-        const int pieceCount = boardManager_->getBitboards()->countPiece(pieceName);
-        auto pieceValue = pieceScoresArray[pieceName];
+    const auto currentTurn = boardManager_->getCurrentTurn();
 
-        if (pieceColours[pieceName] == boardManager_->getCurrentTurn()) {
-            playerToMoveScore += pieceValue * pieceCount;
-        } else { otherPlayerScore += pieceValue * pieceCount; }
+    // precalculate whether each piece is the current turn to avoid colour lookups
+    std::array<bool, PIECE_N> pieceIsCurrentTurn;
+    for (int precachePiece = 0; precachePiece < PIECE_N; ++precachePiece) {
+        // if it's a white piece...
+        if (precachePiece == WP || precachePiece == WN || precachePiece == WB || precachePiece == WQ || precachePiece ==
+            WR || precachePiece == WK) {
+            // ... and the current turn is white - we should flag it as true
+            if (currentTurn == WHITE) { pieceIsCurrentTurn[precachePiece] = true; }
+            // current turn is black - ignore this one
+            else { pieceIsCurrentTurn[precachePiece] = false; }
+        }
+
+        // if it's a black piece
+        else {
+            if (currentTurn == WHITE) {
+                // ... and the current turn is white - we should flag it as false
+                pieceIsCurrentTurn[precachePiece] = false;
+            }
+            // current turn is black - check this one
+            else { pieceIsCurrentTurn[precachePiece] = true; }
+        }
+    }
+
+    for (int pieceToTest = 0; pieceToTest < PIECE_N; ++pieceToTest) {
+        auto pieceName = static_cast<Piece>(pieceToTest);
+        const int pieceCount = boardManager_->getBitboards()->countPiece(pieceName);
+        const auto pieceValue = pieceScoresArray[pieceName];
+
+        if (pieceIsCurrentTurn[pieceToTest]) { playerToMoveScore += pieceValue * pieceCount; } else {
+            otherPlayerScore += pieceValue * pieceCount;
+        }
     }
     return playerToMoveScore - otherPlayerScore;
 }
@@ -43,13 +68,17 @@ float Evaluator::pieceSquareScore(){
 
     for (int piece = 0; piece < PIECE_N; ++piece) {
         auto pieceName = static_cast<Piece>(piece);
+        bool pieceIsCurrentTurn = pieceColours[pieceName] == currentTurn;
 
         // where are these pieces
         Bitboard locations = boardManager_->getBitboards()->getOccupancy(pieceName);
 
+        // precache the results of this piece
+        auto& scoresForThisPiece = getPieceScores(pieceTypes[pieceName]);
+
         while (locations) {
             const auto location = std::countr_zero(locations); // bottom set bit
-            locations &= ~(1ULL << location); // pop the bit
+            locations &= locations - 1; // pop the bit
 
             int lookupIndex;
             // manual check to avoid looking up colours - black need the board flipping
@@ -60,12 +89,9 @@ float Evaluator::pieceSquareScore(){
             // must be white - don't need to flip
             else { lookupIndex = location; }
 
-            auto scoresForThisPiece = getPieceScores(pieceTypes[pieceName]);
+            // now get the square specific score
             auto pieceScore = scoresForThisPiece[lookupIndex];
-
-            if (pieceColours[pieceName] == currentTurn) { playerToMoveScore += pieceScore; } else {
-                otherPlayerTurn += pieceScore;
-            }
+            if (pieceIsCurrentTurn) { playerToMoveScore += pieceScore; } else { otherPlayerTurn += pieceScore; }
         }
     }
 
@@ -79,6 +105,3 @@ float Evaluator::evaluate(){
     // centipawns
     return score / (pieceScoresArray[WP] / 100.f);
 }
-
-
-
