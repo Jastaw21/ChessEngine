@@ -10,7 +10,7 @@
 #include <iostream>
 #include <optional>
 #include <string>
-
+#include <bit>
 #include "Engine/Piece.h"
 #include "Utility/Fen.h"
 #include "Utility/Vec2D.h"
