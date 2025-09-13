@@ -15,6 +15,7 @@
 
 #include "MagicBitboards/MagicBitBoards.h"
 #include "Utility/Fen.h"
+#include "Engine/RepetitionTable.h"
 
 
 class BitBoards;
@@ -121,14 +122,14 @@ public:
     void resetGame(){
         setFullFen(Fen::FULL_STARTING_FEN);
         while (!moveHistory.empty()) { moveHistory.pop(); }
-        repetitionTable2.clear();
+        repetitionTable_New_.clear();
         while (!boardStateHistory.empty()) { boardStateHistory.pop(); }
     }
 
     void resetGame(const FenString& fen){
         setFullFen(fen);
         while (!moveHistory.empty()) { moveHistory.pop(); }
-        repetitionTable2.clear();
+        repetitionTable_New_.clear();
     };
 
     void setFullFen(const FenString& fen);
@@ -167,7 +168,7 @@ private:
     BitBoards bitboards{};
     std::stack<Move> moveHistory;
     std::stack<BoardState> boardStateHistory;
-    std::unordered_map<uint64_t, int> repetitionTable2;
+    RepetitionTable repetitionTable_New_;
     bool repetitionFlag = false;
     Colours currentTurn = WHITE;
     ZobristHash zobristHash_;

@@ -48,6 +48,8 @@ add_library(
         include/Engine/EvaluationValues.h
         src/Engine/TranspositionTable.cpp
         include/Engine/TranspositionTable.h
+        include/Engine/RepetitionTable.cpp
+        include/Engine/RepetitionTable.h
 )
 
 target_include_directories(chess_lib PUBLIC include)
