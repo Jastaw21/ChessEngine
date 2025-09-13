@@ -71,7 +71,7 @@ Move createMove(const Piece& piece, const std::string& moveUCI){
 
 BoardManager::BoardManager() = default;
 
-/** 
+/**
 * Checks if a move is legal - in all elements other than if it leaves the moving king in check
 * @param Move - the move to be checked. This will be edited to reflect the outcome of the move
 * @return boolean success
@@ -274,12 +274,12 @@ void BoardManager::makeMove(Move& move){
     // otherwise, need to toggle on the bit for the piece it chose
     else { bitboards.setOne(move.promotedPiece, move.rankTo, move.fileTo); }
 
-    swapTurns(); // need to swap
+    swapTurns();
 
-    // check for repetition
     zobristHash_.addMove(move);
-    auto countOfRepetitions = ++repetitionTable2[zobristHash_.getHash()];
-    if (countOfRepetitions >= 3) { repetitionFlag = true; }
+
+    repetitionTable_New_.addMove(zobristHash_.getHash());
+    if (repetitionTable_New_.checkForRepetition()) { repetitionFlag = true; }
 
     moveHistory.emplace(move);
     boardStateHistory.emplace(BoardState{.enPassantSquare = enPassantSquareState, .castlingRights = ""});
@@ -374,7 +374,8 @@ void BoardManager::undoMove(const Move& move){
     boardStateHistory.pop();
 
     swapTurns();
-    repetitionTable2[zobristHash_.getHash()]--; // remove the board state before undoing
+
+    repetitionTable_New_.popMove();
     zobristHash_.undoMove(move);
     repetitionFlag = false;
     checkMateFlag = false; // can never undo into a checkmate position

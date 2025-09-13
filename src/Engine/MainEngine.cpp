@@ -31,7 +31,7 @@ void MainEngine::generateValidMovesFromPosition(const Piece& piece,
 
     while (possibleMoves) {
         const auto endSquare = std::countr_zero(possibleMoves); // bottom set bit
-        possibleMoves &= ~(1ULL << endSquare); // pop the bit
+        possibleMoves &= possibleMoves - 1; // pop the bit
         auto candidateMove = Move(piece, startSquare, endSquare);
         bool promoted = false;
         if ((piece == WP && endSquare >= WHITE_PROMOTION_START) ||
