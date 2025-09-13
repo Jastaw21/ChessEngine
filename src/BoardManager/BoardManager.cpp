@@ -264,7 +264,7 @@ void BoardManager::makeMove(Move& move){
 
     // if it was an en_passant capture, set the correct square to zero
     if (move.resultBits & EN_PASSANT) {
-        const auto rankOffset = pieceColours[move.piece] == WHITE ? -1 : 1;
+        const auto rankOffset = move.piece == WP ? -1 : 1;
         bitboards.setZero(move.rankTo + rankOffset, move.fileTo);
     }
 
@@ -354,8 +354,8 @@ void BoardManager::undoMove(const Move& move){
 
     // if it was an en_passant capture, restore the correct square to one
     if (move.resultBits & EN_PASSANT) {
-        const auto opponentPawn = pieceColours[move.piece] == WHITE ? BP : WP;
-        const auto rankOffset = pieceColours[move.piece] == WHITE ? -1 : 1;
+        const auto opponentPawn = move.piece == WP ? BP : WP;
+        const auto rankOffset = move.piece == WP ? -1 : 1;
         bitboards.setOne(opponentPawn, move.rankTo + rankOffset, move.fileTo);
     }
 
@@ -490,7 +490,12 @@ bool BoardManager::turnToMoveInCheck(){
 bool BoardManager::isNowCheckMate(){ return !hasLegalMoveToEscapeCheck(); }
 
 bool BoardManager::hasLegalMoveToEscapeCheck(){
-    for (const auto& pieceName: filteredPieces[currentTurn]) { if (canPieceEscapeCheck(pieceName)) { return true; } }
+    if (currentTurn == WHITE) {
+        // king first - most likely to escape check I guess?
+        for (const auto& pieceName: {WK, WN, WB, WQ, WR, WP}) { if (canPieceEscapeCheck(pieceName)) { return true; } }
+    } else {
+        for (const auto& pieceName: {BK, BN, BB, BQ, BR, BP}) { if (canPieceEscapeCheck(pieceName)) { return true; } }
+    }
     return false;
 }
 
@@ -499,18 +504,15 @@ bool BoardManager::canPieceEscapeCheck(const Piece& pieceName){
     while (startingBoard) {
         // count trailing zeros to find the index of the first set bit
         const int startSquare = std::countr_zero(startingBoard);
-        startingBoard &= ~(1ULL << startSquare);
+        startingBoard &= startingBoard - 1;
         const auto possibleMoves = magicBitBoards.getMoves(startSquare, pieceName, bitboards);
-        if (hasValidMoveFromSquare(pieceName, startSquare, possibleMoves)) {
-            // spacing
-            return true;
-        }
+        if (hasValidMoveFromSquare(pieceName, startSquare, possibleMoves)) { return true; }
     }
     return false;
 }
 
 bool BoardManager::hasValidMoveFromSquare(const Piece pieceName, const int startSquare,
-                                          Bitboard& destinationSquares){
+                                          Bitboard destinationSquares){
     while (destinationSquares) {
         // count trailing zeros to find the index of the first set bit
         const int destinationSquare = std::countr_zero(destinationSquares);
@@ -523,17 +525,6 @@ bool BoardManager::hasValidMoveFromSquare(const Piece pieceName, const int start
     return false;
 }
 
-bool BoardManager::hasValidMoveFromSquare(const Piece pieceName, const int startSquare,
-                                          const std::bitset<64>& destinationSquares){
-    for (int destinationSquare = 0; destinationSquare < destinationSquares.size(); ++destinationSquare) {
-        if (!destinationSquares.test(destinationSquare)) { continue; }
-
-        auto move = Move(pieceName, startSquare, destinationSquare);
-
-        if (isValidEscapeMove(move)) { return true; }
-    }
-    return false;
-}
 
 bool BoardManager::isValidEscapeMove(Move& move){
     if (tryMove(move)) {
@@ -562,29 +553,25 @@ void BoardManager::handleEnPassant(Move& move){
     move.resultBits |= EN_PASSANT;
     move.resultBits |= CAPTURE;
     const auto relevantFile = move.fileTo;
-    const auto rankOffset = pieceColours[move.piece] == WHITE ? -1 : 1;
+    const auto rankOffset = move.piece == WP ? -1 : 1;
     move.capturedPiece = bitboards.getPiece(move.rankTo + rankOffset, relevantFile).value();
 }
 
 
 bool BoardManager::lastTurnInCheck(const Move& move){
-    const Colours friendlyColor = pieceColours[move.piece];
-    const Piece friendlyKing = friendlyColor == BLACK ? BK : WK;
-    const Bitboard& kingLocation = bitboards[friendlyKing];
+    const Piece lastTurnPiece = currentTurn == BLACK ? WK : BK;
+    const Bitboard& kingLocation = bitboards[lastTurnPiece];
 
-    if (kingLocation == 0) {
-        return false; // No king on board
-    }
-
-    // Iterate through enemy pieces
-    const auto colourToSearch = pieceColours[move.piece] == WHITE ? BLACK : WHITE;
-    for (const auto& pieceName: filteredPieces[colourToSearch]) {
+    // Iterate through the pieces that can attack it
+    for (const auto& pieceName: filteredPieces[currentTurn]) {
         auto startingBoard = bitboards[pieceName];
         while (startingBoard) {
             // count trailing zeros to find the index of the first set bit
             const int startSquare = std::countr_zero(startingBoard);
-            startingBoard &= ~(1ULL << startSquare);
+            startingBoard &= startingBoard - 1;
             Bitboard prelimAttacks = 0ULL;
+
+            // see if they can even attack in theory
             rules.getPseudoAttacks(pieceName, startSquare, prelimAttacks);
             if (!(kingLocation & prelimAttacks))
                 continue;
@@ -595,23 +582,6 @@ bool BoardManager::lastTurnInCheck(const Move& move){
     }
 
     return false;
-}
-
-std::vector<int> BoardManager::getStartingSquaresOfPiece(const Piece& piece){
-    std::vector<int> startingSquares;
-    startingSquares.reserve(8); // max of 8 pieces per board
-
-    auto startingBoard = bitboards[piece];
-    if (startingBoard == 0ULL) { return startingSquares; }
-    while (startingBoard) {
-        // count trailing zeros to find the index of the first set bit
-        const int index = std::countr_zero(startingBoard);
-        startingSquares.push_back(index);
-        // clear the bit at that index
-        startingBoard &= ~(1ULL << index);
-    }
-
-    return startingSquares;
 }
 
 std::string BoardManager::getFullFen(){

@@ -139,7 +139,6 @@ public:
     void setCurrentTurn(const Colours current_turn){ currentTurn = current_turn; }
 
     bool isNowCheckMate();
-    std::vector<int> getStartingSquaresOfPiece(const Piece& piece);
 
 private:
 
@@ -156,12 +155,8 @@ private:
 
     bool hasLegalMoveToEscapeCheck();
     bool canPieceEscapeCheck(const Piece& pieceName);
-    bool hasValidMoveFromSquare(Piece pieceName, int startSquare, Bitboard& destinationSquares);
+    bool hasValidMoveFromSquare(Piece pieceName, int startSquare, Bitboard destinationSquares);
     bool isValidEscapeMove(Move& move);
-    bool hasValidMoveFromSquare(Piece pieceName, int startSquare,
-                                const std::bitset<64>& destinationSquares);
-
-
     void swapTurns();
 
     // data

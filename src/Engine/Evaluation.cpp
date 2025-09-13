@@ -74,7 +74,7 @@ float Evaluator::pieceSquareScore(){
         Bitboard locations = boardManager_->getBitboards()->getOccupancy(pieceName);
 
         // precache the results of this piece
-        auto& scoresForThisPiece = getPieceScores(pieceTypes[pieceName]);
+        auto& scoresForThisPiece = getPieceScores(pieceName);
 
         while (locations) {
             const auto location = std::countr_zero(locations); // bottom set bit

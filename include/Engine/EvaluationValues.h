@@ -102,6 +102,29 @@ inline const std::array<int, 64>& getPieceScores(PieceType pieceType){
     }
 }
 
+inline const std::array<int, 64>& getPieceScores(Piece piece){
+    switch (piece) {
+        case WP:
+        case BP:
+            return pawnScores;
+        case WN:
+        case BN:
+            return knightScores;
+        case WB:
+        case BB:
+            return bishopScores;
+        case WQ:
+        case BQ:
+            return queenScores;
+        case WR:
+        case BR:
+            return rookScores;
+        default:
+            return zeroScores;
+    }
+}
+
+
 inline int flipBoard(const int square){ return 63 - square; }
 
 #endif //CHESS_EVALUATIONVALUES_H

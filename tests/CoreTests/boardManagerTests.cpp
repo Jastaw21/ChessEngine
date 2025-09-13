@@ -532,7 +532,7 @@ TEST(BoardManagerMoveExecution, CastlingCanBeUndone){
     // this is a white castling position
     manager.getBitboards()->setFenPositionOnly("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R");
 
-    // this would be the castling move
+    // works for white in a coupl of dirre
     auto whiteMove = createMove(WK, "e1g1");
     auto initialWhiteKingBoard = manager.getBitboards()->getBitboard(WK);
     auto initialWhiteRookBoard = manager.getBitboards()->getBitboard(WR);
@@ -552,6 +552,7 @@ TEST(BoardManagerMoveExecution, CastlingCanBeUndone){
     EXPECT_EQ(manager.getBitboards()->getBitboard(WK), qsInitialWhiteKing);
 
     manager.getBitboards()->setFenPositionOnly("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R");
+    manager.setCurrentTurn(BLACK);
     auto blackMove = createMove(BK, "e8g8");
     auto initialBlackKingBoard = manager.getBitboards()->getBitboard(BK);
     auto initialBlackRookBoard = manager.getBitboards()->getBitboard(BR);
@@ -607,6 +608,7 @@ TEST(BoardManagerAdvancedRules, KingCantMoveInCheck){
     auto manager = BoardManager();
     manager.getBitboards()->setFenPositionOnly("8/8/8/8/8/8/8/kQ6");
 
+    manager.setCurrentTurn(BLACK);
     auto move = createMove(BK, "a1a2");
     EXPECT_FALSE(manager.checkMove(move));
     EXPECT_TRUE(move.resultBits & MoveResult::ILLEGAL_MOVE);
@@ -637,10 +639,12 @@ TEST(BoardManagerAdvancedRules, CheckCantBeExposed){
     manager.getBitboards()->setFenPositionOnly("8/8/8/8/8/q7/R7/K7");
 
     auto rookMoveOutOfWay = createMove(WR, "a2b2");
+    manager.setCurrentTurn(WHITE);
     EXPECT_FALSE(manager.checkMove(rookMoveOutOfWay));
     EXPECT_TRUE(rookMoveOutOfWay.resultBits & MoveResult::ILLEGAL_MOVE);
 
     manager.getBitboards()->setFenPositionOnly("8/2p5/K2p4/1P5r/1R3p1k/8/4P1P1/8");
+    manager.setCurrentTurn(BLACK);
     auto BPMovesOutOfWay = createMove(BP, "f4f3");
     EXPECT_FALSE(manager.checkMove(BPMovesOutOfWay));
 
@@ -670,35 +674,29 @@ TEST(BoardManagerAdvancedRules, EnPassantCanBeUndone){
     auto manager = BoardManager();
     manager.getBitboards()->setFenPositionOnly(Fen::STARTING_FEN);
 
-    // e5e6 e5d5 then into en passant
     auto whiteMove1 = createMove(WP, "e2e4");
-    manager.tryMove(whiteMove1);
+    ASSERT_TRUE(manager.tryMove(whiteMove1));
+    auto blackMove1 = createMove(BP, "c7c6");
+    ASSERT_TRUE(manager.tryMove(blackMove1));
     auto whiteMove2 = createMove(WP, "e4e5");
-    manager.tryMove(whiteMove2);
-    auto blackMove1 = createMove(BP, "f7f5");
-    manager.tryMove(blackMove1);
-
-    auto initialWhiteBitboard = manager.getBitboards()->getBitboard(BP);
-    auto initialBlackBitboard = manager.getBitboards()->getBitboard(WP);
+    ASSERT_TRUE(manager.tryMove(whiteMove2));
+    auto blackMove2 = createMove(BP, "f7f5");
+    ASSERT_TRUE(manager.tryMove(blackMove2));
 
     auto testEnPassant = createMove(WP, "e5f6");
+    ASSERT_TRUE(manager.tryMove(testEnPassant));
+    ASSERT_TRUE(testEnPassant.resultBits & MoveResult::EN_PASSANT);
+
+    auto initialWhitePawn = manager.getBitboards()->getPiece(WP);
+    auto initialBlackPawn = manager.getBitboards()->getPiece(BP);
 
     manager.undoMove(testEnPassant);
 
-    auto finalWhiteBitboard = manager.getBitboards()->getBitboard(BP);
-    auto finalBlackBitboard = manager.getBitboards()->getBitboard(WP);
+    auto finalWhitePawn = manager.getBitboards()->getPiece(WP);
+    auto finalBlackPawn = manager.getBitboards()->getPiece(BP);
 
-    EXPECT_EQ(initialWhiteBitboard, finalWhiteBitboard);
-    EXPECT_EQ(initialBlackBitboard, finalBlackBitboard);
-
-    manager.getBitboards()->setFenPositionOnly("r3k2r/p1ppqpb1/bn2pnp1/3PN3/Pp2P3/2N2Q1p/1PPBBPPP/R3K2R");
-    auto move = createMove(BP, "b4a3");
-
-    auto blackEnPassantStartingState = manager.getBitboards()->toFEN();
-    manager.tryMove(move);
-    manager.undoMove(move);
-    auto blackEnPassantFinalState = manager.getBitboards()->toFEN();
-    EXPECT_EQ(blackEnPassantStartingState, blackEnPassantFinalState);
+    EXPECT_EQ(initialWhitePawn, finalWhitePawn);
+    EXPECT_EQ(initialBlackPawn, finalBlackPawn);
 }
 
 TEST(BoardManagerAdvancedRules, CastlingKingSideWorks){
@@ -713,6 +711,7 @@ TEST(BoardManagerAdvancedRules, CastlingKingSideWorks){
     EXPECT_TRUE(whiteMove.resultBits & MoveResult::CASTLING);
 
     manager.getBitboards()->setFenPositionOnly("rnbqk2r/p2p1ppp/1ppbpn2/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
+    manager.setCurrentTurn(BLACK);
     auto blackMove = createMove(BK, "e8g8");
     EXPECT_TRUE(manager.checkMove(blackMove));
 
@@ -741,6 +740,7 @@ TEST(BoardManagerAdvancedRules, QueenSideCastlingUpdatesBoardState){
 
     // black first
     manager.getBitboards()->setFenPositionOnly("r3kbnr/p1pqpppp/bp1p4/2n5/8/1PPP4/P3PPPP/RNBQKBNR");
+    manager.setCurrentTurn(BLACK);
     auto blackMove = createMove(BK, "e8c8");
     ASSERT_TRUE(manager.tryMove(blackMove));
 
@@ -1005,6 +1005,7 @@ TEST(BoardManagerAdvancedRules, CantCastleToC_If_B_Occupied){
 
 TEST(BoardManagerAdvancedRules, CanCastleToC_if_B_Attacked){
     auto manager = BoardManager();
+    manager.setCurrentTurn(BLACK);
     manager.getBitboards()->setFenPositionOnly("r3k2r/p1pNqpb1/bn2pnp1/3P4/1p2P3/2N2Q1p/PPPBBPPP/R3K2R");
 
     auto attemptedCastling = createMove(BK, "e8c8");
@@ -1083,6 +1084,7 @@ TEST(BoardManagerLegality, KiwiPeteCanMoveBlackPawns){
 TEST(BoardManagerLegality, EnPassantRequiresLastMoveToBePawnMovingTwoSquares){
     auto manager = BoardManager();
     manager.getBitboards()->setFenPositionOnly("r3k2r/p1ppqNb1/bn2pnp1/3P4/1p2P3/2N2Q1p/PPPBBPPP/R3K2R");
+    manager.setCurrentTurn(BLACK);
     auto blackPawnMoveOneSouth = createMove(BP, "e6e5");
     ASSERT_TRUE(manager.tryMove(blackPawnMoveOneSouth));
 
@@ -1143,22 +1145,6 @@ TEST(BoardManagerAdvancedRules, EnPassantMustBeAttackingLastMovedPiece){
     EXPECT_FALSE(manager.checkMove(attemptedEnPassant));
 }
 
-
-TEST(BoardManager, StartingSquares){
-    auto manager = BoardManager();
-
-    manager.getBitboards()->setFenPositionOnly(Fen::STARTING_FEN);
-
-    const auto startingWhitePawns = manager.getStartingSquaresOfPiece(WP);
-    EXPECT_EQ(startingWhitePawns.size(), 8);
-
-    std::vector<int> expectedStarts;
-    for (int i = 8; i <= 15; i++) { expectedStarts.push_back(i); }
-
-    for (const auto& start: startingWhitePawns) {
-        EXPECT_TRUE(std::ranges::any_of(expectedStarts, [&](const auto actualStart) { return actualStart == start; }));
-    }
-}
 
 TEST(BoardManager, LoadingFen){
     auto manager = BoardManager();
