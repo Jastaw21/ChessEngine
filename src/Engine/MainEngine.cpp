@@ -24,10 +24,8 @@ void MainEngine::processPawnPromotion(std::vector<Move>& validMoves, Move& baseM
 }
 
 
-std::vector<Move> MainEngine::generateValidMovesFromPosition(const Piece& piece,
-                                                             const int startSquare){
-    std::vector<Move> validMoves;
-
+void MainEngine::generateValidMovesFromPosition(const Piece& piece,
+                                                const int startSquare, std::vector<Move>& moveList){
     auto possibleMoves = internalBoardManager_.getMagicBitBoards()->getMoves(
         startSquare, piece, *internalBoardManager_.getBitboards());
 
@@ -39,38 +37,31 @@ std::vector<Move> MainEngine::generateValidMovesFromPosition(const Piece& piece,
         if ((piece == WP && endSquare >= WHITE_PROMOTION_START) ||
             (piece == BP && endSquare <= BLACK_PROMOTION_END)) {
             promoted = true;
-            processPawnPromotion(validMoves, candidateMove);
+            processPawnPromotion(moveList, candidateMove);
         }
 
         if (!promoted) {
             // still need to check the move in case of checks etc
-            if (internalBoardManager_.checkMove(candidateMove)) { validMoves.push_back(candidateMove); }
+            if (internalBoardManager_.checkMove(candidateMove)) { moveList.push_back(candidateMove); }
         }
     }
-    return validMoves;
 }
 
-std::vector<Move> MainEngine::generateMovesForPiece(const Piece& piece){
-    std::vector<Move> pieceMoves;
-
+void MainEngine::generateMovesForPiece(const Piece& piece, std::vector<Move>& moveList){
     auto piecePositions = internalBoardManager_.getBitboards()->getBitboard(piece);
 
     while (piecePositions) {
         const auto startSquare = std::countr_zero(piecePositions); // bottom set bit
         piecePositions &= ~(1ULL << startSquare); // pop the bit
-        auto validMoves = generateValidMovesFromPosition(piece, startSquare);
-        pieceMoves.insert(pieceMoves.end(), validMoves.begin(), validMoves.end());
+        generateValidMovesFromPosition(piece, startSquare, moveList);
     }
-
-    return pieceMoves;
 }
 
 std::vector<Move> MainEngine::generateMoveList(){
     std::vector<Move> moves;
     // check each piece we have
     for (const auto& pieceName: filteredPieces[internalBoardManager_.getCurrentTurn()]) {
-        auto pieceMoves = generateMovesForPiece(pieceName);
-        moves.insert(moves.end(), pieceMoves.begin(), pieceMoves.end());
+        generateMovesForPiece(pieceName, moves);
     }
     return moves;
 }

@@ -77,9 +77,9 @@ protected:
 
     // Move Generation Interface
     virtual std::vector<Move> generateMoveList();
-    virtual std::vector<Move> generateValidMovesFromPosition(
-        const Piece& piece, int startSquare) = 0;
-    virtual std::vector<Move> generateMovesForPiece(const Piece& piece) = 0;
+    virtual void generateValidMovesFromPosition(
+        const Piece& piece, int startSquare, std::vector<Move>& moveList) = 0;
+    virtual void generateMovesForPiece(const Piece& piece, std::vector<Move>& moveList) = 0;
 
     // Performance Testing Implementation
     virtual PerftResults perft(int depth);
