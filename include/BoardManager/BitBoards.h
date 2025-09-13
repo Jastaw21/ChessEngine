@@ -50,8 +50,14 @@ inline void printBitboard(const Bitboard inBoard){
     std::cout << std::endl;
 }
 
-int getLowestSetBit(const Bitboard& inBoard);
-int popLowestSetBit(Bitboard& inBoard);
+inline int getLowestSetBit(const Bitboard& inBoard){ return std::countr_zero(inBoard); }
+
+inline int popLowestSetBit(Bitboard& inBoard){
+    const int lsb = getLowestSetBit(inBoard);
+    inBoard &= inBoard - 1;
+    return lsb;
+}
+
 
 namespace Comparisons {
     constexpr Bitboard buildFileBoard(const char file){

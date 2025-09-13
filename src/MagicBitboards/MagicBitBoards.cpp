@@ -187,8 +187,10 @@ Bitboard MagicBitBoards::calculateAttacksForPiece(const int square, const Piece&
         case BB:
             return getBishopAttacks(square, boards.getOccupancy());
         case WQ:
-        case BQ:
-            return getRookAttacks(square, boards.getOccupancy()) | getBishopAttacks(square, boards.getOccupancy());
+        case BQ: {
+            const auto occupancy = boards.getOccupancy();
+            return getRookAttacks(square, occupancy) | getBishopAttacks(square, occupancy);
+        }
         case WN:
             return rules.knightAttacks2[square] & ~boards.getOccupancy(WHITE); // cant go to own square
         case BN:
@@ -201,10 +203,8 @@ Bitboard MagicBitBoards::calculateAttacksForPiece(const int square, const Piece&
             return rules.getPseudoPawnAttacks(piece, square) & ~boards.getOccupancy(WHITE);
         case BP:
             return rules.getPseudoPawnAttacks(piece, square) & ~boards.getOccupancy(BLACK);
-        default: ;
+        default: return 0ULL;
     }
-
-    return 0ULL;
 }
 
 Bitboard MagicBitBoards::findAttacksForColour(const Colours& colourToGetAttacksFor, const BitBoards& boards){

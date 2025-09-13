@@ -45,14 +45,6 @@ int squareToFile(const int square){ return square % 8 + 1; }
 int squareToRank(const int square){ return square / 8 + 1; }
 
 
-int getLowestSetBit(const Bitboard& inBoard){ return std::countr_zero(inBoard); }
-
-int popLowestSetBit(Bitboard& inBoard){
-    const int lsb = getLowestSetBit(inBoard);
-    inBoard &= ~(1ULL << lsb);
-    return lsb;
-}
-
 BitBoards::BitBoards(){ bitboards.fill(0ULL); }
 
 void BitBoards::setFenPositionOnly(const FenString& fen){
@@ -134,24 +126,20 @@ bool BitBoards::testSquare(const int square) const{
 int BitBoards::countPiece(const Piece& pieceToSearch) const{ return std::popcount(bitboards[pieceToSearch]); }
 
 Bitboard BitBoards::getOccupancy() const{
-    const auto accumulated = std::accumulate(bitboards.begin(), bitboards.end(), 0ULL, std::bit_or<>());
-    return accumulated;
+    return
+            bitboards[WP] | bitboards[WN] | bitboards[WB] | bitboards[WR] | bitboards[WQ] | bitboards[WK]
+            | bitboards[BP] | bitboards[BN] | bitboards[BB] | bitboards[BR] | bitboards[BQ] | bitboards[BK];
 }
 
 Bitboard BitBoards::getOccupancy(const Piece& piece) const{ return bitboards[piece]; }
 
 Bitboard BitBoards::getOccupancy(const Colours& colour) const{
-    Bitboard result = 0ULL;
     if (colour == WHITE) {
-        for (const auto& piece: {WP, WN, WB, WR, WQ, WK}) { result |= bitboards[piece]; }
-        return result;
-    }
-    if (colour == BLACK) {
-        for (const auto& piece: {BP, BN, BB, BR, BQ, BK}) { result |= bitboards[piece]; }
-        return result;
+        // no loop
+        return bitboards[WP] | bitboards[WN] | bitboards[WB] | bitboards[WR] | bitboards[WQ] | bitboards[WK];
     }
 
-    return result; //
+    return bitboards[BP] | bitboards[BN] | bitboards[BB] | bitboards[BR] | bitboards[BQ] | bitboards[BK];
 }
 
 
