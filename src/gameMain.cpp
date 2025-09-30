@@ -43,10 +43,10 @@ void runEngineGame(){
 void searchTest(){
     auto engine = MainEngine();
     engine.setFullFen(Fen::FULL_STARTING_FEN);
-    engine.searchWithTT(5);
+    engine.Search(5);
 }
 
 int main(int argc, char** argv){
-    searchTest();
+    runEngineStandaloneGame();
     return 0;
 }
