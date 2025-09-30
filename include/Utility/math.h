@@ -34,20 +34,17 @@ namespace MathUtility {
 
 
 namespace OtherUtility {
-    inline std::string nowAsString(){
-        using namespace std::chrono;
+    inline std::string getCurrentTimeString(){
+        // Get current time
+        auto now = std::chrono::system_clock::now();
+        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+        auto time = std::chrono::system_clock::to_time_t(now);
 
-        const auto now = system_clock::now();
-        auto itt = system_clock::to_time_t(now);
-        std::tm bt = *std::localtime(&itt);
-
-        // milliseconds part
-        auto ms = duration_cast<milliseconds>(now.time_since_epoch()) % 1000;
-
-        std::ostringstream oss;
-        oss << std::put_time(&bt, "%H:%M:%S") // e.g. 14:37:12
-                << '.' << std::setw(3) << std::setfill('0') << ms.count(); // +.015
-        return oss.str();
+        // Convert to string
+        std::stringstream ss;
+        ss << std::put_time(std::localtime(&time), "%Y-%m-%d %H:%M:%S");
+        ss << '.' << std::setfill('0') << std::setw(3) << ms.count();
+        return ss.str();
     }
 }
 

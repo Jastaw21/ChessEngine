@@ -34,10 +34,12 @@ public:
 
     // Core Engine Interface
     SearchResults Search(int depth = 5);
+    SearchResults Search(int MaxDepth, int SearchMs);
+    bool evaluateGameState(int depth, int ply, float& value1);
     Move getBestMove(int depth){ return Search(depth).bestMove; }
 
     // control flage
-    void stop(){ StopFlag.store(true); }
+    void stop(){ shouldQuit_ = true; }
     void quit(){ shouldQuit_ = true; }
     void reset(){ internalBoardManager_.resetGame(); }
     void go(int depth);
@@ -89,11 +91,11 @@ private:
     std::mt19937 rng; // used for randomising the moves if no best move found;
     std::ofstream searchLogStream;
 
-    std::atomic<bool> StopFlag;
+    std::chrono::steady_clock::time_point deadline;
 
-    void startTimer(int ms);
-    void stopTimer();
+
     float alphaBeta(int depth, float alpha, float beta, int ply, std::vector<Move>& pv);
+    float alphaBetaTimed(int depth, float alpha, float beta, int ply, std::vector<Move>& pv);
 };
 
 

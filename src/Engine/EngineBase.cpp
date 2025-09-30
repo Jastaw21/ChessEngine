@@ -9,6 +9,11 @@
 
 #include "Engine/Evaluation.h"
 
+inline void SortMoves(std::vector<Move>& moves){
+    std::ranges::sort(moves, [&](const auto& moveToSort, const auto& moveToSort2) {
+        return (moveToSort.resultBits & CAPTURE) > (moveToSort2.resultBits & CAPTURE);
+    });
+}
 
 EngineBase::EngineBase() : ChessPlayer(ENGINE),
                            rng(std::chrono::system_clock::now().time_since_epoch().count()){
@@ -20,6 +25,8 @@ EngineBase::EngineBase() : ChessPlayer(ENGINE),
 
     evaluator_.setBoardManager(&internalBoardManager_);
 }
+
+void EngineBase::loadFEN(const std::string& fen){ boardManager()->setFullFen(fen); }
 
 void EngineBase::go(const int depth){
     const auto bestMove = Search(depth).bestMove;
@@ -35,21 +42,10 @@ void EngineBase::parseUCI(const std::string& uci){
     std::visit(visitor, *command);
 }
 
-
-void EngineBase::startTimer(int ms){
-    StopFlag.store(false); // reset at the start of each search
-    std::thread([ms, this]() {
-        std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-        stopTimer(); // signal search to stop
-    }).detach(); // let it run independently
-}
-
-void EngineBase::stopTimer(){
-    std::cout << OtherUtility::nowAsString << "Stopping timer" << std::endl;
-    StopFlag.store(true); // signal search to stop
-}
+std::vector<Move> EngineBase::generateMoveList(){ return std::vector<Move>(); }
 
 SearchResults EngineBase::Search(int depth){
+    std::cerr << "Search Start  aa Time " << OtherUtility::getCurrentTimeString() << std::endl;
     SearchResults bestResult;
     auto moves = generateMoveList();
     if (moves.empty()) { return bestResult; }
@@ -83,22 +79,186 @@ SearchResults EngineBase::Search(int depth){
     return bestResult;
 }
 
-PerftResults EngineBase::runPerftTest(const std::string& Fen, const int depth){
-    internalBoardManager_.getBitboards()->setFenPositionOnly(Fen);
-    return perft(depth);
+SearchResults EngineBase::Search(int MaxDepth, int SearchMs){
+    int marginSearch = SearchMs * 0.95;
+    deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(marginSearch);
+
+    SearchResults bestResult;
+
+    for (int depth = 1; depth <= MaxDepth; depth++) {
+        std::vector<Move> thisPV;
+
+        float score = alphaBetaTimed(depth, -INFINITY, INFINITY, 1, thisPV);
+
+        if (std::chrono::steady_clock::now() >= deadline) {
+            std::cerr << OtherUtility::getCurrentTimeString() << " Deadline reached" << std::endl;
+            break;
+        }
+
+        if (!thisPV.empty()) {
+            bestResult.bestMove = thisPV[0];
+            bestResult.score = score;
+            bestResult.depth = depth;
+            bestResult.variation.clear();
+            bestResult.variation.push_back(thisPV[0]);
+            bestResult.variation.insert(bestResult.variation.end(),
+                                        thisPV.begin() + 1, thisPV.end());
+        }
+    }
+
+    return bestResult;
 }
 
-std::vector<PerftResults> EngineBase::runDivideTest(const std::string& Fen, const int depth){
-    internalBoardManager_.getBitboards()->setFenPositionOnly(Fen);
-    return perftDivide(depth);
+bool EngineBase::evaluateGameState(int depth, int ply, float& value1){
+    if (internalBoardManager_.getGameResult() & GameResult::CHECKMATE) {
+        value1 = -MATE_SCORE + ply;
+        return true;
+    }
+    if (internalBoardManager_.getMoveHistory().size() > 0 && internalBoardManager_.getMoveHistory().top().resultBits &
+        MoveResult::CHECK_MATE) {
+        value1 = -MATE_SCORE + ply;
+        return true;
+    }
+    if (internalBoardManager_.getGameResult() & GameResult::DRAW) {
+        value1 = 0.0f;
+        return true;
+    }
+    if (depth == 0) {
+        value1 = evaluator_.evaluate();
+        return true;
+    }
+    return false;
 }
 
-std::vector<PerftResults> EngineBase::runDivideTest(const int depth){ return perftDivide(depth); }
+float EngineBase::alphaBeta(int depth, float alpha, float beta, int ply, std::vector<Move>& pv){
+    pv.clear();
+    float endingEvaluation;
+    if (evaluateGameState(depth, ply, endingEvaluation)) return endingEvaluation;
 
+    auto moves = generateMoveList();
+    SortMoves(moves);
 
-std::vector<Move> EngineBase::generateMoveList(){ return std::vector<Move>(); }
+    if (moves.empty()) { return evaluator_.evaluate(); }
 
-void EngineBase::loadFEN(const std::string& fen){ boardManager()->setFullFen(fen); }
+    float bestScore = -MATE_SCORE - 1;
+    Move bestMove;
+    std::vector<Move> bestPV;
+
+    for (auto& move: moves) {
+        // push the move onto the board
+        internalBoardManager_.forceMove(move);
+        std::vector<Move> thisPV;
+        float eval = 0.f;
+
+        // check if we've seen the state
+        auto hash = boardManager()->getZobristHash()->getHash();
+        auto precachedResult = transpositionTable_.retrieveVector(hash);
+
+        // if we haven't seen the state, searchWithTT it
+        if (!precachedResult.has_value()) {
+            eval = -alphaBeta(depth - 1, -beta, -alpha, ply + 1, thisPV);
+            // need to then store it
+            TTEntry newEntry{
+                        .key = hash,
+                        .eval = eval,
+                        .depth = depth,
+                        .age = ply
+                    };
+            transpositionTable_.storeVector(newEntry);
+        } else { eval = precachedResult->eval; }
+
+        internalBoardManager_.undoMove();
+
+        if (eval > bestScore) {
+            bestScore = eval;
+            bestMove = move;
+            bestPV = thisPV;
+        }
+        alpha = std::max(alpha, eval);
+
+        if (alpha >= beta) { break; }
+    }
+
+    if (bestScore > -MATE_SCORE - 1) {
+        pv.push_back(bestMove);
+        pv.insert(pv.end(), bestPV.begin(), bestPV.end());
+    }
+
+    return bestScore;
+}
+
+float EngineBase::alphaBetaTimed(int depth, float alpha, float beta, int ply, std::vector<Move>& pv){
+    pv.clear();
+
+    if (std::chrono::steady_clock::now() >= deadline) {
+        std::cerr << "Deadline reached inside ab" << std::endl;
+        return 0.0f; // bail
+    }
+
+    if (internalBoardManager_.getGameResult() & GameResult::CHECKMATE) { return -MATE_SCORE + ply; }
+    if (internalBoardManager_.getMoveHistory().size() > 0 && internalBoardManager_.getMoveHistory().top().resultBits &
+        MoveResult::CHECK_MATE) { return -MATE_SCORE + ply; }
+    if (internalBoardManager_.getGameResult() & GameResult::DRAW) { return 0.0f; }
+    if (depth == 0) { return evaluator_.evaluate(); }
+
+    auto moves = generateMoveList();
+
+    std::ranges::sort(moves, [&](const auto& moveToSort, const auto& moveToSort2) {
+        return (moveToSort.resultBits & CAPTURE) > (moveToSort2.resultBits & CAPTURE);
+    });
+
+    if (moves.empty()) { return evaluator_.evaluate(); }
+
+    float bestScore = -MATE_SCORE - 1;
+    Move bestMove;
+    std::vector<Move> bestPV;
+
+    for (auto& move: moves) {
+        if (std::chrono::steady_clock::now() >= deadline) {
+            std::cerr << OtherUtility::getCurrentTimeString() << " Deadline reached inside move search" << std::endl;
+            return 0.0f; // bail inside loop
+        }
+        // push the move onto the board
+        internalBoardManager_.forceMove(move);
+        std::vector<Move> thisPV;
+        float eval = 0.f;
+
+        // check if we've seen the state
+        auto hash = boardManager()->getZobristHash()->getHash();
+        auto precachedResult = transpositionTable_.retrieveVector(hash);
+
+        // if we haven't seen the state, searchWithTT it
+        if (!precachedResult.has_value()) {
+            eval = -alphaBeta(depth - 1, -beta, -alpha, ply + 1, thisPV);
+            // need to then store it
+            TTEntry newEntry{
+                        .key = hash,
+                        .eval = eval,
+                        .depth = depth,
+                        .age = ply
+                    };
+            transpositionTable_.storeVector(newEntry);
+        } else { eval = precachedResult->eval; }
+
+        internalBoardManager_.undoMove();
+
+        if (eval > bestScore) {
+            bestScore = eval;
+            bestMove = move;
+            bestPV = thisPV;
+        }
+        alpha = std::max(alpha, eval);
+
+        if (alpha >= beta) { break; }
+    }
+
+    if (bestScore > -MATE_SCORE - 1) {
+        pv.push_back(bestMove);
+        pv.insert(pv.end(), bestPV.begin(), bestPV.end());
+    }
+
+    return bestScore;
+}
 
 PerftResults EngineBase::perft(const int depth){
     if (depth == 0) return PerftResults{1, 0, 0, 0, 0, 0};
@@ -156,7 +316,6 @@ std::vector<PerftResults> EngineBase::perftDivide(const int depth){
     return results;
 }
 
-
 int EngineBase::simplePerft(const int depth){
     if (depth == 0)
         return 1;
@@ -172,68 +331,14 @@ int EngineBase::simplePerft(const int depth){
     return nodes;
 }
 
-
-float EngineBase::alphaBeta(int depth, float alpha, float beta, int ply, std::vector<Move>& pv){
-    pv.clear();
-    if (internalBoardManager_.getGameResult() & GameResult::CHECKMATE) { return -MATE_SCORE + ply; }
-    if (internalBoardManager_.getMoveHistory().size() > 0 && internalBoardManager_.getMoveHistory().top().resultBits &
-        MoveResult::CHECK_MATE) { return -MATE_SCORE + ply; }
-    if (internalBoardManager_.getGameResult() & GameResult::DRAW) { return 0.0f; }
-    if (depth == 0) { return evaluator_.evaluate(); }
-
-    auto moves = generateMoveList();
-
-    // really basic move ordering --- huuuuuuuuuuge improvement (4sec to 612ms at depth 5)
-    std::ranges::sort(moves, [&](const auto& moveToSort, const auto& moveToSort2) {
-        return (moveToSort.resultBits & CAPTURE) > (moveToSort2.resultBits & CAPTURE);
-    });
-
-    if (moves.empty()) { return evaluator_.evaluate(); }
-
-    float bestScore = -MATE_SCORE - 1;
-    Move bestMove;
-    std::vector<Move> bestPV;
-
-    for (auto& move: moves) {
-        // push the move onto the board
-        internalBoardManager_.forceMove(move);
-        std::vector<Move> thisPV;
-        float eval = 0.f;
-
-        // check if we've seen the state
-        auto hash = boardManager()->getZobristHash()->getHash();
-        auto precachedResult = transpositionTable_.retrieveVector(hash);
-
-        // if we haven't seen the state, searchWithTT it
-        if (!precachedResult.has_value()) {
-            eval = -alphaBeta(depth - 1, -beta, -alpha, ply + 1, thisPV);
-            // need to then store it
-            TTEntry newEntry{
-                        .key = hash,
-                        .eval = eval,
-                        .depth = depth,
-                        .age = ply
-                    };
-            transpositionTable_.storeVector(newEntry);
-        } else { eval = precachedResult->eval; }
-
-        internalBoardManager_.undoMove();
-
-        if (eval > bestScore) {
-            bestScore = eval;
-            bestMove = move;
-            bestPV = thisPV;
-        }
-        alpha = std::max(alpha, eval);
-
-        if (alpha >= beta) { break; }
-    }
-
-    if (bestScore > -MATE_SCORE - 1) {
-        pv.push_back(bestMove);
-        pv.insert(pv.end(), bestPV.begin(), bestPV.end());
-    }
-
-    return bestScore;
+PerftResults EngineBase::runPerftTest(const std::string& Fen, const int depth){
+    internalBoardManager_.getBitboards()->setFenPositionOnly(Fen);
+    return perft(depth);
 }
 
+std::vector<PerftResults> EngineBase::runDivideTest(const std::string& Fen, const int depth){
+    internalBoardManager_.getBitboards()->setFenPositionOnly(Fen);
+    return perftDivide(depth);
+}
+
+std::vector<PerftResults> EngineBase::runDivideTest(const int depth){ return perftDivide(depth); }
