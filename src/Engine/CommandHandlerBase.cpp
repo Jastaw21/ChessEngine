@@ -2,7 +2,7 @@
 // Created by jacks on 17/07/2025.
 //
 
-#include "../../include/EngineShared/CommandHandlerBase.h"
+#include "../../include/Engine/CommandHandlerBase.h"
 #include "Engine/EngineBase.h"
 
 void CommandHandlerBase::operator()(const UCICommand& cmd, EngineBase* engine){

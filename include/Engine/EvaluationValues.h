@@ -80,6 +80,8 @@ constexpr std::array zeroScores = {
 // clang-format on
 
 
+inline const float MATE_SCORE = 10000;
+
 constexpr std::array<float, PIECE_N> pieceScoresArray = {
             100, 310, 320, 500, 900, 1000,
             100, 310, 320, 500, 900, 1000

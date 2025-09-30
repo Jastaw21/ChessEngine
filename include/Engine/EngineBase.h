@@ -5,6 +5,7 @@
 #ifndef ENGINEBASE_H
 #define ENGINEBASE_H
 
+#include <atomic>
 #include <filesystem>
 #include <fstream>
 #include <random>
@@ -15,7 +16,7 @@
 
 #include "BoardManager/BoardManager.h"
 
-#include "EngineShared/PerftResults.h"
+#include "PerftResults.h"
 
 struct SearchResults {
     float score;
@@ -101,6 +102,11 @@ private:
 
     std::mt19937 rng; // used for randomising the moves if no best move found;
     std::ofstream searchLogStream;
+
+    std::atomic<bool> StopFlag;
+
+    void startTimer(int ms);
+    void stopTimer();
 };
 
 

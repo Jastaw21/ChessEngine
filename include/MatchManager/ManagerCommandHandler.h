@@ -4,7 +4,7 @@
 
 #ifndef MANAGERCOMMANDHANDLER_H
 #define MANAGERCOMMANDHANDLER_H
-#include "EngineShared/UCIParsing/UciParser.h"
+#include "UCIParsing/UciParser.h"
 
 
 class MatchManager;

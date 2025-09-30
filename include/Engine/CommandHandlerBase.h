@@ -4,7 +4,7 @@
 
 #ifndef COMMANDHANDLERBASE_H
 #define COMMANDHANDLERBASE_H
-#include "EngineShared/UCIParsing/UciParser.h"
+#include "UCIParsing/UciParser.h"
 
 
 class EngineBase;

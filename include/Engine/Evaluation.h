@@ -7,6 +7,7 @@
 #include "BoardManager/BoardManager.h"
 #include "EvaluationValues.h"
 
+
 class Evaluator {
 public:
 

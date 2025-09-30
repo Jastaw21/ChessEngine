@@ -11,7 +11,7 @@
 #include "Rules.h"
 #include "Engine/Piece.h"
 
-#include "EngineShared/ZobristHash.h"
+#include "../Engine/ZobristHash.h"
 
 #include "MagicBitboards/MagicBitBoards.h"
 #include "Utility/Fen.h"

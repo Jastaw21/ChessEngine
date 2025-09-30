@@ -10,7 +10,7 @@
 #include "ChessPlayer.h"
 #include "ManagerCommandHandler.h"
 #include "BoardManager/BoardManager.h"
-#include "EngineShared/UCIParsing/UciParser.h"
+#include "UCIParsing/UciParser.h"
 #include "Utility/Fen.h"
 
 class ChessGui;

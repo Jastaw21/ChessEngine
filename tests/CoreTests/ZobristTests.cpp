@@ -3,7 +3,7 @@
 //
 
 #include  <gtest/gtest.h>
-#include  "EngineShared/ZobristHash.h"
+#include "../../include/Engine/ZobristHash.h"
 #include "BoardManager/BoardManager.h"
 
 TEST(Zobrist, BasicInitAndUpdateState){

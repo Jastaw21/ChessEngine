@@ -1,10 +1,9 @@
-#include "../../../include/EngineShared/UCIParsing/UciParser.h"
+#include "UCIParsing/UciParser.h"
 
 #include <iostream>
 #include <string>
 
-#include "EngineShared/UCIParsing/Tokeniser.h"
-
+#include "UCIParsing/Tokeniser.h"
 
 std::optional<Command> UCIParser::parse(const std::string& inString){
     currentToken = 0;

@@ -10,7 +10,7 @@
 #include <ranges>
 #include "Engine/MainEngine.h"
 #include "Utility/Fen.h"
-#include "EngineShared/PerftResults.h"
+#include "../../include/Engine/PerftResults.h"
 
 inline const std::string fileRoot = R"(C:\Users\jacks\source\repos\Chess\tests\output\)";
 inline const std::string divideCmd =

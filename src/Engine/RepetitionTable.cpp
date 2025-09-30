@@ -2,7 +2,7 @@
 // Created by jacks on 13/09/2025.
 //
 
-#include "RepetitionTable.h"
+#include "../../include/Engine/RepetitionTable.h"
 
 bool RepetitionTable::checkForRepetition() const{
     auto currentState = table.back();

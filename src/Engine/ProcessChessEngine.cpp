@@ -2,7 +2,7 @@
 // Created by jacks on 31/08/2025.
 //
 
-#include "../../include/EngineShared/ProcessChessEngine.h"
+#include "../../include/Engine/ProcessChessEngine.h"
 
 void ProcessChessEngine::stopProcess(){
     // Try graceful shutdown first

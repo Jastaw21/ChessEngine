@@ -7,7 +7,7 @@
 #include "Engine/MainEngine.h"
 #include "Engine/Evaluation.h"
 
-#include "EngineShared/ProcessChessEngine.h"
+#include "../../include/Engine/ProcessChessEngine.h"
 
 #include "Utility/Fen.h"
 
@@ -236,4 +236,3 @@ TEST(Performance, Depth5WithNoTT){
     engine.setFullFen(Fen::FULL_STARTING_FEN);
     engine.search(5);
 }
-

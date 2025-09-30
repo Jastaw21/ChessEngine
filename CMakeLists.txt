@@ -37,18 +37,18 @@ add_library(
         src/MatchManager/ManagerCommandHandler.cpp
         src/Engine/Evaluation.cpp
         src/GUI/EvaluationBar.cpp
-        src/EngineShared/CommandHandlerBase.cpp
-        src/EngineShared/UCIParsing/UciParser.cpp
-        src/EngineShared/UCIParsing/Tokeniser.cpp
-        src/EngineShared/ZobristHash.cpp
+        src/Engine/CommandHandlerBase.cpp
+        src/UCIParsing/UciParser.cpp
+        src/UCIParsing/Tokeniser.cpp
+        src/Engine/ZobristHash.cpp
         src/GUI/PromotionPiecePicker.cpp
         include/GUI/PromotionPiecePicker.h
         src/Engine/ProcessChessEngine.cpp
-        include/EngineShared/ProcessChessEngine.h
+        include/Engine/ProcessChessEngine.h
         include/Engine/EvaluationValues.h
         src/Engine/TranspositionTable.cpp
         include/Engine/TranspositionTable.h
-        include/Engine/RepetitionTable.cpp
+        src/Engine/RepetitionTable.cpp
         include/Engine/RepetitionTable.h
 )
 

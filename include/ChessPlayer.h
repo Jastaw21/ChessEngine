@@ -9,7 +9,7 @@
 #include <memory>
 
 #include "Engine/Piece.h"
-#include "EngineShared/CommandHandlerBase.h"
+#include "Engine/CommandHandlerBase.h"
 
 class CommunicatorBase;
 

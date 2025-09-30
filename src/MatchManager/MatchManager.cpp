@@ -7,7 +7,7 @@
 #include <filesystem>
 #include <fstream>
 
-#include "EngineShared/ProcessChessEngine.h"
+#include "../../include/Engine/ProcessChessEngine.h"
 
 #include "GUI/gui.h"
 

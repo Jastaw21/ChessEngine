@@ -9,7 +9,6 @@
 
 #include "Engine/Evaluation.h"
 
-float MATE_SCORE = 10000;
 
 EngineBase::EngineBase() : ChessPlayer(ENGINE),
                            rng(std::chrono::system_clock::now().time_since_epoch().count()){
@@ -51,7 +50,7 @@ Move EngineBase::searchWithTT(const int depth){
         internalBoardManager_.forceMove(move);
 
         std::vector<Move> thisPV;
-        float eval = -alphaBetaWithResultAndTT(depth - 1, alpha, beta, 1, thisPV);
+        float eval = -alphaBetaWithResult(depth - 1, alpha, beta, 1, thisPV);
 
         internalBoardManager_.undoMove();
 
@@ -104,18 +103,18 @@ Move EngineBase::search(const int depth){
     return bestResult.bestMove;
 }
 
-PerftResults EngineBase::runPerftTest(const std::string& Fen, const int depth){
-    internalBoardManager_.getBitboards()->setFenPositionOnly(Fen);
-    return perft(depth);
+void EngineBase::startTimer(int ms){
+    StopFlag.store(false); // reset at the start of each search
+    std::thread([ms, this]() {
+        std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+        stopTimer(); // signal search to stop
+    }).detach(); // let it run independently
 }
 
-std::vector<PerftResults> EngineBase::runDivideTest(const std::string& Fen, const int depth){
-    internalBoardManager_.getBitboards()->setFenPositionOnly(Fen);
-    return perftDivide(depth);
+void EngineBase::stopTimer(){
+    std::cout << OtherUtility::nowAsString << "Stopping timer" << std::endl;
+    StopFlag.store(true); // signal search to stop
 }
-
-std::vector<PerftResults> EngineBase::runDivideTest(const int depth){ return perftDivide(depth); }
-
 
 SearchResults EngineBase::searchWithResult(int depth){
     SearchResults bestResult;
@@ -132,7 +131,7 @@ SearchResults EngineBase::searchWithResult(int depth){
         internalBoardManager_.forceMove(move);
 
         std::vector<Move> thisPV;
-        float eval = -alphaBetaWithResultAndTT(depth - 1, alpha, beta, 1, thisPV);
+        float eval = -alphaBetaWithResult(depth - 1, alpha, beta, 1, thisPV);
 
         internalBoardManager_.undoMove();
 
@@ -150,6 +149,19 @@ SearchResults EngineBase::searchWithResult(int depth){
     bestResult.depth = depth;
     return bestResult;
 }
+
+PerftResults EngineBase::runPerftTest(const std::string& Fen, const int depth){
+    internalBoardManager_.getBitboards()->setFenPositionOnly(Fen);
+    return perft(depth);
+}
+
+std::vector<PerftResults> EngineBase::runDivideTest(const std::string& Fen, const int depth){
+    internalBoardManager_.getBitboards()->setFenPositionOnly(Fen);
+    return perftDivide(depth);
+}
+
+std::vector<PerftResults> EngineBase::runDivideTest(const int depth){ return perftDivide(depth); }
+
 
 std::vector<Move> EngineBase::generateMoveList(){ return std::vector<Move>(); }
 
@@ -210,6 +222,7 @@ std::vector<PerftResults> EngineBase::perftDivide(const int depth){
 
     return results;
 }
+
 
 int EngineBase::simplePerft(const int depth){
     if (depth == 0)
@@ -336,3 +349,4 @@ float EngineBase::alphaBetaWithResult(int depth, float alpha, float beta, int pl
 
     return bestScore;
 }
+

@@ -2,7 +2,7 @@
 // Created by jacks on 15/07/2025.
 //
 
-#include "EngineShared/UCIParsing/Tokeniser.h"
+#include "UCIParsing/Tokeniser.h"
 
 #include <algorithm>
 #include <iostream>

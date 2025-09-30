@@ -3,8 +3,8 @@
 //
 
 #include <gtest/gtest.h>
-#include "../../include/EngineShared/UCIParsing/Tokeniser.h"
-#include "EngineShared/UCIParsing/UciParser.h"
+#include "UCIParsing/Tokeniser.h"
+#include "UCIParsing/UciParser.h"
 
 
 TEST(Tokenisation, BasicTokens){

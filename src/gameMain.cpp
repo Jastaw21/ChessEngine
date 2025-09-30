@@ -1,7 +1,7 @@
 #include "HumanPlayer.h"
 
 #include "Engine/MainEngine.h"
-#include "EngineShared/ProcessChessEngine.h"
+#include "../include/Engine/ProcessChessEngine.h"
 
 #include "GUI/gui.h"
 
