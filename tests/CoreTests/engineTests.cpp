@@ -229,6 +229,13 @@ TEST(Performance, Depth5WithTT){
     engine.Search(5);
 }
 
+TEST(Performance, Depth7){
+    auto engine = MainEngine();
+    engine.setFullFen(Fen::FULL_STARTING_FEN);
+    engine.Search(7);
+}
+
+
 TEST(EngineTests, TimedSearchGivesSameResult){
     auto engine = MainEngine();
 
@@ -250,10 +257,12 @@ TEST(EngineTests, TimedSearchExitsVaguelyRight){
     engine.setFullFen(Fen::FULL_STARTING_FEN);
 
     auto startTime = std::chrono::high_resolution_clock::now();
-    auto result = engine.Search(13, 1000);
+    auto result = engine.Search(13, 7000);
     auto endTime = std::chrono::high_resolution_clock::now();
 
-    EXPECT_LT(std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count(), 1100);
+    // doesn't burst
+    EXPECT_LT(std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count(), 7000);
+    std::cout << result.depth << std::endl;
 }
 
 TEST(EngineTests, EngineParsesAndReturnsCorrectlyWithTimedGo){

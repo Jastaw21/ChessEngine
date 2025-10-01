@@ -9,6 +9,21 @@
 
 #include "Engine/Evaluation.h"
 
+inline void SortMovesNew(std::vector<Move>& moves){
+    std::ranges::partial_sort(
+        moves.begin(),
+        moves.begin() + std::min(moves.size(), static_cast<size_t>(5)),
+        moves.end(),
+        [](const auto& a, const auto& b) {
+            return
+                    (a.resultBits & CAPTURE)
+                    >
+                    (b.resultBits & CAPTURE);
+        }
+    );
+}
+
+
 inline void SortMoves(std::vector<Move>& moves){
     std::ranges::sort(moves, [&](const auto& moveToSort, const auto& moveToSort2) {
         return (moveToSort.resultBits & CAPTURE) > (moveToSort2.resultBits & CAPTURE);
@@ -33,7 +48,7 @@ void EngineBase::go(const int depth){
     std::cout << "bestmove " << bestMove.toUCI() << std::endl;
 }
 
-void EngineBase::go(int depth, int wtime, int btime, int winc, int binc){
+void EngineBase::go(const int depth, const int wtime, const int btime, const int winc, const int binc){
     const auto relevantTimeRemaining = internalBoardManager_.getCurrentTurn() == WHITE ? wtime : btime;
     const auto relevantTimeIncrement = internalBoardManager_.getCurrentTurn() == WHITE ? winc : binc;
 
@@ -54,8 +69,7 @@ void EngineBase::parseUCI(const std::string& uci){
 
 std::vector<Move> EngineBase::generateMoveList(){ return std::vector<Move>(); }
 
-SearchResults EngineBase::Search(int depth){
-    std::cerr << "Search Start Time " << OtherUtility::getCurrentTimeString() << std::endl;
+SearchResults EngineBase::Search(const int depth){
     SearchResults bestResult;
     auto moves = generateMoveList();
     if (moves.empty()) { return bestResult; }
@@ -89,23 +103,16 @@ SearchResults EngineBase::Search(int depth){
     return bestResult;
 }
 
-SearchResults EngineBase::Search(int MaxDepth, int SearchMs){
-    std::cerr << "Search Start Time " << OtherUtility::getCurrentTimeString() << std::endl;
-    const int marginSearch = SearchMs * 0.9;
+SearchResults EngineBase::Search(const int MaxDepth, const int SearchMs){
+    const int marginSearch = std::max(50, SearchMs - 60);
     deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(marginSearch);
-    std::cerr << "Search Deadline" << OtherUtility::getDateTimeString(deadline) << std::endl;
 
     SearchResults bestResult;
 
     for (int depth = 1; depth <= MaxDepth; depth++) {
         std::vector<Move> thisPV;
-
         const float score = alphaBetaTimed(depth, -INFINITY, INFINITY, 1, thisPV);
-
-        if (std::chrono::steady_clock::now() >= deadline) {
-            std::cerr << OtherUtility::getCurrentTimeString() << " Deadline reached" << std::endl;
-            break;
-        }
+        if (std::chrono::steady_clock::now() >= deadline) { break; }
 
         if (!thisPV.empty()) {
             bestResult.bestMove = thisPV[0];
@@ -121,7 +128,7 @@ SearchResults EngineBase::Search(int MaxDepth, int SearchMs){
     return bestResult;
 }
 
-bool EngineBase::evaluateGameState(int depth, int ply, float& value1){
+bool EngineBase::evaluateGameState(const int depth, const int ply, float& value1){
     if (internalBoardManager_.getGameResult() & GameResult::CHECKMATE) {
         value1 = -MATE_SCORE + ply;
         return true;
@@ -142,7 +149,7 @@ bool EngineBase::evaluateGameState(int depth, int ply, float& value1){
     return false;
 }
 
-float EngineBase::alphaBeta(int depth, float alpha, float beta, int ply, std::vector<Move>& pv){
+float EngineBase::alphaBeta(const int depth, float alpha, const float beta, const int ply, std::vector<Move>& pv){
     pv.clear();
     float endingEvaluation;
     if (evaluateGameState(depth, ply, endingEvaluation)) return endingEvaluation;
@@ -167,8 +174,12 @@ float EngineBase::alphaBeta(int depth, float alpha, float beta, int ply, std::ve
         auto precachedResult = transpositionTable_.retrieveVector(hash);
 
         // if we haven't seen the state, searchWithTT it
-        if (!precachedResult.has_value()) {
-            eval = -alphaBeta(depth - 1, -beta, -alpha, ply + 1, thisPV);
+        if (precachedResult.has_value())
+            eval = precachedResult->eval;
+
+        // if we haven't seen the state, search it
+        else {
+            eval = -alphaBetaTimed(depth - 1, -beta, -alpha, ply + 1, thisPV);
             // need to then store it
             TTEntry newEntry{
                         .key = hash,
@@ -177,7 +188,7 @@ float EngineBase::alphaBeta(int depth, float alpha, float beta, int ply, std::ve
                         .age = ply
                     };
             transpositionTable_.storeVector(newEntry);
-        } else { eval = precachedResult->eval; }
+        }
 
         internalBoardManager_.undoMove();
 
@@ -199,27 +210,19 @@ float EngineBase::alphaBeta(int depth, float alpha, float beta, int ply, std::ve
     return bestScore;
 }
 
-float EngineBase::alphaBetaTimed(int depth, float alpha, float beta, int ply, std::vector<Move>& pv){
+float EngineBase::alphaBetaTimed(const int depth, float alpha, const float beta, const int ply, std::vector<Move>& pv){
     pv.clear();
 
     if (std::chrono::steady_clock::now() >= deadline) {
-        std::cerr << "Deadline reached inside ab" << std::endl;
         return 0.0f; // bail
     }
 
-    if (internalBoardManager_.getGameResult() & GameResult::CHECKMATE) { return -MATE_SCORE + ply; }
-    if (internalBoardManager_.getMoveHistory().size() > 0 && internalBoardManager_.getMoveHistory().top().resultBits &
-        MoveResult::CHECK_MATE) { return -MATE_SCORE + ply; }
-    if (internalBoardManager_.getGameResult() & GameResult::DRAW) { return 0.0f; }
-    if (depth == 0) { return evaluator_.evaluate(); }
+    if (float endingEvaluation; evaluateGameState(depth, ply, endingEvaluation)) return endingEvaluation;
 
     auto moves = generateMoveList();
-
-    std::ranges::sort(moves, [&](const auto& moveToSort, const auto& moveToSort2) {
-        return (moveToSort.resultBits & CAPTURE) > (moveToSort2.resultBits & CAPTURE);
-    });
-
     if (moves.empty()) { return evaluator_.evaluate(); }
+
+    SortMoves(moves);
 
     float bestScore = -MATE_SCORE - 1;
     Move bestMove;
@@ -227,7 +230,6 @@ float EngineBase::alphaBetaTimed(int depth, float alpha, float beta, int ply, st
 
     for (auto& move: moves) {
         if (std::chrono::steady_clock::now() >= deadline) {
-            std::cerr << OtherUtility::getCurrentTimeString() << " Deadline reached inside move search" << std::endl;
             return 0.0f; // bail inside loop
         }
         // push the move onto the board
@@ -239,7 +241,6 @@ float EngineBase::alphaBetaTimed(int depth, float alpha, float beta, int ply, st
         auto hash = boardManager()->getZobristHash()->getHash();
         auto precachedResult = transpositionTable_.retrieveVector(hash);
 
-        // if we haven't seen the state, searchWithTT it
         if (!precachedResult.has_value()) {
             eval = -alphaBeta(depth - 1, -beta, -alpha, ply + 1, thisPV);
             // need to then store it
