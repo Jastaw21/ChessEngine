@@ -22,14 +22,17 @@ void CommandHandlerBase::operator()(const QuitCommand& cmd, EngineBase* engine){
 }
 
 void CommandHandlerBase::operator()(const GoCommand& cmd, EngineBase* engine){
-    if (cmd.depth.has_value()) { engine->go(cmd.depth.value()); } else { engine->go(engine->getSearchDepth()); }
+    const auto depth = cmd.depth.value_or(engine->getSearchDepth());
+    const auto hasTimeCommands = cmd.wtime.has_value() && cmd.btime.has_value();
+
+    if (hasTimeCommands) { engine->go(depth, cmd.wtime.value(), cmd.btime.value()); }
 }
 
 void CommandHandlerBase::operator()(const PositionCommand& cmd, EngineBase* engine){
     engine->reset();
     engine->boardManager()->setFullFen(cmd.fen);
     for (auto& move: cmd.moves) {
-        if (bool result = engine->boardManager()->tryMove(move); !result) {
+        if (const bool result = engine->boardManager()->tryMove(move); !result) {
             engine->logError("Invalid move: " + move + "\n");
         }
     }

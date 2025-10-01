@@ -43,6 +43,7 @@ public:
     void quit(){ shouldQuit_ = true; }
     void reset(){ internalBoardManager_.resetGame(); }
     void go(int depth);
+    void go(int depth, int wtime, int btime, int winc = 0, int binc = 0);
     bool shouldQuit() const{ return shouldQuit_; }
 
     // Board State Management

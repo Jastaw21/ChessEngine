@@ -46,6 +46,25 @@ namespace OtherUtility {
         ss << '.' << std::setfill('0') << std::setw(3) << ms.count();
         return ss.str();
     }
-}
 
+    inline std::string getDateTimeString(std::chrono::steady_clock::time_point& timePoint){
+        // Get the current time in system_clock as a baseline
+        auto now_system = std::chrono::system_clock::now();
+        auto now_steady = std::chrono::steady_clock::now();
+
+        // Calculate the offset of the steady_clock time_point relative to now
+        auto offset = timePoint - now_steady;
+        auto system_time_point = now_system + offset;
+
+        // Extract milliseconds and formatted time
+        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(system_time_point.time_since_epoch()) % 1000;
+        auto time = std::chrono::system_clock::to_time_t(system_time_point);
+
+        // Format the string
+        std::stringstream ss;
+        ss << std::put_time(std::localtime(&time), "%Y-%m-%d %H:%M:%S");
+        ss << '.' << std::setfill('0') << std::setw(3) << ms.count();
+        return ss.str();
+    }
+}
 #endif //MATH_H

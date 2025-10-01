@@ -2,12 +2,12 @@
 // Created by jacks on 10/09/2025.
 //
 
-#include "../../include/Engine/TranspositionTable.h"
+#include "Engine/TranspositionTable.h"
 
 TranspositionTable::TranspositionTable(size_t size) : maxSize(size), vectorTable(size){}
 
 void TranspositionTable::store(TTEntry& entry){
-    auto last16Bits = MathUtility::getXBits(entry.key, 16);
+    const auto last16Bits = MathUtility::getXBits(entry.key, 16);
 
     table[last16Bits] = entry;
 
@@ -23,7 +23,7 @@ void TranspositionTable::storeVector(TTEntry& newEntry){
 
 
 std::optional<TTEntry> TranspositionTable::retrieve(uint64_t& key){
-    auto last16Bits = MathUtility::getXBits(key, 16);
+    const auto last16Bits = MathUtility::getXBits(key, 16);
 
     if (table.find(last16Bits) == table.end()) { return std::nullopt; }
 

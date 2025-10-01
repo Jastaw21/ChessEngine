@@ -50,8 +50,6 @@ TEST(EngineTests, ObviousChecksWork){
     engine.setFullFen("4QQ1Q/8/8/8/8/8/8/1k2KR2 w - - 6 42");
     auto bestMove3 = engine.Search(3);
 
-    std::cout << bestMove3.score;
-
     engine.reset();
     engine.setFullFen("3q1kr1/r7/8/8/4K3/3Q4/B7/q1q3qR b - - 1 46");
     auto bestMove4 = engine.Search(3);
@@ -247,7 +245,7 @@ TEST(EngineTests, TimedSearchGivesSameResult){
     EXPECT_EQ(bestMove2.toUCI(), TimedBestMove2.bestMove.toUCI());
 }
 
-TEST(EngineTest, TimedSearchExitsVaguelyRight){
+TEST(EngineTests, TimedSearchExitsVaguelyRight){
     auto engine = MainEngine();
     engine.setFullFen(Fen::FULL_STARTING_FEN);
 
@@ -256,4 +254,11 @@ TEST(EngineTest, TimedSearchExitsVaguelyRight){
     auto endTime = std::chrono::high_resolution_clock::now();
 
     EXPECT_LT(std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count(), 1100);
+}
+
+TEST(EngineTests, EngineParsesAndReturnsCorrectlyWithTimedGo){
+    auto engine = MainEngine();
+    engine.setFullFen(Fen::FULL_STARTING_FEN);
+
+    engine.parseUCI("go wtime 1000 btime 2000 winc 100 binc 100 depth 3");
 }

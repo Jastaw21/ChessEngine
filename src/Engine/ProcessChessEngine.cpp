@@ -2,7 +2,7 @@
 // Created by jacks on 31/08/2025.
 //
 
-#include "../../include/Engine/ProcessChessEngine.h"
+#include "Engine/ProcessChessEngine.h"
 
 void ProcessChessEngine::stopProcess(){
     // Try graceful shutdown first
@@ -10,7 +10,7 @@ void ProcessChessEngine::stopProcess(){
         sendCommand("QUIT"); // Send quit command to engine
 
         // Give the process a moment to exit gracefully
-        DWORD waitResult = WaitForSingleObject(processInfo.hProcess, 2000); // 2 second timeout
+        const DWORD waitResult = WaitForSingleObject(processInfo.hProcess, 2000); // 2 second timeout
 
         if (waitResult != WAIT_OBJECT_0) {
             // Process didn't exit gracefully, force terminate
@@ -54,7 +54,7 @@ ProcessChessEngine::ProcessChessEngine(const std::string& exePath, const std::st
 }
 
 void ProcessChessEngine::setEngineID(const std::string& engineID){
-    auto command = "set id " + engineID;
+    const auto command = "set id " + engineID;
     sendCommand(command);
 }
 
@@ -84,7 +84,7 @@ bool ProcessChessEngine::startEngine(){
     siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
 
     // Create the child process
-    BOOL success = CreateProcessA(
+    const BOOL success = CreateProcessA(
         enginePath.c_str(),
         NULL,
         NULL, NULL,
@@ -103,7 +103,7 @@ bool ProcessChessEngine::startEngine(){
 }
 
 bool ProcessChessEngine::sendCommand(const std::string& command){
-    std::string cmd = command + '\n';
+    const std::string cmd = command + '\n';
     DWORD bytesWritten;
     outStream << "Recieved: " << command << std::endl;
 
@@ -115,7 +115,7 @@ bool ProcessChessEngine::sendCommand(const std::string& command){
 
         // Keep reading until no more data available
         while (PeekNamedPipe(hChildStdOutRead, NULL, 0, NULL, &bytesAvailable, NULL) && bytesAvailable > 0) {
-            DWORD toRead = (sizeof(buffer) < bytesAvailable) ? sizeof(buffer) : bytesAvailable;
+            const DWORD toRead = (sizeof(buffer) < bytesAvailable) ? sizeof(buffer) : bytesAvailable;
             if (!ReadFile(hChildStdOutRead, buffer, toRead, &bytesRead, NULL)) { break; }
         }
     }

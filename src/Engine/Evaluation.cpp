@@ -68,7 +68,7 @@ float Evaluator::pieceSquareScore(){
 
     for (int piece = 0; piece < PIECE_N; ++piece) {
         auto pieceName = static_cast<Piece>(piece);
-        bool pieceIsCurrentTurn = pieceColours[pieceName] == currentTurn;
+        const bool pieceIsCurrentTurn = pieceColours[pieceName] == currentTurn;
 
         // where are these pieces
         Bitboard locations = boardManager_->getBitboards()->getOccupancy(pieceName);
@@ -90,7 +90,7 @@ float Evaluator::pieceSquareScore(){
             else { lookupIndex = location; }
 
             // now get the square specific score
-            auto pieceScore = scoresForThisPiece[lookupIndex];
+            const auto pieceScore = scoresForThisPiece[lookupIndex];
             if (pieceIsCurrentTurn) { playerToMoveScore += pieceScore; } else { otherPlayerTurn += pieceScore; }
         }
     }
@@ -100,7 +100,7 @@ float Evaluator::pieceSquareScore(){
 
 
 float Evaluator::evaluate(){
-    auto score = materialScore() + pieceSquareScore();
+    const auto score = materialScore() + pieceSquareScore();
 
     // centipawns
     return score / (pieceScoresArray[WP] / 100.f);

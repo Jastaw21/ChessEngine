@@ -33,6 +33,16 @@ void EngineBase::go(const int depth){
     std::cout << "bestmove " << bestMove.toUCI() << std::endl;
 }
 
+void EngineBase::go(int depth, int wtime, int btime, int winc, int binc){
+    const auto relevantTimeRemaining = internalBoardManager_.getCurrentTurn() == WHITE ? wtime : btime;
+    const auto relevantTimeIncrement = internalBoardManager_.getCurrentTurn() == WHITE ? winc : binc;
+
+    const auto thisTimeBudget = relevantTimeRemaining / 20 + relevantTimeIncrement / 2;
+
+    const auto bestMove = Search(depth, thisTimeBudget).bestMove;
+    std::cout << "bestmove " << bestMove.toUCI() << std::endl;
+}
+
 void EngineBase::parseUCI(const std::string& uci){
     auto command = parser.parse(uci);
     // Create a visitor lambda that captures 'this' and forwards to the command handler
@@ -45,7 +55,7 @@ void EngineBase::parseUCI(const std::string& uci){
 std::vector<Move> EngineBase::generateMoveList(){ return std::vector<Move>(); }
 
 SearchResults EngineBase::Search(int depth){
-    std::cerr << "Search Start  aa Time " << OtherUtility::getCurrentTimeString() << std::endl;
+    std::cerr << "Search Start Time " << OtherUtility::getCurrentTimeString() << std::endl;
     SearchResults bestResult;
     auto moves = generateMoveList();
     if (moves.empty()) { return bestResult; }
@@ -53,14 +63,14 @@ SearchResults EngineBase::Search(int depth){
     bestResult.bestMove = moves[0];
     bestResult.score = -MATE_SCORE - 1;
 
-    float alpha = -INFINITY;
-    float beta = INFINITY;
+    const float alpha = -INFINITY;
+    const float beta = INFINITY;
 
     for (auto& move: moves) {
         internalBoardManager_.forceMove(move);
 
         std::vector<Move> thisPV;
-        float eval = -alphaBeta(depth - 1, alpha, beta, 1, thisPV);
+        const float eval = -alphaBeta(depth - 1, alpha, beta, 1, thisPV);
 
         internalBoardManager_.undoMove();
 
@@ -80,15 +90,17 @@ SearchResults EngineBase::Search(int depth){
 }
 
 SearchResults EngineBase::Search(int MaxDepth, int SearchMs){
-    int marginSearch = SearchMs * 0.95;
+    std::cerr << "Search Start Time " << OtherUtility::getCurrentTimeString() << std::endl;
+    const int marginSearch = SearchMs * 0.9;
     deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(marginSearch);
+    std::cerr << "Search Deadline" << OtherUtility::getDateTimeString(deadline) << std::endl;
 
     SearchResults bestResult;
 
     for (int depth = 1; depth <= MaxDepth; depth++) {
         std::vector<Move> thisPV;
 
-        float score = alphaBetaTimed(depth, -INFINITY, INFINITY, 1, thisPV);
+        const float score = alphaBetaTimed(depth, -INFINITY, INFINITY, 1, thisPV);
 
         if (std::chrono::steady_clock::now() >= deadline) {
             std::cerr << OtherUtility::getCurrentTimeString() << " Deadline reached" << std::endl;
