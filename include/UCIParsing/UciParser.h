@@ -23,6 +23,10 @@ struct IsReadyCommand {};
 
 struct GoCommand {
     std::optional<int> depth;
+    std::optional<int> wtime;
+    std::optional<int> btime;
+    std::optional<int> winc;
+    std::optional<int> binc;
 };
 
 struct PositionCommand {
@@ -44,6 +48,7 @@ struct NewGameCommand {};
 struct SetIDCommand {
     std::string id;
 };
+
 
 using Command = std::variant<
     UCICommand,

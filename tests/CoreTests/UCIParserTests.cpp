@@ -34,6 +34,21 @@ TEST(Tokenisation, BasicTokens){
     EXPECT_EQ(tokens.size(), 8);
 }
 
+TEST(Tokenisation, AdvancedGoCommand){
+    auto tokeniser = Tokeniser("go depth 1 wtime 123 btime 145");
+    auto& tokens = tokeniser.getTokens();
+
+    EXPECT_EQ(tokens.size(), 8);
+    EXPECT_EQ(tokens[0].type, TokenType::GO);
+    EXPECT_EQ(tokens[1].type, TokenType::DEPTH);
+    EXPECT_EQ(tokens[2].type, TokenType::INT_LITERAL);
+    EXPECT_EQ(tokens[3].type, TokenType::WTIME);
+    EXPECT_EQ(tokens[4].type, TokenType::INT_LITERAL);
+    EXPECT_EQ(tokens[5].type, TokenType::BTIME);
+    EXPECT_EQ(tokens[6].type, TokenType::INT_LITERAL);
+    EXPECT_EQ(tokens[7].type, TokenType::EOF_TOKEN);
+}
+
 TEST(Parsing, UCICommand){
     auto parser = UCIParser{};
 
@@ -137,4 +152,22 @@ TEST(Parsing, SetIDWorks){
     ASSERT_TRUE(result.has_value());
     EXPECT_TRUE(std::holds_alternative<SetIDCommand>(*result));
     EXPECT_EQ(std::get<SetIDCommand>(*result).id, "white");
+}
+
+TEST(Parsing, GoWithTimeOnly){
+    auto parser = UCIParser{};
+    const auto result = parser.parse("go wtime 1000");
+    ASSERT_TRUE(result.has_value());
+    EXPECT_TRUE(std::holds_alternative<GoCommand>(*result));
+    EXPECT_EQ(std::get<GoCommand>(*result).wtime, 1000);
+}
+
+TEST(Parsing, GoWithTimeAndDepth){
+    auto parser = UCIParser{};
+    const auto result = parser.parse("go wtime 1000 btime 2000 depth 7");
+    ASSERT_TRUE(result.has_value());
+    EXPECT_TRUE(std::holds_alternative<GoCommand>(*result));
+    EXPECT_EQ(std::get<GoCommand>(*result).wtime, 1000);
+    EXPECT_EQ(std::get<GoCommand>(*result).btime, 2000);
+    EXPECT_EQ(std::get<GoCommand>(*result).depth, 7);
 }

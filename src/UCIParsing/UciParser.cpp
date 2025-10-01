@@ -81,9 +81,46 @@ std::optional<Command> UCIParser::parsePosition(){
 std::optional<Command> UCIParser::parseGo(){
     GoCommand result;
     result.depth = std::nullopt; // default to null depth, handle that in the engine
-    if (peek().type == TokenType::DEPTH) {
-        consume();
-        if (peek().type == TokenType::INT_LITERAL) { result.depth = std::min(std::stoi(consume().value), 10); }
+    result.wtime = std::nullopt;
+    result.btime = std::nullopt;
+    result.winc = std::nullopt;
+    result.binc = std::nullopt;
+
+    // while our "anchor token is a time-related one"
+    while (
+        peek().type == TokenType::GO
+        || peek().type == TokenType::DEPTH
+        || peek().type == TokenType::WTIME
+        || peek().type == TokenType::BTIME
+        || peek().type == TokenType::WINC
+        || peek().type == TokenType::BINC
+    ) {
+        auto anchorToken = consume();
+        switch (anchorToken.type) {
+            case TokenType::DEPTH: {
+                if (peek().type == TokenType::INT_LITERAL) { result.depth = std::stoi(consume().value); }
+                break; // break from cases
+            }
+
+            case TokenType::WTIME: {
+                if (peek().type == TokenType::INT_LITERAL) { result.wtime = std::stoi(consume().value); }
+                break;
+            }
+
+            case TokenType::BTIME: {
+                if (peek().type == TokenType::INT_LITERAL) { result.btime = std::stoi(consume().value); }
+                break;
+            }
+
+            case TokenType::WINC: {
+                if (peek().type == TokenType::INT_LITERAL) { result.winc = std::stoi(consume().value); }
+                break;
+            }
+            case TokenType::BINC: {
+                if (peek().type == TokenType::INT_LITERAL) { result.binc = std::stoi(consume().value); }
+                break;
+            }
+        }
     }
     return result;
 }

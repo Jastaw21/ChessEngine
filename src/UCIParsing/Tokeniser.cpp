@@ -69,6 +69,15 @@ void Tokeniser::handleToken(std::string& builtToken){
     else if (builtToken == "depth") { type = TokenType::DEPTH; }
     // set token
     else if (builtToken == "set") { type = TokenType::SET; }
+    // w time
+    else if (builtToken == "wtime") { type = TokenType::WTIME; }
+    // b time
+    else if (builtToken == "btime") { type = TokenType::BTIME; }
+    // w inc
+    else if (builtToken == "winc") { type = TokenType::WINC; }
+    // b inc
+    else if (builtToken == "binc") { type = TokenType::BINC; }
+
     //unknown token
     else { type = getUnknownTokenType(builtToken); }
 

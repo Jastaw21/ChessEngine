@@ -22,11 +22,15 @@ enum class TokenType {
 
     // literals
     INT_LITERAL, STRING_LITERAL, DASH,
+
     // parser utilities
     EOF_TOKEN, UNKNOWN,
 
     // option setting
-    SET, SET_OPTION, SET_VALUE
+    SET, SET_OPTION, SET_VALUE,
+
+    // time control
+    WTIME, BTIME, WINC, BINC,
 };
 
 struct Token {
