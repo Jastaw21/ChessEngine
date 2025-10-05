@@ -1,12 +1,12 @@
 #include "HumanPlayer.h"
 
-#include "Engine/MainEngine.h"
 #include "../include/Engine/ProcessChessEngine.h"
+#include "Engine/MainEngine.h"
 
 #include "GUI/gui.h"
 
-
-void runGame(){
+void runGame()
+{
     auto whitePlayer = HumanPlayer(WHITE);
     auto blackPlayer = MainEngine();
 
@@ -15,11 +15,12 @@ void runGame(){
     gui.loop();
 }
 
-void runEngineStandaloneGame(){
-    ProcessChessEngine whiteEngine{"StandaloneEngine.exe", "w"};
+void runEngineStandaloneGame()
+{
+    ProcessChessEngine whiteEngine { "StandaloneEngine.exe", "w" };
     whiteEngine.setEngineID("White");
 
-    ProcessChessEngine blackEngine{"StandaloneEngine.exe", "b"};
+    ProcessChessEngine blackEngine { "StandaloneEngine.exe", "b" };
     blackEngine.setEngineID("Black");
 
     auto gui = ChessGui(&whiteEngine, &blackEngine);
@@ -27,8 +28,8 @@ void runEngineStandaloneGame(){
     gui.loop();
 }
 
-
-void runEngineGame(){
+void runEngineGame()
+{
     auto whitePlayer = MainEngine();
     whitePlayer.setEngineID("Good Eval");
 
@@ -40,13 +41,15 @@ void runEngineGame(){
     gui.loop();
 }
 
-void searchTest(){
+void searchTest()
+{
     auto engine = MainEngine();
     engine.setFullFen(Fen::FULL_STARTING_FEN);
-    engine.Search(5);
+    engine.Search(15, 10000);
 }
 
-int main(int argc, char** argv){
-    runEngineStandaloneGame();
+int main(int argc, char** argv)
+{
+    searchTest();
     return 0;
 }
