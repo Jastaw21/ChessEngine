@@ -177,14 +177,14 @@ public:
     }
 
     Bitboard getPseudoPawnPushes(const Piece& piece, const int fromSquare){
-        if (piece == WP) { return whitePawnPushes2[fromSquare]; }
-        if (piece == BP) { return blackPawnPushes2[fromSquare]; }
+        if (piece == WP) { return whitePawnPushes[fromSquare]; }
+        if (piece == BP) { return blackPawnPushes[fromSquare]; }
         return 0ULL;
     }
 
     Bitboard getPseudoPawnAttacks(const Piece& piece, const int fromSquare){
-        if (piece == WP) { return whitePawnAttacks2[fromSquare]; }
-        if (piece == BP) { return blackPawnAttacks2[fromSquare]; }
+        if (piece == WP) { return whitePawnAttacks[fromSquare]; }
+        if (piece == BP) { return blackPawnAttacks[fromSquare]; }
         return 0ULL;
     }
 
@@ -195,20 +195,20 @@ public:
                 return getPseudoPawnAttacks(piece, fromSquare);
             case WN:
             case BN:
-                return knightAttacks2[fromSquare];
+                return knightAttacks[fromSquare];
             case WQ:
             case BQ:
-                return rankAttacks2[fromSquare] | fileAttacks2[fromSquare] | diagAttacks2[fromSquare];
+                return rankAttacks[fromSquare] | fileAttacks[fromSquare] | diagAttacks[fromSquare];
             case WB:
             case BB:
-                return diagAttacks2[fromSquare];
+                return diagAttacks[fromSquare];
             case WR:
             case BR:
-                return rankAttacks2[fromSquare] | fileAttacks2[fromSquare];
+                return rankAttacks[fromSquare] | fileAttacks[fromSquare];
 
             case WK:
             case BK:
-                return kingMoves2[fromSquare];
+                return kingMoves[fromSquare];
             default:
                 return 0ULL;
         }
@@ -223,28 +223,28 @@ public:
             }
             case WN:
             case BN: {
-                inBoard |= knightAttacks2[fromSquare];
+                inBoard |= knightAttacks[fromSquare];
                 break;
             }
             case WQ:
             case BQ: {
-                inBoard |= (rankAttacks2[fromSquare] | fileAttacks2[fromSquare] | diagAttacks2[fromSquare]);
+                inBoard |= (rankAttacks[fromSquare] | fileAttacks[fromSquare] | diagAttacks[fromSquare]);
                 break;
             }
             case WB:
             case BB: {
-                inBoard |= diagAttacks2[fromSquare];
+                inBoard |= diagAttacks[fromSquare];
                 break;
             }
             case WR:
             case BR: {
-                inBoard |= (rankAttacks2[fromSquare] | fileAttacks2[fromSquare]);
+                inBoard |= (rankAttacks[fromSquare] | fileAttacks[fromSquare]);
                 break;
             }
 
             case WK:
             case BK: {
-                inBoard |= kingMoves2[fromSquare];
+                inBoard |= kingMoves[fromSquare];
                 break;
             }
             default: {
@@ -256,15 +256,15 @@ public:
 
     Bitboard getPseudoCastlingMoves(const Piece& piece, const int fromSquare, const BitBoards& boards);
 
-    std::array<Bitboard, 64> rankAttacks2;
-    std::array<Bitboard, 64> fileAttacks2;
-    std::array<Bitboard, 64> diagAttacks2;
-    std::array<Bitboard, 64> knightAttacks2;
-    std::array<Bitboard, 64> whitePawnPushes2;
-    std::array<Bitboard, 64> whitePawnAttacks2;
-    std::array<Bitboard, 64> blackPawnPushes2;
-    std::array<Bitboard, 64> blackPawnAttacks2;
-    std::array<Bitboard, 64> kingMoves2;
+    std::array<Bitboard, 64> rankAttacks;
+    std::array<Bitboard, 64> fileAttacks;
+    std::array<Bitboard, 64> diagAttacks;
+    std::array<Bitboard, 64> knightAttacks;
+    std::array<Bitboard, 64> whitePawnPushes;
+    std::array<Bitboard, 64> whitePawnAttacks;
+    std::array<Bitboard, 64> blackPawnPushes;
+    std::array<Bitboard, 64> blackPawnAttacks;
+    std::array<Bitboard, 64> kingMoves;
 };
 
 namespace SingleMoves {
@@ -972,7 +972,7 @@ namespace RulesCheck {
                     if (pieceColours[pieceName] == pieceColours[piece])
                         continue;
 
-                    auto startingBits = std::bitset<64>(boards->getBitboard(pieceName));
+                    auto startingBits = std::bitset < 64 > (boards->getBitboard(pieceName));
                     for (int index = 0; index < startingBits.size(); ++index) {
                         if (startingBits.test(index)) {
                             const Bitboard attacks = getAttackMoves(index, pieceName, boards);

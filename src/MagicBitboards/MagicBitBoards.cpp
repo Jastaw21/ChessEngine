@@ -74,16 +74,16 @@ Bitboard MagicBitBoards::getMoves(const int square, const Piece& piece, const Bi
         case BQ:
             return getRookAttacks(square, boards.getOccupancy()) | getBishopAttacks(square, boards.getOccupancy());
         case WN:
-            return rules.knightAttacks2[square] & ~boards.getOccupancy(WHITE);
+            return rules.knightAttacks[square] & ~boards.getOccupancy(WHITE);
         case BN:
-            return rules.knightAttacks2[square] & ~boards.getOccupancy(BLACK); // cant go to own square
+            return rules.knightAttacks[square] & ~boards.getOccupancy(BLACK); // cant go to own square
         case WK: {
             const Bitboard castling = getCastling(square, piece, boards);
-            return (castling | rules.kingMoves2[square]) & ~boards.getOccupancy(WHITE);
+            return (castling | rules.kingMoves[square]) & ~boards.getOccupancy(WHITE);
         }
         case BK: {
             const Bitboard castling = getCastling(square, piece, boards);
-            return (castling | rules.kingMoves2[square]) & ~boards.getOccupancy(BLACK);
+            return (castling | rules.kingMoves[square]) & ~boards.getOccupancy(BLACK);
         }
         case BP:
         case WP: {
@@ -136,21 +136,21 @@ void MagicBitBoards::getMoves(const int square, const Piece& piece, const BitBoa
             break;
         }
         case WN: {
-            resultMoves |= rules.knightAttacks2[square] & ~boards.getOccupancy(WHITE);
+            resultMoves |= rules.knightAttacks[square] & ~boards.getOccupancy(WHITE);
             break;
         } // cant go to own square
         case BN: {
-            resultMoves |= rules.knightAttacks2[square] & ~boards.getOccupancy(BLACK);
+            resultMoves |= rules.knightAttacks[square] & ~boards.getOccupancy(BLACK);
             break;
         } // cant go to own square
         case WK: {
             const Bitboard castling = getCastling(square, piece, boards);
-            resultMoves |= (castling | rules.kingMoves2[square]) & ~boards.getOccupancy(WHITE);
+            resultMoves |= (castling | rules.kingMoves[square]) & ~boards.getOccupancy(WHITE);
             break;
         }
         case BK: {
             const Bitboard castling = getCastling(square, piece, boards);
-            resultMoves |= (castling | rules.kingMoves2[square]) & ~boards.getOccupancy(BLACK);
+            resultMoves |= (castling | rules.kingMoves[square]) & ~boards.getOccupancy(BLACK);
             break;
         }
         // cant go to own square
@@ -201,13 +201,13 @@ Bitboard MagicBitBoards::calculateAttacksForPiece(const int square, const Piece&
             return getRookAttacks(square, occupancy) | getBishopAttacks(square, occupancy);
         }
         case WN:
-            return rules.knightAttacks2[square] & ~boards.getOccupancy(WHITE); // cant go to own square
+            return rules.knightAttacks[square] & ~boards.getOccupancy(WHITE); // cant go to own square
         case BN:
-            return rules.knightAttacks2[square] & ~boards.getOccupancy(BLACK); // cant go to own square
+            return rules.knightAttacks[square] & ~boards.getOccupancy(BLACK); // cant go to own square
         case WK:
-            return rules.kingMoves2[square] & ~boards.getOccupancy(WHITE); // cant go to own square
+            return rules.kingMoves[square] & ~boards.getOccupancy(WHITE); // cant go to own square
         case BK:
-            return rules.kingMoves2[square] & ~boards.getOccupancy(BLACK); // cant go to own square
+            return rules.kingMoves[square] & ~boards.getOccupancy(BLACK); // cant go to own square
         case WP:
             return rules.getPseudoPawnAttacks(piece, square) & ~boards.getOccupancy(WHITE);
         case BP:

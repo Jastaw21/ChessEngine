@@ -576,22 +576,41 @@ bool BoardManager::lastTurnInCheck(const Move& move){
     const Piece lastTurnPiece = currentTurn == BLACK ? WK : BK;
     const Bitboard& kingLocation = bitboards[lastTurnPiece];
 
-    // Iterate through the pieces that can attack it
-    for (const auto& pieceName: filteredPieces[currentTurn]) {
-        auto startingBoard = bitboards[pieceName];
-        while (startingBoard) {
-            // count trailing zeros to find the index of the first set bit
-            const int startSquare = std::countr_zero(startingBoard);
-            startingBoard &= startingBoard - 1;
-            Bitboard prelimAttacks = 0ULL;
+    if (currentTurn == WHITE) {
+        for (const auto& pieceName: {WP, WQ, WK, WR, WB, WN}) {
+            auto startingBoard = bitboards[pieceName];
+            while (startingBoard) {
+                // count trailing zeros to find the index of the first set bit
+                const int startSquare = std::countr_zero(startingBoard);
+                startingBoard &= startingBoard - 1;
+                Bitboard prelimAttacks = 0ULL;
 
-            // see if they can even attack in theory
-            rules.getPseudoAttacks(pieceName, startSquare, prelimAttacks);
-            if (!(kingLocation & prelimAttacks))
-                continue;
-            Bitboard possibleMoves = 0ULL;
-            magicBitBoards.getMoves(startSquare, pieceName, bitboards, possibleMoves);
-            if (possibleMoves & kingLocation) { return true; }
+                // see if they can even attack in theory
+                rules.getPseudoAttacks(pieceName, startSquare, prelimAttacks);
+                if (!(kingLocation & prelimAttacks))
+                    continue;
+                Bitboard possibleMoves = 0ULL;
+                magicBitBoards.getMoves(startSquare, pieceName, bitboards, possibleMoves);
+                if (possibleMoves & kingLocation) { return true; }
+            }
+        }
+    } else {
+        for (const auto& pieceName: {BP, BQ, BK, BR, BB, BN}) {
+            auto startingBoard = bitboards[pieceName];
+            while (startingBoard) {
+                // count trailing zeros to find the index of the first set bit
+                const int startSquare = std::countr_zero(startingBoard);
+                startingBoard &= startingBoard - 1;
+                Bitboard prelimAttacks = 0ULL;
+
+                // see if they can even attack in theory
+                rules.getPseudoAttacks(pieceName, startSquare, prelimAttacks);
+                if (!(kingLocation & prelimAttacks))
+                    continue;
+                Bitboard possibleMoves = 0ULL;
+                magicBitBoards.getMoves(startSquare, pieceName, bitboards, possibleMoves);
+                if (possibleMoves & kingLocation) { return true; }
+            }
         }
     }
 
