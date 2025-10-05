@@ -91,6 +91,8 @@ struct Move {
 };
 
 Move createMove(const Piece& piece, const std::string& moveUCI);
+Move createMove(const Piece& piece, const RankAndFile squareFrom, const RankAndFile squareTo,
+                const Piece promotedPiece = PIECE_N);
 
 class BoardManager {
 public:

@@ -69,6 +69,19 @@ Move createMove(const Piece& piece, const std::string& moveUCI){
     return returnMove;
 }
 
+Move createMove(const Piece& piece, const RankAndFile squareFrom, const RankAndFile squareTo,
+                const Piece promotedPiece){
+    Move returnMove;
+    returnMove.piece = piece;
+    returnMove.rankFrom = squareFrom.rank;
+    returnMove.fileFrom = squareFrom.file;
+    returnMove.rankTo = squareTo.rank;
+    returnMove.fileTo = squareTo.file;
+    returnMove.promotedPiece = promotedPiece;
+
+    return returnMove;
+}
+
 BoardManager::BoardManager() = default;
 
 /**

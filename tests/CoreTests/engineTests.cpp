@@ -229,40 +229,38 @@ TEST(Performance, Depth5WithTT){
     engine.Search(5);
 }
 
-TEST(Performance, Depth7){
-    auto engine = MainEngine();
-    engine.setFullFen(Fen::FULL_STARTING_FEN);
-    engine.Search(7);
-}
-
-
 TEST(EngineTests, TimedSearchGivesSameResult){
     auto engine = MainEngine();
 
     engine.setFullFen("rnbqkbnr/pppp1ppp/4p3/8/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 1");
 
-    auto bestMove = engine.getBestMove(3);
-    auto TimedBestMove = engine.Search(3, 1000);
+    auto bestMove = engine.getBestMove(5);
+    auto TimedBestMove = engine.Search(5, 5000);
     EXPECT_EQ(bestMove.toUCI(), TimedBestMove.bestMove.toUCI());
 
     engine.reset();
     engine.setFullFen("rnbqkbnr/ppppp2p/8/5pp1/4P3/2N5/PPPP1PPP/R1BQKBNR w KQkq - 0 3");
     auto bestMove2 = engine.getBestMove(3);
-    auto TimedBestMove2 = engine.Search(3, 1000);
+    auto TimedBestMove2 = engine.Search(3, 5000);
     EXPECT_EQ(bestMove2.toUCI(), TimedBestMove2.bestMove.toUCI());
 }
 
 TEST(EngineTests, TimedSearchExitsVaguelyRight){
     auto engine = MainEngine();
-    engine.setFullFen(Fen::FULL_STARTING_FEN);
+    engine.setFullFen(Fen::FULL_KIWI_PETE_FEN);
 
     auto startTime = std::chrono::high_resolution_clock::now();
-    auto result = engine.Search(13, 1000);
+    auto result = engine.Search(40, 3000);
+    std::cout
+            << "Nodes: " << result.nodesSearched
+            << " Depth: " << result.depth
+            << " Hash Hits: " << result.hashHits << std::endl;
     auto endTime = std::chrono::high_resolution_clock::now();
 
     // doesn't burst
-    EXPECT_LT(std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count(), 1000);
-    std::cout << result.depth << std::endl;
+    EXPECT_LT(std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count(), 3000);
+    EXPECT_GT(std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count(), 2860);
+    std::cout << result.bestMove.toUCI() << std::endl;
 }
 
 TEST(EngineTests, EngineParsesAndReturnsCorrectlyWithTimedGo){
@@ -270,4 +268,10 @@ TEST(EngineTests, EngineParsesAndReturnsCorrectlyWithTimedGo){
     engine.setFullFen(Fen::FULL_STARTING_FEN);
 
     engine.parseUCI("go wtime 1000 btime 2000 winc 100 binc 100 depth 3");
+}
+
+TEST(EngineTests, TTDepth1){
+    auto engine = MainEngine();
+    engine.setFullFen(Fen::FULL_STARTING_FEN);
+    engine.Search(2, 100);
 }

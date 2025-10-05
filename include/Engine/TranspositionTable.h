@@ -6,6 +6,7 @@
 #define CHESS_TRANSPOSITIONTABLE_H
 #include "BoardManager/BoardManager.h"
 
+
 struct TTEntry {
     uint64_t key;
     float eval;
@@ -18,27 +19,28 @@ struct TTEntry {
 class TranspositionTable {
 public:
 
-    TranspositionTable(size_t size = 1024 * 512);
+    TranspositionTable(size_t sizeinMB = 64);
 
-    std::unordered_map<uint16_t, TTEntry> table;
+
     std::vector<TTEntry> vectorTable;
 
-    void store(TTEntry& entry);
-    void storeVector(TTEntry& entry);
 
-    std::optional<TTEntry> retrieve(uint64_t& key);
+    void storeVector(TTEntry& entry);
     std::optional<TTEntry> retrieveVector(uint64_t& key);
 
 
-    size_t size() const{ return table.size() * sizeof(TTEntry); }
-    size_t entries() const{ return table.size(); }
-    size_t maxSize = 1024 * 512; // 512 mb?
+    size_t size() const{ return vectorTable.size() * sizeof(TTEntry); }
+    size_t entries() const{ return vectorTable.size(); }
+    size_t populatedEntries() const;
 
-    uint16_t getOldestAge() const{
-        return std::ranges::min_element(table, [](const auto& a, const auto& b) {
-            return a.second.age < b.second.age;
-        })->first;
+    auto getPopulatedEntries(){
+        std::vector<TTEntry> result;
+        for (const auto entry: vectorTable) { if (entry.key != 0) { result.push_back(entry); } }
+        return result;
     }
+
+    void clear();
+    size_t maxSize;
 };
 
 

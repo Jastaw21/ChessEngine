@@ -4,37 +4,37 @@
 
 #include "Engine/TranspositionTable.h"
 
-TranspositionTable::TranspositionTable(size_t size) : maxSize(size), vectorTable(size){}
+#include <ranges>
 
-void TranspositionTable::store(TTEntry& entry){
-    const auto last16Bits = MathUtility::getXBits(entry.key, 16);
 
-    table[last16Bits] = entry;
+TranspositionTable::TranspositionTable(size_t sizeinMB){
+    size_t numberEntries;
 
-    if (table.size() > maxSize / sizeof(TTEntry)) { table.erase(table.begin()); }
+    numberEntries = 1;
+
+    while (numberEntries * 2 <= (sizeinMB * 1024 * 1024) / sizeof(TTEntry)) { numberEntries *= 2; }
+
+    maxSize = numberEntries;
+    vectorTable.resize(numberEntries);
 }
+
 
 void TranspositionTable::storeVector(TTEntry& newEntry){
-    // index the table by this mask. This mask always falls within the table's range, so we overwrite, for now just on age
     auto& entry = vectorTable[newEntry.key & maxSize - 1];
-
-    if (newEntry.age < entry.age) { entry = newEntry; }
+    // always newer, more recent search
+    if (entry.key == 0 || entry.key == newEntry.key || newEntry.depth >= entry.depth) { entry = newEntry; }
 }
 
-
-std::optional<TTEntry> TranspositionTable::retrieve(uint64_t& key){
-    const auto last16Bits = MathUtility::getXBits(key, 16);
-
-    if (table.find(last16Bits) == table.end()) { return std::nullopt; }
-
-    if (table[last16Bits].key == key) { return table[last16Bits]; }
-    return std::nullopt;
-}
 
 std::optional<TTEntry> TranspositionTable::retrieveVector(uint64_t& key){
     TTEntry& entry = vectorTable[key & (maxSize - 1)];
-    if (entry.key == key) {
+    if (entry.key == key && entry.key != 0) {
+        //std::cout << "retrieved entry" << std::endl;
         return entry; // exact match
     }
     return std::nullopt; // either empty slot or collision
+}
+
+size_t TranspositionTable::populatedEntries() const{
+    return std::ranges::count_if(vectorTable, [](const auto& entry) { return entry.key != 0; });
 }

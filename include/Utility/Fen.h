@@ -6,12 +6,15 @@
 #define FEN_H
 #include <string>
 
+#include "Vec2D.h"
+
 
 using FenString = std::string;
 
 namespace Fen {
     inline const FenString STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
     inline const FenString FULL_STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    inline const FenString FULL_STARTING_FEN_BLACK = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1";
     inline const FenString STARTING_FEN_TEST = "r7/8/8/8/8/8/8/8";
     inline const FenString KIWI_PETE_FEN = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R";
     inline const FenString FULL_KIWI_PETE_FEN = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
@@ -20,9 +23,17 @@ namespace Fen {
 
     inline FenString rankAndFileToFen(const int rank, const int file){
         FenString returnString;
-        const char rankString = 'a' - 1 + rank;
-        returnString += rankString;
-        returnString += std::to_string(file);
+        const char fileValue = 'a' - 1 + file;
+        returnString += fileValue;
+        returnString += std::to_string(rank);
+        return returnString;
+    }
+
+    inline FenString rankAndFileToFen(const RankAndFile rankAndFile){
+        FenString returnString;
+        const char fileValue = 'a' - 1 + rankAndFile.file;
+        returnString += fileValue;
+        returnString += std::to_string(rankAndFile.rank);
         return returnString;
     }
 

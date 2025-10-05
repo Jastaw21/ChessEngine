@@ -9,25 +9,32 @@
 
 #include "Engine/Evaluation.h"
 
-inline void SortMovesNew(std::vector<Move>& moves){
-    std::ranges::partial_sort(
-        moves.begin(),
-        moves.begin() + std::min(moves.size(), static_cast<size_t>(5)),
-        moves.end(),
-        [](const auto& a, const auto& b) {
-            return
-                    (a.resultBits & CAPTURE)
-                    >
-                    (b.resultBits & CAPTURE);
-        }
-    );
+
+void EngineBase::SortMoves(std::vector<Move>& moves, const Move& ttMove){
+    std::stable_sort(moves.begin(), moves.end(),
+                     [&ttMove, this](const Move& a, const Move& b) {
+                         if (a.toUCI() == ttMove.toUCI()) return true;
+                         if (b.toUCI() == ttMove.toUCI()) return false;
+
+                         bool aIsBetter = ScoreMove(a) > ScoreMove(b);
+
+                         if (aIsBetter) return true;
+                         return false;
+                     });
 }
 
+int EngineBase::ScoreMove(const Move& move){
+    // is it the best pv
+    auto hash = internalBoardManager_.getZobristHash()->getHash();
+    //std::cout << "Looking for hash from ScoreMove:" << std::endl;
+    auto precachedBestMove = transpositionTable_.retrieveVector(hash);
+    int score = 0;
+    if (precachedBestMove.has_value() && precachedBestMove->bestMove == move) { score += 999999; }
 
-inline void SortMoves(std::vector<Move>& moves){
-    std::ranges::sort(moves, [&](const auto& moveToSort, const auto& moveToSort2) {
-        return (moveToSort.resultBits & CAPTURE) > (moveToSort2.resultBits & CAPTURE);
-    });
+    if (move.resultBits & MoveResult::CAPTURE)
+        score += 10 + pieceScoresArray[move.capturedPiece] - pieceScoresArray[move.piece];
+
+    return score;
 }
 
 EngineBase::EngineBase() : ChessPlayer(ENGINE),
@@ -70,6 +77,8 @@ void EngineBase::parseUCI(const std::string& uci){
 std::vector<Move> EngineBase::generateMoveList(){ return std::vector<Move>(); }
 
 SearchResults EngineBase::Search(const int depth){
+    lastSearchEvaluations.reset();
+    currentSearchID++;
     SearchResults bestResult;
     auto moves = generateMoveList();
     if (moves.empty()) { return bestResult; }
@@ -81,10 +90,13 @@ SearchResults EngineBase::Search(const int depth){
     float beta = INFINITY;
 
     for (auto& move: moves) {
+        NodesSearched++;
         internalBoardManager_.forceMove(move);
 
         std::vector<Move> thisPV;
-        float eval = -alphaBeta(depth - 1, alpha, beta, 1, thisPV);
+        float eval = -alphaBeta(depth - 1, alpha, beta, 1, thisPV, false);
+        lastSearchEvaluations.moves.push_back(move);
+        lastSearchEvaluations.scores.push_back(eval);
 
         internalBoardManager_.undoMove();
 
@@ -100,19 +112,23 @@ SearchResults EngineBase::Search(const int depth){
     }
 
     bestResult.depth = depth;
+    bestResult.hashHits = HashHits;
+    bestResult.nodesSearched = NodesSearched;
     return bestResult;
 }
 
 SearchResults EngineBase::Search(int MaxDepth, int SearchMs){
-    const int marginSearch = std::max(50, SearchMs - 60);
+    currentSearchID++;
+    const int marginSearch = std::max(50, SearchMs - 50);
     deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(marginSearch);
 
     SearchResults bestResult;
+    int maxDepthReached = 0;
 
     for (int depth = 1; depth <= MaxDepth; depth++) {
         std::vector<Move> thisPV;
         if (std::chrono::steady_clock::now() >= deadline) { break; }
-        const float score = alphaBetaTimed(depth, -INFINITY, INFINITY, 1, thisPV);
+        const float score = alphaBeta(depth, -INFINITY, INFINITY, 1, thisPV, true);
 
         if (!thisPV.empty()) {
             bestResult.bestMove = thisPV[0];
@@ -123,7 +139,12 @@ SearchResults EngineBase::Search(int MaxDepth, int SearchMs){
             bestResult.variation.insert(bestResult.variation.end(),
                                         thisPV.begin() + 1, thisPV.end());
         }
+        maxDepthReached = depth;
     }
+
+    bestResult.hashHits = HashHits;
+    bestResult.nodesSearched = NodesSearched;
+    bestResult.depth = maxDepthReached;
 
     return bestResult;
 }
@@ -149,7 +170,8 @@ bool EngineBase::evaluateGameState(const int depth, const int ply, float& value1
     return false;
 }
 
-float EngineBase::alphaBeta(const int depth, float alpha, const float beta, const int ply, std::vector<Move>& pv){
+float EngineBase::alphaBeta(const int depth, float alpha, const float beta, const int ply, std::vector<Move>& pv,
+                            const bool timed){
     pv.clear();
     if (internalBoardManager_.getGameResult() & GameResult::CHECKMATE) { return -MATE_SCORE + ply; }
     if (internalBoardManager_.getMoveHistory().size() > 0 && internalBoardManager_.getMoveHistory().top().resultBits &
@@ -157,106 +179,38 @@ float EngineBase::alphaBeta(const int depth, float alpha, const float beta, cons
     if (internalBoardManager_.getGameResult() & GameResult::DRAW) { return 0.0f; }
     if (depth == 0) { return evaluator_.evaluate(); }
 
+    auto hash = boardManager()->getZobristHash()->getHash();
+    auto ttEntry = transpositionTable_.retrieveVector(hash);
+
+    Move ttMove;
+    if (ttEntry.has_value()) {
+        if (ttEntry->depth >= depth) {
+            HashHits++;
+            return ttEntry->eval;
+        }
+        ttMove = ttEntry->bestMove;
+    }
+
     auto moves = generateMoveList();
+    SortMoves(moves, ttMove);
 
-    std::ranges::sort(moves, [&](const auto& moveToSort, const auto& moveToSort2) {
-        return (moveToSort.resultBits & CAPTURE) > (moveToSort2.resultBits & CAPTURE);
-    });
-
-    if (moves.empty()) { return evaluator_.evaluate(); }
+    if (moves.empty())
+        return evaluator_.evaluate();
 
     float bestScore = -MATE_SCORE - 1;
     Move bestMove;
     std::vector<Move> bestPV;
 
     for (auto& move: moves) {
-        // push the move onto the board
-        internalBoardManager_.forceMove(move);
-        std::vector<Move> thisPV;
-        float eval = 0.f;
-
-        // check if we've seen the state
-        auto hash = boardManager()->getZobristHash()->getHash();
-        auto precachedResult = transpositionTable_.retrieveVector(hash);
-
-        if (precachedResult.has_value())
-            eval = precachedResult->eval;
-        else {
-            eval = -alphaBeta(depth - 1, -beta, -alpha, ply + 1, thisPV);
-            // need to then store it
-            TTEntry newEntry{
-                        .key = hash,
-                        .eval = eval,
-                        .depth = depth,
-                        .age = ply
-                    };
-            transpositionTable_.storeVector(newEntry);
-        }
-        internalBoardManager_.undoMove();
-
-        if (eval > bestScore) {
-            bestScore = eval;
-            bestMove = move;
-            bestPV = thisPV;
-        }
-        alpha = std::max(alpha, eval);
-
-        if (alpha >= beta) { break; }
-    }
-
-    if (bestScore > -MATE_SCORE - 1) {
-        pv.push_back(bestMove);
-        pv.insert(pv.end(), bestPV.begin(), bestPV.end());
-    }
-
-    return bestScore;
-}
-
-float EngineBase::alphaBetaTimed(const int depth, float alpha, const float beta, const int ply, std::vector<Move>& pv){
-    pv.clear();
-
-    if (internalBoardManager_.getGameResult() & GameResult::CHECKMATE) { return -MATE_SCORE + ply; }
-    if (internalBoardManager_.getMoveHistory().size() > 0 && internalBoardManager_.getMoveHistory().top().resultBits &
-        MoveResult::CHECK_MATE) { return -MATE_SCORE + ply; }
-    if (internalBoardManager_.getGameResult() & GameResult::DRAW) { return 0.0f; }
-    if (depth == 0) { return evaluator_.evaluate(); }
-
-    auto moves = generateMoveList();
-
-    std::ranges::sort(moves, [&](const auto& moveToSort, const auto& moveToSort2) {
-        return (moveToSort.resultBits & CAPTURE) > (moveToSort2.resultBits & CAPTURE);
-    });
-
-    if (moves.empty()) { return evaluator_.evaluate(); }
-
-    float bestScore = -MATE_SCORE - 1;
-    Move bestMove;
-    std::vector<Move> bestPV;
-
-    for (auto& move: moves) {
-        if (std::chrono::steady_clock::now() >= deadline) {
+        if (timed && std::chrono::steady_clock::now() >= deadline) {
             return 0.0f; // bail inside loop
         }
+        NodesSearched++;
         // push the move onto the board
         internalBoardManager_.forceMove(move);
         std::vector<Move> thisPV;
-        float eval = 0.f;
 
-        // check if we've seen the state
-        auto hash = boardManager()->getZobristHash()->getHash();
-        auto precachedResult = transpositionTable_.retrieveVector(hash);
-
-        if (!precachedResult.has_value()) {
-            eval = -alphaBetaTimed(depth - 1, -beta, -alpha, ply + 1, thisPV);
-            // need to then store it
-            TTEntry newEntry{
-                        .key = hash,
-                        .eval = eval,
-                        .depth = depth,
-                        .age = ply
-                    };
-            transpositionTable_.storeVector(newEntry);
-        } else { eval = precachedResult->eval; }
+        float eval = -alphaBeta(depth - 1, -beta, -alpha, ply + 1, thisPV, timed);
 
         internalBoardManager_.undoMove();
 
@@ -265,10 +219,19 @@ float EngineBase::alphaBetaTimed(const int depth, float alpha, const float beta,
             bestMove = move;
             bestPV = thisPV;
         }
-        alpha = std::max(alpha, eval);
+
+        if (eval > alpha) { alpha = eval; }
 
         if (alpha >= beta) { break; }
     }
+    TTEntry newEntry{
+                .key = hash,
+                .eval = bestScore,
+                .bestMove = bestMove,
+                .depth = depth,
+                .age = currentSearchID // Track which search this is from
+            };
+    transpositionTable_.storeVector(newEntry);
 
     if (bestScore > -MATE_SCORE - 1) {
         pv.push_back(bestMove);
@@ -277,6 +240,7 @@ float EngineBase::alphaBetaTimed(const int depth, float alpha, const float beta,
 
     return bestScore;
 }
+
 
 PerftResults EngineBase::perft(const int depth){
     if (depth == 0) return PerftResults{1, 0, 0, 0, 0, 0};

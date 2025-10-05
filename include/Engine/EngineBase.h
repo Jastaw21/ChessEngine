@@ -5,26 +5,36 @@
 #ifndef ENGINEBASE_H
 #define ENGINEBASE_H
 
-#include <atomic>
 #include <filesystem>
 #include <fstream>
 #include <random>
 
 #include "ChessPlayer.h"
 #include "Evaluation.h"
+#include "PerftResults.h"
 #include "TranspositionTable.h"
 
 #include "BoardManager/BoardManager.h"
-
-#include "PerftResults.h"
 
 struct SearchResults {
     float score;
     Move bestMove;
     int depth;
     std::vector<Move> variation;
+
+    int nodesSearched = 0;
+    int hashHits = 0;
 };
 
+struct MoveEvaluations {
+    std::vector<Move> moves;
+    std::vector<float> scores;
+
+    void reset(){
+        moves.clear();
+        scores.clear();
+    }
+};
 
 class EngineBase : public ChessPlayer {
 public:
@@ -35,7 +45,7 @@ public:
     // Core Engine Interface
     SearchResults Search(int depth = 5);
     SearchResults Search(int MaxDepth, int SearchMs);
-    bool evaluateGameState(int depth, int ply, float& value1);
+
     Move getBestMove(int depth){ return Search(depth).bestMove; }
 
     // control flage
@@ -53,6 +63,7 @@ public:
     // Search Configuration
     virtual int getSearchDepth() const{ return searchDepth_; }
     virtual void setSearchDepth(const int search_depth){ searchDepth_ = search_depth; }
+    MoveEvaluations& getLastSearchEvaluations(){ return lastSearchEvaluations; }
 
     // UCI Protocol Interface
     virtual void parseUCI(const std::string& uci);
@@ -94,9 +105,17 @@ private:
 
     std::chrono::steady_clock::time_point deadline;
 
+    float alphaBeta(int depth, float alpha, float beta, int ply, std::vector<Move>& pv, bool timed = false);
 
-    float alphaBeta(int depth, float alpha, float beta, int ply, std::vector<Move>& pv);
-    float alphaBetaTimed(int depth, float alpha, float beta, int ply, std::vector<Move>& pv);
+    int ScoreMove(const Move& move);
+    void SortMoves(std::vector<Move>& moves, const Move& ttMove);
+    bool evaluateGameState(int depth, int ply, float& value1);
+
+    int currentSearchID = 0;
+    int NodesSearched = 0;
+    int HashHits = 0;
+
+    MoveEvaluations lastSearchEvaluations;
 };
 
 

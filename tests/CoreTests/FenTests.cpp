@@ -16,7 +16,7 @@ TEST(Fen, rankAndFileToFen){
     ASSERT_EQ("h8", Fen::rankAndFileToFen(8, 8));
 
     // top left
-    ASSERT_EQ("a8", Fen::rankAndFileToFen(1, 8));
+    ASSERT_EQ("a8", Fen::rankAndFileToFen(8, 1));
 }
 
 TEST(Fen, fenToRankAndFile){
