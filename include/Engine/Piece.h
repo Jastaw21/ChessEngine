@@ -69,21 +69,26 @@ inline std::unordered_map<Piece, std::string> pieceNames = {
             {BK, "Black King"},
         };
 
-inline std::unordered_map<Piece, Colours> pieceColours = {
-            {WP, WHITE},
-            {WN, WHITE},
-            {WB, WHITE},
-            {WR, WHITE},
-            {WQ, WHITE},
-            {WK, WHITE},
-            {BP, BLACK},
-            {BN, BLACK},
-            {BB, BLACK},
-            {BR, BLACK},
-            {BQ, BLACK},
-            {BK, BLACK},
-        };
+// inline std::unordered_map<Piece, Colours> pieceColours = {
+//             {WP, WHITE},
+//             {WN, WHITE},
+//             {WB, WHITE},
+//             {WR, WHITE},
+//             {WQ, WHITE},
+//             {WK, WHITE},
+//             {BP, BLACK},
+//             {BN, BLACK},
+//             {BB, BLACK},
+//             {BR, BLACK},
+//             {BQ, BLACK},
+//             {BK, BLACK},
+//         };
 
+inline std::array<Colours, PIECE_N> pieceColours = {
+            WHITE, WHITE, WHITE, WHITE, WHITE, WHITE,
+            BLACK, BLACK, BLACK, BLACK, BLACK, BLACK
+
+        };
 
 inline std::unordered_map<Piece, PieceType> pieceTypes = {
             {WP, PieceType::PAWN},

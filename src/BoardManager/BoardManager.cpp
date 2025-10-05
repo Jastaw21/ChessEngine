@@ -96,7 +96,8 @@ bool BoardManager::validateMove(Move& move){
     const int toSquare = rankAndFileToSquare(move.rankTo, move.fileTo);
 
     const Bitboard toSquareBitboard = 1ULL << toSquare;
-    const auto friendlyPieces = bitboards.getOccupancy(pieceColours[move.piece]);
+    const auto friendlyColour = move.piece <= 5 ? WHITE : BLACK;
+    const auto friendlyPieces = bitboards.getOccupancy(friendlyColour);
     const auto enemyPieces = bitboards.getOccupancy() & ~friendlyPieces;
 
     // just get all of the possible moves

@@ -81,7 +81,7 @@ float Evaluator::pieceSquareScore(){
             locations &= locations - 1; // pop the bit
 
             int lookupIndex;
-            // manual check to avoid looking up colours - black need the board flipping
+            // manual check to avoid looking up colours - black needs the board flipping
             if (pieceName == BP || pieceName == BB ||
                 pieceName == BN || pieceName == BQ ||
                 pieceName == BR || pieceName == BK) { lookupIndex = flipBoard(location); }
