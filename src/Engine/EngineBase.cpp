@@ -71,9 +71,7 @@ void EngineBase::parseUCI(const std::string& uci){
 
 std::vector<Move> EngineBase::generateMoveList(){ return std::vector<Move>(); }
 
-SearchResults EngineBase::Search(const int depth){
-    lastSearchEvaluations.reset();
-    currentSearchID++;
+SearchResults EngineBase::executeSearch(const int depth, const bool timed){
     SearchResults bestResult;
     auto moves = generateMoveList();
     if (moves.empty()) { return bestResult; }
@@ -89,7 +87,7 @@ SearchResults EngineBase::Search(const int depth){
         internalBoardManager_.forceMove(move);
 
         std::vector<Move> thisPV;
-        float eval = -alphaBeta(depth - 1, alpha, beta, 1, thisPV, false);
+        float eval = -alphaBeta(depth - 1, alpha, beta, 1, thisPV, timed);
         lastSearchEvaluations.moves.push_back(move);
         lastSearchEvaluations.scores.push_back(eval);
 
@@ -112,6 +110,12 @@ SearchResults EngineBase::Search(const int depth){
     return bestResult;
 }
 
+SearchResults EngineBase::Search(const int depth){
+    lastSearchEvaluations.reset();
+    currentSearchID++;
+    return executeSearch(depth);
+}
+
 SearchResults EngineBase::Search(int MaxDepth, int SearchMs){
     currentSearchID++;
     const int marginSearch = std::max(50, SearchMs - 50);
@@ -121,19 +125,8 @@ SearchResults EngineBase::Search(int MaxDepth, int SearchMs){
     int maxDepthReached = 0;
 
     for (int depth = 1; depth <= MaxDepth; depth++) {
-        std::vector<Move> thisPV;
         if (std::chrono::steady_clock::now() >= deadline) { break; }
-        const float score = alphaBeta(depth, -INFINITY, INFINITY, 1, thisPV, true);
-
-        if (!thisPV.empty()) {
-            bestResult.bestMove = thisPV[0];
-            bestResult.score = score;
-            bestResult.depth = depth;
-            bestResult.variation.clear();
-            bestResult.variation.push_back(thisPV[0]);
-            bestResult.variation.insert(bestResult.variation.end(),
-                                        thisPV.begin() + 1, thisPV.end());
-        }
+        bestResult = executeSearch(depth, true);
         maxDepthReached = depth;
     }
 

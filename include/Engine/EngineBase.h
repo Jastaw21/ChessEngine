@@ -81,6 +81,7 @@ protected:
 
     // Move Generation Interface
     virtual std::vector<Move> generateMoveList();
+
     virtual void generateValidMovesFromPosition(
         const Piece& piece, int startSquare, std::vector<Move>& moveList) = 0;
     virtual void generateMovesForPiece(const Piece& piece, std::vector<Move>& moveList) = 0;
@@ -105,6 +106,7 @@ private:
 
     std::chrono::steady_clock::time_point deadline;
 
+    SearchResults executeSearch(int depth, bool timed = false);
     float alphaBeta(int depth, float alpha, float beta, int ply, std::vector<Move>& pv, bool timed = false);
 
     int ScoreMove(const Move& move, const Move& ttMove);
