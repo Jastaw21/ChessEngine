@@ -75,8 +75,14 @@ struct Move {
     std::string toUCI() const;
 
     bool operator==(const Move& other) const{
-        return piece == other.piece && rankFrom == other.rankFrom && fileFrom == other.fileFrom && rankTo == other.
-               rankTo && fileTo == other.fileTo && resultBits == other.resultBits;
+        return
+                piece == other.piece
+                && rankFrom == other.rankFrom
+                && fileFrom == other.fileFrom
+                && rankTo == other.rankTo
+                && fileTo == other.fileTo
+                && capturedPiece == other.capturedPiece
+                && promotedPiece == other.promotedPiece;
     }
 
     bool operator!=(const Move& other) const{ return !(*this == other); }

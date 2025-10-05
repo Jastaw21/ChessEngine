@@ -11,28 +11,23 @@
 
 
 void EngineBase::SortMoves(std::vector<Move>& moves, const Move& ttMove){
-    std::stable_sort(moves.begin(), moves.end(),
-                     [&ttMove, this](const Move& a, const Move& b) {
-                         if (a.toUCI() == ttMove.toUCI()) return true;
-                         if (b.toUCI() == ttMove.toUCI()) return false;
-
-                         bool aIsBetter = ScoreMove(a) > ScoreMove(b);
-
-                         if (aIsBetter) return true;
-                         return false;
-                     });
+    std::ranges::stable_sort(moves,
+                             [&ttMove, this](const Move& a, const Move& b) {
+                                 return ScoreMove(a, ttMove) > ScoreMove(b, ttMove);
+                             });
 }
 
-int EngineBase::ScoreMove(const Move& move){
+int EngineBase::ScoreMove(const Move& move, const Move& ttMove){
     // is it the best pv
-    auto hash = internalBoardManager_.getZobristHash()->getHash();
-    //std::cout << "Looking for hash from ScoreMove:" << std::endl;
-    auto precachedBestMove = transpositionTable_.retrieveVector(hash);
-    int score = 0;
-    if (precachedBestMove.has_value() && precachedBestMove->bestMove == move) { score += 999999; }
+    if (move == ttMove) { return 1000000; }
 
+    int score = 0;
+    if (move.resultBits & MoveResult::CHECK)
+        score += 5000;
+    if (move.resultBits & MoveResult::PROMOTION)
+        score += 1000;
     if (move.resultBits & MoveResult::CAPTURE)
-        score += 10 + pieceScoresArray[move.capturedPiece] - pieceScoresArray[move.piece];
+        score += 500;
 
     return score;
 }

@@ -107,7 +107,7 @@ private:
 
     float alphaBeta(int depth, float alpha, float beta, int ply, std::vector<Move>& pv, bool timed = false);
 
-    int ScoreMove(const Move& move);
+    int ScoreMove(const Move& move, const Move& ttMove);
     void SortMoves(std::vector<Move>& moves, const Move& ttMove);
     bool evaluateGameState(int depth, int ply, float& value1);
 
