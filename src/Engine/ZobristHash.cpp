@@ -8,6 +8,40 @@
 
 #include "BoardManager/BoardManager.h"
 
+char getCharFromPiece(const Piece piece){
+    switch (piece) {
+        case WP:
+            return 'P';
+        case WB:
+            return 'B';
+        case WR:
+            return 'R';
+        case WK:
+            return 'K';
+        case WQ:
+            return 'Q';
+        case WN:
+            return 'N';
+
+        case BP:
+            return 'p';
+        case BB:
+            return 'b';
+        case BR:
+            return 'r';
+        case BK:
+            return 'k';
+        case BQ:
+            return 'q';
+        case BN:
+            return 'n';
+        default:
+            break;
+    }
+
+    return ' ';
+}
+
 void ZobristHash::initializeHashFromFen(FenString fenString){
     std::istringstream fenStream(fenString);
 
@@ -56,7 +90,7 @@ void ZobristHash::setFen(const FenString& fenString){ initializeHashFromFen(fenS
 
 void ZobristHash::addMove(const Move& move){
     // we'll use these all the way down
-    const auto pieceReversed = PIECE_TO_CHAR_MAP[move.piece];
+    const auto pieceReversed = getCharFromPiece(move.piece);
     const auto squareFrom = rankAndFileToSquare(move.rankFrom, move.fileFrom);
     const auto squareTo = rankAndFileToSquare(move.rankTo, move.fileTo);
 
@@ -68,13 +102,12 @@ void ZobristHash::addMove(const Move& move){
     bool shouldMoveTo = true;
 
     if (move.resultBits & MoveResult::EN_PASSANT) {
-        const auto rankOffset = move.piece == WP ? -1 : 1;
-        const auto enPassantCapturedSquare = rankAndFileToSquare(move.rankTo + rankOffset, move.fileTo);
-
-        // white - take off the black piece the rank behind where we're moving to
-        if (move.piece == WP) { hashValue ^= blackPawn[enPassantCapturedSquare]; }
-        // black - take off the white piece, the rank behind where we're moving to
-        else { hashValue ^= whitePawn[enPassantCapturedSquare]; }
+        const int rankOffset = (move.piece == WP) ? -1 : 1;
+        const int enPassantCapturedSquare = rankAndFileToSquare(move.rankTo + rankOffset, move.fileTo);
+        hashValue ^= (move.piece == WP) ? blackPawn[enPassantCapturedSquare] : whitePawn[enPassantCapturedSquare];
+    } else if (move.resultBits & MoveResult::CAPTURE) {
+        const auto& capturedArray = getArray(PIECE_TO_CHAR_MAP[move.capturedPiece]);
+        hashValue ^= capturedArray[squareTo];
     }
 
     // treat pure capture separately

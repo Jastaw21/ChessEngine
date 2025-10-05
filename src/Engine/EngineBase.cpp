@@ -22,6 +22,8 @@ int EngineBase::ScoreMove(const Move& move, const Move& ttMove){
     if (move == ttMove) { return 1000000; }
 
     int score = 0;
+    if (move.resultBits & MoveResult::CHECK_MATE)
+        score += 100000;
     if (move.resultBits & MoveResult::CHECK)
         score += 5000;
     if (move.resultBits & MoveResult::PROMOTION)

@@ -237,8 +237,8 @@ bool BoardManager::tryMove(const std::string& moveUCI){
 
 /**
 * Forces a move to happen without legality check. Intended for use when moves have been checked during generation
-* @param Move - the move to be checked. This will be edited to reflect the outcome of the move
-* @return boolean success
+* @param Move - The move to be checked. This will be edited to reflect the outcome of the move
+* @return boolean success - always true
 **/
 bool BoardManager::forceMove(Move& move){
     makeMove(move);
@@ -506,9 +506,9 @@ bool BoardManager::isNowCheckMate(){ return !hasLegalMoveToEscapeCheck(); }
 bool BoardManager::hasLegalMoveToEscapeCheck(){
     if (currentTurn == WHITE) {
         // king first - most likely to escape check I guess?
-        for (const auto& pieceName: {WK, WN, WB, WQ, WR, WP}) { if (canPieceEscapeCheck(pieceName)) { return true; } }
+        for (const auto& pieceName: {WN, WK, WQ, WR, WB, WP}) { if (canPieceEscapeCheck(pieceName)) { return true; } }
     } else {
-        for (const auto& pieceName: {BK, BN, BB, BQ, BR, BP}) { if (canPieceEscapeCheck(pieceName)) { return true; } }
+        for (const auto& pieceName: {BN, BK, BQ, BR, BB, BP}) { if (canPieceEscapeCheck(pieceName)) { return true; } }
     }
     return false;
 }
@@ -541,20 +541,23 @@ bool BoardManager::hasValidMoveFromSquare(const Piece pieceName, const int start
 
 
 bool BoardManager::isValidEscapeMove(Move& move){
-    if (tryMove(move)) {
+    if (!validateMove(move)) { return false; } // move not even pseudolegal
+    // now we need to check the board state for check mates etc
+    makeMove(move);
+
+    // if the move results in, or leaves our king in check we can't do it.
+    if (lastTurnInCheck(move)) {
         undoMove(move);
-        return true;
+        move.resultBits |= ILLEGAL_MOVE;
+        return false;
     }
-    return false;
+
+    undoMove(move);
+    return true;
 }
 
 bool BoardManager::handleCapture(Move& move) const{
     const auto capturedPiece = bitboards.getPiece(move.rankTo, move.fileTo);
-
-    if (!capturedPiece.has_value()) {
-        std::cout << "Error: No piece captured" << std::endl;
-        return false;
-    }
 
     if (capturedPiece.value() == WK || capturedPiece.value() == BK) { return false; }
 
