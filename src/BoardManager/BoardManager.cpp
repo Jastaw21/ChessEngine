@@ -126,27 +126,7 @@ void BoardManager::makeMove(Move& move){
         enPassantSquareState = -1;
     }
 
-    // always set the "from" square of the moving piece to zero
-    bitboards.setZero(move.rankFrom, move.fileFrom);
-
-    // castling needs special stuff doing
-    if (move.resultBits & CASTLING) { applyCastlingMove(move); }
-
-    // if it was a normal capture, set the piece to zero
-    if (move.resultBits & CAPTURE && !(move.resultBits & EN_PASSANT))
-        bitboards.setZero(move.rankTo, move.fileTo);
-
-    // if it was an en_passant capture, set the correct square to zero
-    if (move.resultBits & EN_PASSANT) {
-        const auto rankOffset = move.piece == WP ? -1 : 1;
-        bitboards.setZero(move.rankTo + rankOffset, move.fileTo);
-    }
-
-    // if it's not a promotion, set the to square of the moving piece to one
-    if (!(move.resultBits & PROMOTION)) { bitboards.setOne(move.piece, move.rankTo, move.fileTo); }
-
-    // otherwise, need to toggle on the bit for the piece it chose
-    else { bitboards.setOne(move.promotedPiece, move.rankTo, move.fileTo); }
+    bitboards.applyMove(move);
 
     swapTurns();
 
@@ -167,82 +147,8 @@ void BoardManager::swapTurns(){
         currentTurn = WHITE;
 }
 
-void BoardManager::applyCastlingMove(Move& move){
-    const auto relevantRook = move.piece == WK ? WR : BR; // what is the rook we also need to move?
-
-    int movedRookFileTo = 0;
-    int movedRookFileFrom = 0;
-    // queen side
-    if (move.fileTo == 3) {
-        movedRookFileTo = move.fileTo + 1; // needs to move one inside the king
-        movedRookFileFrom = 1; //... from file 1
-    }
-    // king side
-    else if (move.fileTo == 7) {
-        movedRookFileTo = move.fileTo - 1; // needs to move one inside the king
-        movedRookFileFrom = 8; //... from file 8
-    }
-
-    // ReSharper disable once CppLocalVariableMightNotBeInitialized
-    bitboards.setOne(relevantRook, move.rankTo, movedRookFileTo);
-    // ReSharper disable once CppLocalVariableMightNotBeInitialized
-    bitboards.setZero(move.rankTo, movedRookFileFrom);
-}
-
-
-void BoardManager::undoCastling(const Move& move){
-    bitboards.setZero(move.rankTo, move.fileTo);
-
-    const auto relevantRook = move.piece == WK ? WR : BR;
-
-    int movedRookFileTo;
-    int movedRookFileFrom;
-    // queen side
-    if (move.fileTo == 3) {
-        // set the new rook location
-        movedRookFileTo = move.fileTo + 1;
-        movedRookFileFrom = 1;
-    }
-    // king side
-    else if (move.fileTo == 7) {
-        movedRookFileTo = move.fileTo - 1;
-        movedRookFileFrom = 8;
-    }
-
-    // ReSharper disable once CppLocalVariableMightNotBeInitialized
-    bitboards.setOne(relevantRook, move.rankFrom, movedRookFileFrom);
-    // ReSharper disable once CppLocalVariableMightNotBeInitialized
-    bitboards.setZero(move.rankTo, movedRookFileTo);
-}
-
 void BoardManager::undoMove(const Move& move){
-    // set the "from" bit back to one
-    const auto squareFrom = rankAndFileToSquare(move.rankFrom, move.fileFrom);
-    bitboards[move.piece] |= 1ULL << squareFrom;
-
-    // if it was a capture, restore that piece to one
-    if (move.resultBits & CAPTURE && !(move.resultBits & EN_PASSANT)) {
-        const auto squareTo = rankAndFileToSquare(move.rankTo, move.fileTo);
-        bitboards[move.capturedPiece] |= 1ULL << squareTo;
-    }
-
-    // if it was an en_passant capture, restore the correct square to one
-    if (move.resultBits & EN_PASSANT) {
-        const auto opponentPawn = move.piece == WP ? BP : WP;
-        const auto rankOffset = move.piece == WP ? -1 : 1;
-        bitboards.setOne(opponentPawn, move.rankTo + rankOffset, move.fileTo);
-    }
-
-    // if it was a castling move, restore the rooks to their original positions
-    if (move.resultBits & CASTLING) { undoCastling(move); }
-
-    // set the "to" bit back to zero for this piece
-    const auto squareTo = rankAndFileToSquare(move.rankTo, move.fileTo);
-    if (move.resultBits & PROMOTION) {
-        bitboards[move.promotedPiece] &= ~(1ULL << squareTo); // whatever we promoted to is gone
-    }
-
-    bitboards[move.piece] &= ~(1ULL << squareTo);
+    bitboards.undoMove(move);
 
     moveHistory.pop();
     boardStateHistory.pop();
@@ -506,7 +412,7 @@ bool BoardManager::lastTurnInCheck(const Move& move){
 }
 
 std::string BoardManager::getFullFen(){
-    const auto baseFen = bitboards.toFEN();
+    const auto baseFen = bitboards.getFenPositionOnly();
     const auto enPassantSquareString = (boardStateHistory.top().enPassantSquare == -1)
                                            ? "-"
                                            : Fen::squareToFen(boardStateHistory.top().enPassantSquare);

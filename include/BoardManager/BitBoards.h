@@ -23,13 +23,18 @@ public:
     BitBoards();
 
     void setFenPositionOnly(const FenString& fen);
-    std::string& toFEN();
+    std::string& getFenPositionOnly();
+
+
+    void applyMove(Move& moveToApply);
+    void undoMove(const Move& moveToUndo);
 
     [[nodiscard]] Bitboard getBitboard(const Piece& piece) const;
     Bitboard& operator[](const Piece piece){ return bitboards[piece]; }
 
     std::optional<Piece> getPiece(int rank, int file) const;
     std::optional<Piece> getPiece(int square) const;
+
     void setZero(int rank, int file);
     void setOne(const Piece& piece, int rank, int file);
 
@@ -47,6 +52,9 @@ private:
     // array of PIECE_N length bitboards
     std::array<Bitboard, PIECE_N> bitboards;
     std::string fen_{};
+
+    void applyCastlingMove(const Move& moveToApply);
+    void undoCastlingMove(const Move& moveToUndo);
 };
 
 

@@ -94,8 +94,7 @@ private:
 
     // do the move
     void makeMove(Move& move);
-    void applyCastlingMove(Move& move);
-    void undoCastling(const Move& move);
+
 
     bool hasLegalMoveToEscapeCheck();
     bool canPieceEscapeCheck(const Piece& pieceName);

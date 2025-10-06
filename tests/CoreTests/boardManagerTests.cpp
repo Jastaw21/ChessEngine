@@ -477,7 +477,7 @@ TEST(BoardManagerMoveExecution, MoveUpdatesFen){
 
     manager.tryMove(move);
 
-    EXPECT_EQ(manager.getBitboards()->toFEN(), "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR");
+    EXPECT_EQ(manager.getBitboards()->getFenPositionOnly(), "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR");
 }
 
 
@@ -727,12 +727,12 @@ TEST(BoardManagerAdvancedRules, KingSideCastlingUpdatesBoardState){
     auto whiteMove = createMove(WK, "e1g1");
     ASSERT_TRUE(manager.tryMove(whiteMove));
 
-    EXPECT_EQ(manager.getBitboards()->toFEN(), "rnbqkbnr/p2ppppp/1pp5/8/4P3/3B1N2/PPPP1PPP/RNBQ1RK1");
+    EXPECT_EQ(manager.getBitboards()->getFenPositionOnly(), "rnbqkbnr/p2ppppp/1pp5/8/4P3/3B1N2/PPPP1PPP/RNBQ1RK1");
 
     manager.getBitboards()->setFenPositionOnly("rnbqk2r/p2p1ppp/1ppbpn2/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
     auto blackMove = createMove(BK, "e8g8");
     ASSERT_TRUE(manager.tryMove(blackMove));
-    EXPECT_EQ(manager.getBitboards()->toFEN(), "rnbq1rk1/p2p1ppp/1ppbpn2/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
+    EXPECT_EQ(manager.getBitboards()->getFenPositionOnly(), "rnbq1rk1/p2p1ppp/1ppbpn2/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
 }
 
 TEST(BoardManagerAdvancedRules, QueenSideCastlingUpdatesBoardState){
@@ -745,7 +745,7 @@ TEST(BoardManagerAdvancedRules, QueenSideCastlingUpdatesBoardState){
     ASSERT_TRUE(manager.tryMove(blackMove));
 
     ASSERT_TRUE(blackMove.resultBits & MoveResult::CASTLING);
-    EXPECT_EQ(manager.getBitboards()->toFEN(), "2kr1bnr/p1pqpppp/bp1p4/2n5/8/1PPP4/P3PPPP/RNBQKBNR");
+    EXPECT_EQ(manager.getBitboards()->getFenPositionOnly(), "2kr1bnr/p1pqpppp/bp1p4/2n5/8/1PPP4/P3PPPP/RNBQKBNR");
 }
 
 
@@ -968,9 +968,9 @@ TEST(BoardManagerMoveExecution, check_e8c8_KP_doesntChangeBoardState){
 
     auto failingMove = createMove(WK, "e8c8");
 
-    auto initialState = manager.getBitboards()->toFEN();
+    auto initialState = manager.getBitboards()->getFenPositionOnly();
     manager.checkMove(failingMove);
-    auto finalState = manager.getBitboards()->toFEN();
+    auto finalState = manager.getBitboards()->getFenPositionOnly();
 
     EXPECT_EQ(initialState, finalState);
 }
@@ -1149,11 +1149,11 @@ TEST(BoardManagerAdvancedRules, EnPassantMustBeAttackingLastMovedPiece){
 TEST(BoardManager, LoadingFen){
     auto manager = BoardManager();
     manager.setFullFen(Fen::STARTING_FEN + " w KQkq - 0 1");
-    EXPECT_EQ(manager.getBitboards()->toFEN(), Fen::STARTING_FEN);
+    EXPECT_EQ(manager.getBitboards()->getFenPositionOnly(), Fen::STARTING_FEN);
     EXPECT_EQ(manager.getCurrentTurn(), WHITE);
 
     manager.setFullFen(Fen::STARTING_FEN + " b KQkq - 0 1");
-    EXPECT_EQ(manager.getBitboards()->toFEN(), Fen::STARTING_FEN);
+    EXPECT_EQ(manager.getBitboards()->getFenPositionOnly(), Fen::STARTING_FEN);
     EXPECT_EQ(manager.getCurrentTurn(), BLACK);
 }
 

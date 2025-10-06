@@ -62,13 +62,13 @@ TEST(BitBoards, BitboardsLocationsCorrect){
 TEST(BitBoards, ToFenWorksAfterInit){
     auto board = BitBoards();
     board.setFenPositionOnly(Fen::STARTING_FEN);
-    EXPECT_EQ(board.toFEN(), Fen::STARTING_FEN);
+    EXPECT_EQ(board.getFenPositionOnly(), Fen::STARTING_FEN);
 }
 
 TEST(BitBoards, ToFenWorksInWeirdPositions){
     auto board = BitBoards();
     board.setFenPositionOnly("rnbqkbnr/p2ppppp/1pp5/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
-    EXPECT_EQ(board.toFEN(), "rnbqkbnr/p2ppppp/1pp5/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
+    EXPECT_EQ(board.getFenPositionOnly(), "rnbqkbnr/p2ppppp/1pp5/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
 }
 
 
@@ -165,13 +165,13 @@ TEST(BitBoards, GetPieceOverloadsMatch){
     for (int i = 0; i < 56; i++) {
         int rank, file;
         squareToRankAndFile(i, rank, file);
-        EXPECT_EQ(board.getPiece(rank,file), board.getPiece(i));
+        EXPECT_EQ(board.getPiece(rank, file), board.getPiece(i));
     }
 
     for (int i = 56; i < 64; i++) {
         int rank, file;
         squareToRankAndFile(i, rank, file);
-        EXPECT_EQ(board.getPiece(rank,file).value(), board.getPiece(i).value());
+        EXPECT_EQ(board.getPiece(rank, file).value(), board.getPiece(i).value());
     }
 }
 
