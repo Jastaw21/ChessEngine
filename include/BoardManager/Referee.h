@@ -5,22 +5,44 @@
 #ifndef CHESS_REFEREE_H
 #define CHESS_REFEREE_H
 
+#include "MagicBitboards/MagicBitBoards.h"
 
 struct Move;
 class BitBoards;
 
+enum class BoardStatus {
+    NORMAL,
+    WHITE_CHECK,
+    BLACK_CHECK,
+    WHITE_CHECKMATE,
+    BLACK_CHECKMATE,
+};
+
 class Referee {
 public:
 
-    Referee();
-
-    bool moveIsLegal(Move& move, BitBoards& boardState);
+    static bool moveIsLegal(Move& move, BitBoards& boardState, MagicBitBoards& mbb, const int enPassantSquare = -1);
+    static BoardStatus checkBoardStatus(BitBoards& bitboards, MagicBitBoards& magicBitBoards,
+                                        Colours colourToMove);
 
 private:
 
-    bool validateMove(Move& move, BitBoards& boardState);
-    bool validateMovePostMaking(Move& move, BitBoards& boardState);
+    static bool handleCapture(Move& move, const BitBoards& bitboards);
+    static void handleEnPassant(Move& move);
+    static bool validateMove(Move& move, const BitBoards& bitboards, MagicBitBoards& magicBitBoards,
+                             const int enPassantSquare);
+    static bool validatePromotion(const Move& move);
+    static bool lastTurnInCheck(BitBoards& bitboards, MagicBitBoards& magicBitBoards,
+                                Colours currentTurn);
+    static bool currentTurnInCheck(BitBoards& bitboards, MagicBitBoards& magicBitBoards,
+                                   Colours currentTurn);
+
+    static bool hasLegalMoveToEscapeCheck(BitBoards& bitboards, MagicBitBoards& magicBitBoards,
+                                          Colours currentTurn);
+    static void makeMove(const Move& move);
+    static bool isValidEscapeMove(Move& move, BitBoards& bitboards, MagicBitBoards& magicBitBoards);
+    static bool hasValidMoveFromSquare(Piece piece, int startSquare, Bitboard destinationSquares, BitBoards& bitboards,
+                                       MagicBitBoards& magicBitBoards);
+    static bool canPieceEscapeCheck(const Piece& pieceName, BitBoards& bitboards, MagicBitBoards& magicBitBoards);
 };
-
-
 #endif //CHESS_REFEREE_H

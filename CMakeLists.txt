@@ -50,6 +50,8 @@ add_library(
         include/BoardManager/Referee.h
         include/BoardManager/Move.h
         src/BoardManager/Move.cpp
+        include/Utility/ChessUtility.h
+        src/Utility/ChessUtility.cpp
 )
 
 target_include_directories(chess_lib PUBLIC include)

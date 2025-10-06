@@ -19,8 +19,6 @@ struct Magic {
 };
 
 class MagicBitBoards {
-private:
-
     Magic rookMagics[64];
     Magic bishopMagics[64];
 
@@ -181,13 +179,11 @@ public:
     Rules rules;
     Bitboard findAttacksForColour(const Colours& colourToGetAttacksFor, const BitBoards& boards);
     Bitboard findAttacksForPiece(Piece piece, const BitBoards& boards);
+    Bitboard getCastling(int square, const Piece& piece, const BitBoards& boards);
 
 private:
 
     Bitboard calculateAttacksForPiece(int square, const Piece& piece, const BitBoards& boards);
-
-
-    Bitboard getCastling(int square, const Piece& piece, const BitBoards& boards);
 };
 
 

@@ -8,15 +8,16 @@
 #include <stack>
 
 #include "BitBoards.h"
-#include "Rules.h"
-#include "Engine/Piece.h"
+
 #include "BoardManager/Move.h"
 
-#include "../Engine/ZobristHash.h"
+#include "Engine/Piece.h"
+#include "Engine/RepetitionTable.h"
+#include "Engine/ZobristHash.h"
 
 #include "MagicBitboards/MagicBitBoards.h"
+
 #include "Utility/Fen.h"
-#include "Engine/RepetitionTable.h"
 
 
 class BitBoards;
@@ -41,7 +42,7 @@ enum GameResult {
 class BoardManager {
 public:
 
-    explicit BoardManager();
+    BoardManager() = default;
     explicit BoardManager(const Colours colour) : currentTurn(colour){}
 
     BitBoards* getBitboards(){ return &bitboards; }
@@ -88,10 +89,7 @@ public:
 
 private:
 
-    bool handleCapture(Move& move) const;
-    void handleEnPassant(Move& move);
     bool validateMove(Move& move);
-
     bool lastTurnInCheck(const Move& move);
 
     // do the move
@@ -114,7 +112,6 @@ private:
     Colours currentTurn = WHITE;
     ZobristHash zobristHash_;
 
-    Rules rules;
     MagicBitBoards magicBitBoards;
 
     bool checkMateFlag = false;

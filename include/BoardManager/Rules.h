@@ -972,7 +972,7 @@ namespace RulesCheck {
                     if (pieceColours[pieceName] == pieceColours[piece])
                         continue;
 
-                    auto startingBits = std::bitset < 64 > (boards->getBitboard(pieceName));
+                    auto startingBits = std::bitset<64>(boards->getBitboard(pieceName));
                     for (int index = 0; index < startingBits.size(); ++index) {
                         if (startingBits.test(index)) {
                             const Bitboard attacks = getAttackMoves(index, pieceName, boards);

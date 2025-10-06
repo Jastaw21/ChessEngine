@@ -2,16 +2,14 @@
 
 #include "BoardManager/BoardManager.h"
 
-#include <bitset>
 #include <iostream>
 #include <sstream>
 
 #include "BoardManager/BitBoards.h"
 #include "BoardManager/Rules.h"
+#include "BoardManager/Referee.h"
 #include "Utility/Fen.h"
 
-
-BoardManager::BoardManager() = default;
 
 /**
 * Checks if a move is legal - in all elements other than if it leaves the moving king in check
@@ -19,85 +17,18 @@ BoardManager::BoardManager() = default;
 * @return boolean success
 **/
 bool BoardManager::validateMove(Move& move){
-    if (boardStateHistory.empty()) { boardStateHistory.push(BoardState{.enPassantSquare = -1, .castlingRights = ""}); }
+    if (boardStateHistory.empty()) {
+        boardStateHistory.push(
+            BoardState{.enPassantSquare = -1, .castlingRights = ""}
+        );
+    }
     move.resultBits = 0; // reset the move result tracker
-    const int fromSquare = rankAndFileToSquare(move.rankFrom, move.fileFrom);
-    const int toSquare = rankAndFileToSquare(move.rankTo, move.fileTo);
-
-    const Bitboard toSquareBitboard = 1ULL << toSquare;
-    const auto friendlyColour = move.piece <= 5 ? WHITE : BLACK;
-    const auto friendlyPieces = bitboards.getOccupancy(friendlyColour);
-    const auto enemyPieces = bitboards.getOccupancy() & ~friendlyPieces;
-
-    // just get all of the possible moves
-    const auto allMoves = magicBitBoards.getMoves(fromSquare, move.piece, bitboards);
-
-    // if the to square doesn't appear in all, the move is therefore not any form of legal
-    if (!(allMoves & toSquareBitboard)) {
-        move.resultBits |= ILLEGAL_MOVE;
-        return false;
-    }
-
-    // move would be on top of a friendly piece
-    if (toSquareBitboard & friendlyPieces) {
-        move.resultBits |= ILLEGAL_MOVE;
-        return false;
-    }
-
-    // we are attacking an enemy, check it's legal (i.e. non-king)
-    if (toSquareBitboard & enemyPieces) {
-        const bool captureHandled = handleCapture(move);
-        if (!captureHandled) {
-            move.resultBits = 0;
-            move.resultBits |= ILLEGAL_MOVE;
-            return false;
-        }
-
-        // if it's not a promotion capture - escape now
-        if (move.promotedPiece == PIECE_N) { return true; }
-    }
-
-    // ep
-    if (move.piece == WP || move.piece == BP) {
-        if (boardStateHistory.top().enPassantSquare == toSquare) {
-            handleEnPassant(move);
-            return true;
-        }
-
-        if (move.fileTo != move.fileFrom && (move.resultBits & CAPTURE) == 0) {
-            // if not EP or capture (handled above), going diagonal must be an illegal move
-            move.resultBits = 0; // reset the move result tracker
-            move.resultBits |= ILLEGAL_MOVE;
-            return false;
-        }
-    }
-
-    // castling
-    const auto castlingMoves = RulesCheck::getCastlingMoves(fromSquare, move.piece, &bitboards);
-    if (toSquareBitboard & castlingMoves) {
-        move.resultBits |= CASTLING;
-        return true;
-    }
-
-    // promotion
-    if (move.promotedPiece != PIECE_N) {
-        if (pieceColours[move.piece] != pieceColours[move.promotedPiece]) {
-            move.resultBits |= ILLEGAL_MOVE;
-            return false;
-        }
-
-        if (move.promotedPiece != WQ && move.promotedPiece != BQ && move.promotedPiece != WR &&
-            move.promotedPiece != BR && move.promotedPiece != WN && move.promotedPiece != BN && move.promotedPiece != WB
-            && move.promotedPiece != BB) {
-            move.resultBits |= ILLEGAL_MOVE;
-            return false;
-        }
-        move.resultBits |= PROMOTION;
-    }
-
-    // push
-    move.resultBits |= PUSH;
-    return true;
+    return Referee::moveIsLegal(
+        move,
+        bitboards,
+        magicBitBoards,
+        boardStateHistory.top().enPassantSquare
+    );
 }
 
 
@@ -179,10 +110,10 @@ bool BoardManager::forceMove(Move& move){
 * @param move - the move to be applied. This should have been checked before.
 **/
 void BoardManager::makeMove(Move& move){
-    int enPassantSquareState;
     BoardState newBoardState;
 
     // handle the EP square
+    int enPassantSquareState;
     if ((move.piece == WP || move.piece == BP)
         && move.fileTo == move.fileFrom
         && abs(move.rankTo - move.rankFrom) == 2
@@ -435,7 +366,8 @@ bool BoardManager::turnToMoveInCheck(Move& move){
     int pieceIndex = 0;
     for (const auto& pieceName: fakeAttackers) {
         const auto realAttacker = realAttackers[pieceIndex];
-        const auto psuedoAttacks = rules.getPseudoAttacks(pieceName, std::countr_zero(kingToMoveLocation));
+        const auto psuedoAttacks = magicBitBoards.rules.getPseudoAttacks(
+            pieceName, std::countr_zero(kingToMoveLocation));
         if (psuedoAttacks & bitboards.getOccupancy(realAttacker)) {
             checkFurther = true;
             piecesThatGiveCheck[pieceIndex] = realAttacker; // cache which pieces so we only have to verify those
@@ -528,25 +460,6 @@ bool BoardManager::isValidEscapeMove(Move& move){
     return true;
 }
 
-bool BoardManager::handleCapture(Move& move) const{
-    const auto capturedPiece = bitboards.getPiece(move.rankTo, move.fileTo);
-
-    if (capturedPiece.value() == WK || capturedPiece.value() == BK) { return false; }
-
-    move.capturedPiece = capturedPiece.value();
-    move.resultBits |= CAPTURE;
-    return true;
-}
-
-void BoardManager::handleEnPassant(Move& move){
-    move.resultBits |= EN_PASSANT;
-    move.resultBits |= CAPTURE;
-    const auto relevantFile = move.fileTo;
-    const auto rankOffset = move.piece == WP ? -1 : 1;
-    move.capturedPiece = bitboards.getPiece(move.rankTo + rankOffset, relevantFile).value();
-}
-
-
 bool BoardManager::lastTurnInCheck(const Move& move){
     const Piece lastTurnPiece = currentTurn == BLACK ? WK : BK;
     const Bitboard& kingLocation = bitboards[lastTurnPiece];
@@ -561,7 +474,7 @@ bool BoardManager::lastTurnInCheck(const Move& move){
                 Bitboard prelimAttacks = 0ULL;
 
                 // see if they can even attack in theory
-                rules.getPseudoAttacks(pieceName, startSquare, prelimAttacks);
+                magicBitBoards.rules.getPseudoAttacks(pieceName, startSquare, prelimAttacks);
                 if (!(kingLocation & prelimAttacks))
                     continue;
                 Bitboard possibleMoves = 0ULL;
@@ -579,7 +492,7 @@ bool BoardManager::lastTurnInCheck(const Move& move){
                 Bitboard prelimAttacks = 0ULL;
 
                 // see if they can even attack in theory
-                rules.getPseudoAttacks(pieceName, startSquare, prelimAttacks);
+                magicBitBoards.rules.getPseudoAttacks(pieceName, startSquare, prelimAttacks);
                 if (!(kingLocation & prelimAttacks))
                     continue;
                 Bitboard possibleMoves = 0ULL;
