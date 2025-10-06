@@ -17,11 +17,6 @@
 * @return boolean success
 **/
 bool BoardManager::validateMove(Move& move){
-    if (boardStateHistory.empty()) {
-        boardStateHistory.push(
-            BoardState{.enPassantSquare = -1, .castlingRights = ""}
-        );
-    }
     move.resultBits = 0; // reset the move result tracker
     return Referee::moveIsLegal(
         move,
@@ -38,10 +33,34 @@ bool BoardManager::validateMove(Move& move){
 * @return boolean success
 **/
 bool BoardManager::checkMove(Move& move){
-    if (!validateMove(move)) { return false; } // move not even pseudolegal
+    if (boardStateHistory.empty()) {
+        boardStateHistory.push(
+            BoardState{.enPassantSquare = -1, .castlingRights = ""}
+        );
+    }
+    const bool isPseudoLegal =
+            Referee::moveIsLegal(
+                move,
+                bitboards,
+                magicBitBoards,
+                boardStateHistory.top().enPassantSquare
+            );
+    if (!isPseudoLegal) { return false; } // move not even pseudolegal
 
     // now we need to check the board state for check mates etc
-    makeMove(move);
+    bitboards.applyMove(move);
+    swapTurns();
+    auto status = Referee::checkBoardStatus(
+        bitboards,
+        magicBitBoards,
+        currentTurn
+    );
+
+    if (status == BoardStatus::NORMAL) {
+        bitboards.undoMove(move);
+        swapTurns();
+        return true;
+    }
 
     // if the move results in, or leaves our king in check we can't do it.
     if (lastTurnInCheck(move)) {

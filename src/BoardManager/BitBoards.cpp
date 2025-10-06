@@ -233,22 +233,22 @@ void BitBoards::undoCastlingMove(const Move& moveToUndo){
 
     const auto relevantRook = moveToUndo.piece == WK ? WR : BR;
 
-    int moveToUndodRookFileTo;
-    int moveToUndodRookFileFrom;
+    int movedRookFileTo;
+    int movedRookFileFrom;
     // queen side
     if (moveToUndo.fileTo == 3) {
         // set the new rook location
-        moveToUndodRookFileTo = moveToUndo.fileTo + 1;
-        moveToUndodRookFileFrom = 1;
+        movedRookFileTo = moveToUndo.fileTo + 1;
+        movedRookFileFrom = 1;
     }
     // king side
     else if (moveToUndo.fileTo == 7) {
-        moveToUndodRookFileTo = moveToUndo.fileTo - 1;
-        moveToUndodRookFileFrom = 8;
+        movedRookFileTo = moveToUndo.fileTo - 1;
+        movedRookFileFrom = 8;
     }
 
     // ReSharper disable once CppLocalVariableMightNotBeInitialized
-    setOne(relevantRook, moveToUndo.rankFrom, moveToUndodRookFileFrom);
+    setOne(relevantRook, moveToUndo.rankFrom, movedRookFileFrom);
     // ReSharper disable once CppLocalVariableMightNotBeInitialized
-    setZero(moveToUndo.rankTo, moveToUndodRookFileTo);
+    setZero(moveToUndo.rankTo, movedRookFileTo);
 }

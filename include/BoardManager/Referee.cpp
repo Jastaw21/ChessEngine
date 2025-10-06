@@ -31,6 +31,19 @@ BoardStatus Referee::checkBoardStatus(BitBoards& bitboards, MagicBitBoards& magi
 
     // no checks - can't be checkmate
     if (result == BoardStatus::NORMAL) { return result; }
+
+    if (!hasLegalMoveToEscapeCheck(bitboards, magicBitBoards, colourToMove)) {
+        if (colourToMove == WHITE)
+            return BoardStatus::WHITE_CHECKMATE;
+        else
+            return BoardStatus::BLACK_CHECKMATE;
+    }
+
+    return result;
+}
+
+bool Referee::boardIsInCheck(BitBoards& bitboards, MagicBitBoards& magicBitBoards, Colours colourToMove){
+    return currentTurnInCheck(bitboards, magicBitBoards, colourToMove);
 }
 
 
@@ -234,43 +247,60 @@ bool Referee::hasLegalMoveToEscapeCheck(BitBoards& bitboards, MagicBitBoards& ma
     if (currentTurn == WHITE) {
         // king first - most likely to escape check I guess?
         for (const auto& pieceName: {WN, WK, WQ, WR, WB, WP}) {
-            if (canPieceEscapeCheck(pieceName, bitboards, magicBitBoards)) { return true; }
+            if (canPieceEscapeCheck(pieceName, bitboards, magicBitBoards, currentTurn)) { return true; }
         }
     } else {
         for (const auto& pieceName: {BN, BK, BQ, BR, BB, BP}) {
-            if (canPieceEscapeCheck(pieceName, bitboards, magicBitBoards)) { return true; }
+            if (canPieceEscapeCheck(pieceName, bitboards, magicBitBoards, currentTurn)) { return true; }
         }
     }
     return false;
 }
 
-void Referee::makeMove(const Move& move){}
 
-bool Referee::isValidEscapeMove(Move& move, BitBoards& bitboards, MagicBitBoards& magicBitBoards){ return true; }
+bool Referee::isValidEscapeMove(Move& move, BitBoards& bitboards, MagicBitBoards& magicBitBoards,
+                                const Colours currentTurn){
+    if (!validateMove(move, bitboards, magicBitBoards, currentTurn)) { return false; } // move not even pseudolegal
+
+    // now we need to check the board state for check mates etc
+    bitboards.applyMove(move);
+
+    // if the move results in, or leaves our king in check we can't do it.
+    if (lastTurnInCheck(bitboards, magicBitBoards, currentTurn == WHITE ? BLACK : WHITE)) {
+        bitboards.undoMove(move);
+        return false;
+    }
+
+    bitboards.undoMove(move);
+    return true;
+}
 
 bool Referee::hasValidMoveFromSquare(Piece pieceName, int startSquare, Bitboard destinationSquares,
                                      BitBoards& bitboards,
-                                     MagicBitBoards& magicBitBoards){
+                                     MagicBitBoards& magicBitBoards, const Colours currentTurn){
     while (destinationSquares) {
         // count trailing zeros to find the index of the first set bit
         const int destinationSquare = std::countr_zero(destinationSquares);
         destinationSquares &= ~(1ULL << destinationSquare);
         auto move = Move(pieceName, startSquare, destinationSquare);
 
-        if (isValidEscapeMove(move, bitboards, magicBitBoards)) { return true; }
+        if (isValidEscapeMove(move, bitboards, magicBitBoards, currentTurn)) { return true; }
     }
 
     return false;
 }
 
-bool Referee::canPieceEscapeCheck(const Piece& pieceName, BitBoards& bitboards, MagicBitBoards& magicBitBoards){
+bool Referee::canPieceEscapeCheck(const Piece& pieceName, BitBoards& bitboards, MagicBitBoards& magicBitBoards,
+                                  const Colours currentTurn){
     auto startingBoard = bitboards[pieceName];
     while (startingBoard) {
         // count trailing zeros to find the index of the first set bit
         const int startSquare = std::countr_zero(startingBoard);
         startingBoard &= startingBoard - 1;
         const auto possibleMoves = magicBitBoards.getMoves(startSquare, pieceName, bitboards);
-        if (hasValidMoveFromSquare(pieceName, startSquare, possibleMoves, bitboards, magicBitBoards)) { return true; }
+        if (hasValidMoveFromSquare(pieceName, startSquare, possibleMoves, bitboards, magicBitBoards, currentTurn)) {
+            return true;
+        }
     }
     return false;
 }

@@ -27,6 +27,8 @@ public:
 
 private:
 
+    static bool boardIsInCheck(BitBoards& bitboards, MagicBitBoards& magicBitBoards,
+                               Colours colourToMove);
     static bool handleCapture(Move& move, const BitBoards& bitboards);
     static void handleEnPassant(Move& move);
     static bool validateMove(Move& move, const BitBoards& bitboards, MagicBitBoards& magicBitBoards,
@@ -40,9 +42,11 @@ private:
     static bool hasLegalMoveToEscapeCheck(BitBoards& bitboards, MagicBitBoards& magicBitBoards,
                                           Colours currentTurn);
     static void makeMove(const Move& move);
-    static bool isValidEscapeMove(Move& move, BitBoards& bitboards, MagicBitBoards& magicBitBoards);
+    static bool isValidEscapeMove(Move& move, BitBoards& bitboards, MagicBitBoards& magicBitBoards,
+                                  Colours currentTurn);
     static bool hasValidMoveFromSquare(Piece piece, int startSquare, Bitboard destinationSquares, BitBoards& bitboards,
-                                       MagicBitBoards& magicBitBoards);
-    static bool canPieceEscapeCheck(const Piece& pieceName, BitBoards& bitboards, MagicBitBoards& magicBitBoards);
+                                       MagicBitBoards& magicBitBoards, Colours currentTurn);
+    static bool canPieceEscapeCheck(const Piece& pieceName, BitBoards& bitboards, MagicBitBoards& magicBitBoards,
+                                    Colours currentTurn);
 };
 #endif //CHESS_REFEREE_H
