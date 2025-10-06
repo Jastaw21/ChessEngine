@@ -216,6 +216,18 @@ Bitboard MagicBitBoards::calculateAttacksForPiece(const int square, const Piece&
     }
 }
 
+Bitboard MagicBitBoards::findAttacksForPiece(const Piece piece, const BitBoards& boards){
+    Bitboard attacks = 0ULL;
+    Bitboard occupancy = boards.getOccupancy(piece);
+
+    while (occupancy) {
+        const int square = popLowestSetBit(occupancy);
+        attacks |= calculateAttacksForPiece(square, piece, boards);
+    }
+
+    return attacks;
+}
+
 Bitboard MagicBitBoards::findAttacksForColour(const Colours& colourToGetAttacksFor, const BitBoards& boards){
     Bitboard attacks = 0ULL;
 

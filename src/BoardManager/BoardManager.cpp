@@ -86,7 +86,7 @@ BoardManager::BoardManager() = default;
 
 /**
 * Checks if a move is legal - in all elements other than if it leaves the moving king in check
-* @param Move - the move to be checked. This will be edited to reflect the outcome of the move
+* @param move - the move to be checked. This will be edited to reflect the outcome of the move
 * @return boolean success
 **/
 bool BoardManager::validateMove(Move& move){
@@ -117,7 +117,7 @@ bool BoardManager::validateMove(Move& move){
 
     // we are attacking an enemy, check it's legal (i.e. non-king)
     if (toSquareBitboard & enemyPieces) {
-        bool captureHandled = handleCapture(move);
+        const bool captureHandled = handleCapture(move);
         if (!captureHandled) {
             move.resultBits = 0;
             move.resultBits |= ILLEGAL_MOVE;
@@ -174,7 +174,7 @@ bool BoardManager::validateMove(Move& move){
 
 /**
 * Checks if a move is completely legal - including checkmate/check tests
-* @param Move - the move to be checked. This will be edited to reflect the outcome of the move
+* @param move - the move to be checked. This will be edited to reflect the outcome of the move
 * @return boolean success
 **/
 bool BoardManager::checkMove(Move& move){
@@ -208,7 +208,7 @@ bool BoardManager::checkMove(Move& move){
 
 /**
 * Checks and applies a move if legal. Updates internal board state
-* @param Move - the move to be checked. This will be edited to reflect the outcome of the move
+* @param move - the move to be checked. This will be edited to reflect the outcome of the move
 * @return boolean success
 **/
 
@@ -237,7 +237,7 @@ bool BoardManager::tryMove(const std::string& moveUCI){
 
 /**
 * Forces a move to happen without legality check. Intended for use when moves have been checked during generation
-* @param Move - The move to be checked. This will be edited to reflect the outcome of the move
+* @param move - The move to be checked. This will be edited to reflect the outcome of the move
 * @return boolean success - always true
 **/
 bool BoardManager::forceMove(Move& move){
@@ -247,7 +247,7 @@ bool BoardManager::forceMove(Move& move){
 
 /**
 * Applies a move, updating the relevant elements of the board state
-* @param Move - the move to be applied. This should have been checked before.
+* @param move - the move to be applied. This should have been checked before.
 **/
 void BoardManager::makeMove(Move& move){
     int enPassantSquareState;
@@ -259,7 +259,7 @@ void BoardManager::makeMove(Move& move){
         && abs(move.rankTo - move.rankFrom) == 2
     ) {
         // a pawn has moved 2 ranks - and exposed an en passant square - update our state tracker
-        auto targetRank = move.piece == WP ? move.rankTo - 1 : move.rankTo + 1;
+        const auto targetRank = move.piece == WP ? move.rankTo - 1 : move.rankTo + 1;
         enPassantSquareState = rankAndFileToSquare(targetRank, move.fileFrom);
     } else {
         // any other move means the en passant square is now invalid
@@ -474,15 +474,58 @@ void BoardManager::setFullFen(const FenString& fen){
 
 bool BoardManager::turnToMoveInCheck(Move& move){
     const auto kingToMove = getCurrentTurn() == WHITE ? WK : BK;
+    const auto opposingPawn = (kingToMove == WK) ? BP : WP;
+
+    // will send out attackers of this turn colour, to all squares they could possibly attack
+    const auto fakeAttackers = (kingToMove == WK)
+                                   ? std::array{WN, WQ, WR, WB, WK}
+                                   : std::array{BN, BQ, BR, BB, BK};
+
+    // need this, to then refer to to see if the attacks overlap with real pieces
+    const auto realAttackers = (kingToMove == BK)
+                                   ? std::array{WN, WQ, WR, WB, WK}
+                                   : std::array{BN, BQ, BR, BB, BK};
+
     const auto kingToMoveLocation = bitboards[kingToMove];
 
-    const auto colourToSearch = getCurrentTurn() == WHITE ? BLACK : WHITE;
+    bool checkFurther = false;
+    std::array<Piece, 6> piecesThatGiveCheck; // only need six pieces
+    std::ranges::fill(piecesThatGiveCheck, PIECE_N);
 
-    const auto possibleAttacks = magicBitBoards.findAttacksForColour(colourToSearch, bitboards);
+    Bitboard possibleAttacks = 0ULL;
+
+    // the pawns are the only directional pieces, so have to check the colours the "right" way around
+    possibleAttacks |= magicBitBoards.findAttacksForPiece(opposingPawn, bitboards);
     if (possibleAttacks & kingToMoveLocation) {
         move.resultBits |= CHECK;
         move.resultBits &= ~PUSH; // undo the push bit
         return true;
+    }
+
+    // see if we could in theory get to any of the occupied squares
+    int pieceIndex = 0;
+    for (const auto& pieceName: fakeAttackers) {
+        const auto realAttacker = realAttackers[pieceIndex];
+        const auto psuedoAttacks = rules.getPseudoAttacks(pieceName, std::countr_zero(kingToMoveLocation));
+        if (psuedoAttacks & bitboards.getOccupancy(realAttacker)) {
+            checkFurther = true;
+            piecesThatGiveCheck[pieceIndex] = realAttacker; // cache which pieces so we only have to verify those
+        }
+        pieceIndex++;
+    }
+
+    if (checkFurther) {
+        for (const auto& pieceName: piecesThatGiveCheck) {
+            if (pieceName == PIECE_N) continue; // this piece can't possibly attack us
+
+            // get it's real attacks
+            possibleAttacks |= magicBitBoards.findAttacksForPiece(pieceName, bitboards);
+            if (possibleAttacks & kingToMoveLocation) {
+                move.resultBits |= CHECK;
+                move.resultBits &= ~PUSH; // undo the push bit
+                return true;
+            }
+        }
     }
 
     return false;
@@ -621,10 +664,10 @@ bool BoardManager::lastTurnInCheck(const Move& move){
 }
 
 std::string BoardManager::getFullFen(){
-    auto baseFen = bitboards.toFEN();
-    auto enPassantSquareString = (boardStateHistory.top().enPassantSquare == -1)
-                                     ? "-"
-                                     : Fen::squareToFen(boardStateHistory.top().enPassantSquare);
+    const auto baseFen = bitboards.toFEN();
+    const auto enPassantSquareString = (boardStateHistory.top().enPassantSquare == -1)
+                                           ? "-"
+                                           : Fen::squareToFen(boardStateHistory.top().enPassantSquare);
     auto resultFen = baseFen + (currentTurn == WHITE ? " w" : " b") + " KQkq " + enPassantSquareString + " 0 1";
     return resultFen;
 }
