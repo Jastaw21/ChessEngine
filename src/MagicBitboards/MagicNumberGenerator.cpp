@@ -2,7 +2,7 @@
 // Created by jacks on 10/07/2025.
 //
 
-#include "../../include/MagicBitBoardGen/MagicNumberGenerator.h"
+#include "../../include/MagicBitboards/MagicNumberGenerator.h"
 
 #include <chrono>
 #include <iostream>

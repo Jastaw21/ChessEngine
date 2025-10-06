@@ -27,8 +27,8 @@ add_library(
         src/BoardManager/BoardManager.cpp
         src/Engine/Piece.cpp
         src/Utility/Fen.cpp
-        src/ChessPlayer.cpp
-        src/HumanPlayer.cpp
+        src/Engine/ChessPlayer.cpp
+        src/Engine/HumanPlayer.cpp
         include/BoardManager/Rules.h
         src/BoardManager/Rules.cpp
         src/MagicBitboards/MagicBitBoards.cpp
@@ -42,14 +42,14 @@ add_library(
         src/UCIParsing/Tokeniser.cpp
         src/Engine/ZobristHash.cpp
         src/GUI/PromotionPiecePicker.cpp
-        include/GUI/PromotionPiecePicker.h
         src/Engine/ProcessChessEngine.cpp
-        include/Engine/ProcessChessEngine.h
         include/Engine/EvaluationValues.h
         src/Engine/TranspositionTable.cpp
-        include/Engine/TranspositionTable.h
         src/Engine/RepetitionTable.cpp
-        include/Engine/RepetitionTable.h
+        include/BoardManager/Referee.cpp
+        include/BoardManager/Referee.h
+        include/BoardManager/Move.h
+        src/BoardManager/Move.cpp
 )
 
 target_include_directories(chess_lib PUBLIC include)
@@ -73,8 +73,8 @@ add_subdirectory(tests)
 
 # === MagicBitBoardGenerator Lib ===
 add_library(MagicBitBoardGen STATIC
-        src/MagicBitBoardGen/MagicNumberGenerator.cpp
-        include/MagicBitBoardGen/MagicNumberGenerator.h
+        src/MagicBitboards/MagicNumberGenerator.cpp
+        include/MagicBitboards/MagicNumberGenerator.h
         include/MagicBitboards/MagicBitBoardShared.h
         src/MagicBitboards/MagicBitBoardShared.cpp
 )
@@ -82,7 +82,7 @@ target_include_directories(MagicBitBoardGen PUBLIC include)
 target_link_libraries(MagicBitBoardGen PRIVATE chess_lib)
 
 # === MagicBitBoardGenerator exe ===
-add_executable(GenerateMagicNumbers src/MagicBitBoardGen/mbbMain.cpp)
+add_executable(GenerateMagicNumbers src/MagicBitboards/mbbMain.cpp)
 target_link_libraries(GenerateMagicNumbers PRIVATE MagicBitBoardGen)
 target_include_directories(GenerateMagicNumbers PRIVATE include)
 
