@@ -38,3 +38,8 @@ std::optional<TTEntry> TranspositionTable::retrieveVector(uint64_t& key){
 size_t TranspositionTable::populatedEntries() const{
     return std::ranges::count_if(vectorTable, [](const auto& entry) { return entry.key != 0; });
 }
+
+void TranspositionTable::clear(){
+    vectorTable.clear();
+    vectorTable.resize(maxSize);
+}

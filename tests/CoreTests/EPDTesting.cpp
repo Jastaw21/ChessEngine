@@ -65,16 +65,27 @@ TEST(ParsingPNG, PawnCapturesWork){
 TEST(EPDTests, FirstBatch){
     auto results = ParseEPDFile("C:/Users/jacks/source/repos/Chess/tests/CoreTests/TestPositions.txt");
     auto engine = MainEngine();
+    int totalCount = 0;
+    int failureCount = 0;
     for (const auto& result: results) {
+        totalCount++;
         engine.setFullFen(result.fen);
-        auto move = engine.Search(3);
-        std::cout << move.bestMove.toUCI() << "Score from search:" << move.score << std::endl;
+        auto move = engine.Search(4);
 
-        for (int i = 0; i < engine.getLastSearchEvaluations().moves.size(); i++) {
-            std::cout
-                    << engine.getLastSearchEvaluations().moves.at(i).toUCI()
-                    << " Score: " << engine.getLastSearchEvaluations().scores.at(i) << std::endl;
-        }
-        EXPECT_EQ(move.bestMove.toUCI(), result.move.toUCI());
+        const auto matching = move.bestMove.toUCI() == result.move.toUCI();
+        const auto correct = result.BestMove ? matching : !matching;
+        if (!correct) {
+            failureCount++;
+
+            auto moveEvals = engine.getLastSearchEvaluations().getScore(result.move);
+
+            std::cout << "Id: " << totalCount << " failed, starting fen: " << result.fen << " our move: " << move.
+                    bestMove.toUCI() << " score: " << move.score << " engine wanted: " << result.move.toUCI() <<
+                    " which we scored: " << moveEvals <<
+                    std::endl;
+        } else { std::cout << "Passed: " << totalCount << std::endl; }
     }
+
+    EXPECT_EQ(failureCount, 0);
+    std::cout << "Failed: " << failureCount << " out of " << totalCount << std::endl;
 }

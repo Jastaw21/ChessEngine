@@ -24,23 +24,23 @@ void MainEngine::processPawnPromotion(std::vector<Move>& validMoves, Move& baseM
 void MainEngine::generateValidMovesFromPosition(const Piece& piece,
                                                 const int startSquare, std::vector<Move>& moveList){
     auto possibleMoves = internalBoardManager_.getMagicBitBoards()->getMoves(
-        startSquare, piece, *internalBoardManager_.getBitboards());
+        startSquare,
+        piece,
+        *internalBoardManager_.getBitboards()
+    );
 
     while (possibleMoves) {
         const auto endSquare = std::countr_zero(possibleMoves); // bottom set bit
         possibleMoves &= possibleMoves - 1; // pop the bit
         auto candidateMove = Move(piece, startSquare, endSquare);
-        bool promoted = false;
+
         if ((piece == WP && endSquare >= WHITE_PROMOTION_START) ||
             (piece == BP && endSquare <= BLACK_PROMOTION_END)) {
-            promoted = true;
             processPawnPromotion(moveList, candidateMove);
+            continue;
         }
-
-        if (!promoted) {
-            // still need to check the move in case of checks etc
-            if (internalBoardManager_.checkMove(candidateMove)) { moveList.push_back(candidateMove); }
-        }
+        // still need to check the move in case of checks etc
+        if (internalBoardManager_.checkMove(candidateMove)) { moveList.push_back(candidateMove); }
     }
 }
 
@@ -56,6 +56,7 @@ void MainEngine::generateMovesForPiece(const Piece& piece, std::vector<Move>& mo
 
 std::vector<Move> MainEngine::generateMoveList(){
     std::vector<Move> moves;
+    moves.reserve(40);
     // check each piece we have
     const auto ourPieces = internalBoardManager_.getCurrentTurn() == WHITE
                                ? std::array{WP, WN, WB, WR, WQ, WK}

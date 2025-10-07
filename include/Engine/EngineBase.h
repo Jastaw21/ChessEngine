@@ -34,6 +34,11 @@ struct MoveEvaluations {
         moves.clear();
         scores.clear();
     }
+
+    float getScore(const Move& move){
+        for (size_t i = 0; i < moves.size(); i++) { if (moves[i].toUCI() == move.toUCI()) { return scores[i]; } }
+        return 0;
+    }
 };
 
 class EngineBase : public ChessPlayer {

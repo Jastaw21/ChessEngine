@@ -88,101 +88,33 @@ Bitboard MagicBitBoards::getMoves(const int square, const Piece& piece, const Bi
         case BP:
         case WP: {
             Bitboard pushes = rules.getPseudoPawnPushes(piece, square); // just get the dumb pushes
+            const auto rank = squareToRank(square);
+            const auto file = squareToFile(square);
 
-            // need to check the immediate next rank, this blocks us if we move 1 or 2 ranks
+            // need to check the immediate next rank, this blocks us whether we move 1 or 2 ranks
             const int blockingRankOffset = piece == WP ? 1 : -1;
-            int blockingRank = squareToRank(square) + blockingRankOffset;
+            int blockingRank = rank + blockingRankOffset;
             if (blockingRank > 0 && blockingRank < 9) {
-                const int blockingSquare = rankAndFileToSquare(blockingRank, squareToFile(square));
+                const int blockingSquare = rankAndFileToSquare(blockingRank, file);
                 if (boards.testSquare(blockingSquare))
                     pushes = 0ULL;
             }
-            // now check the second rank
-            blockingRank += blockingRankOffset;
-            if (blockingRank > 0 && blockingRank < 9) {
-                const int blockingSquare = rankAndFileToSquare(blockingRank, squareToFile(square));
-                if (boards.testSquare(blockingSquare))
-                    pushes &= ~(1ULL << blockingSquare); // just blank that square off
+
+            // can the pawn even move twice?
+            if ((piece == WP && rank == 2) || (piece == BP && rank == 7)) {
+                blockingRank += blockingRankOffset;
+                if (blockingRank > 0 && blockingRank < 9) {
+                    const int blockingSquare = rankAndFileToSquare(blockingRank, file);
+                    if (boards.testSquare(blockingSquare))
+                        pushes &= ~(1ULL << blockingSquare); // just blank that square off
+                }
             }
 
             Bitboard attacks = rules.getPseudoPawnAttacks(piece, square);
-            attacks &= boards.getOccupancy(piece == WP ? BLACK : WHITE);
-
-            const Piece opponentPawn = piece == BP ? WP : BP;
-            const Bitboard epSquare = rules.getPseudoPawnEP(piece, square, boards.getOccupancy(opponentPawn));
-            return attacks | epSquare | pushes;
+            return attacks | pushes;
         }
         default:
             return 0ULL;
-    }
-}
-
-void MagicBitBoards::getMoves(const int square, const Piece& piece, const BitBoards& boards, Bitboard& resultMoves){
-    switch (piece) {
-        case WR:
-        case BR: {
-            resultMoves |= getRookAttacks(square, boards.getOccupancy());
-            break;
-        }
-        case WB:
-        case BB: {
-            resultMoves |= getBishopAttacks(square, boards.getOccupancy());
-            break;
-        }
-        case WQ:
-        case BQ: {
-            resultMoves |= getRookAttacks(square, boards.getOccupancy()) | getBishopAttacks(
-                square, boards.getOccupancy());
-            break;
-        }
-        case WN: {
-            resultMoves |= rules.knightAttacks[square] & ~boards.getOccupancy(WHITE);
-            break;
-        } // cant go to own square
-        case BN: {
-            resultMoves |= rules.knightAttacks[square] & ~boards.getOccupancy(BLACK);
-            break;
-        } // cant go to own square
-        case WK: {
-            const Bitboard castling = getCastling(square, piece, boards);
-            resultMoves |= (castling | rules.kingMoves[square]) & ~boards.getOccupancy(WHITE);
-            break;
-        }
-        case BK: {
-            const Bitboard castling = getCastling(square, piece, boards);
-            resultMoves |= (castling | rules.kingMoves[square]) & ~boards.getOccupancy(BLACK);
-            break;
-        }
-        // cant go to own square
-        case BP:
-        case WP: {
-            const Bitboard pushes = rules.getPseudoPawnPushes(piece, square); // just get the dumb pushes
-
-            // need to check the immediate next rank, this blocks us if we move 1 or 2 ranks
-            const int blockingRankOffset = piece == WP ? 1 : -1;
-            int blockingRank = squareToRank(square) + blockingRankOffset;
-            if (blockingRank > 0 && blockingRank < 9) {
-                const int blockingSquare = rankAndFileToSquare(blockingRank, squareToFile(square));
-                if (boards.testSquare(blockingSquare))
-                    resultMoves = 0ULL;
-            }
-            // now check the second rank
-            blockingRank += blockingRankOffset;
-            if (blockingRank > 0 && blockingRank < 9) {
-                const int blockingSquare = rankAndFileToSquare(blockingRank, squareToFile(square));
-                if (boards.testSquare(blockingSquare))
-                    resultMoves &= ~(1ULL << blockingSquare); // just blank that square off
-            }
-
-            const Bitboard rawMoves = rules.getPseudoPawnAttacks(piece, square) | pushes;
-            const Piece opponentPawn = piece == BP ? WP : BP;
-            const Bitboard epSquare = rules.getPseudoPawnEP(piece, square, boards.getOccupancy(opponentPawn));
-            resultMoves |= (rawMoves | epSquare) & ~boards.getOccupancy(piece == WP ? WHITE : BLACK);
-
-            break;
-        }
-        default:
-            resultMoves = 0ULL;
     }
 }
 
@@ -280,17 +212,7 @@ Bitboard MagicBitBoards::getCastling(const int square, const Piece& piece, const
     for (const auto& queenSide: isQueenSide) {
         // preset the correct side of the board for the mask
         auto castlingMask = queenSide ? Constants::QUEEN_SIDE_CASTLING : Constants::KING_SIDE_CASTLING;
-
-        if (piece == WK) {
-            // set up the mask for the first rank if white
-            castlingMask &= Constants::RANK_1;
-        } else {
-            // and last if black
-            castlingMask &= Constants::RANK_8;
-        }
-
-        if (castlingMask & boards.getOccupancy())
-            continue; // can't castle through an occupied square, check all ranks
+        castlingMask &= piece == WK ? Constants::RANK_1 : Constants::RANK_8;
 
         Bitboard castleSquare;
         if (queenSide) { castleSquare = piece == WK ? 0 : 56; } else { castleSquare = piece == WK ? 7 : 63; }
@@ -298,6 +220,9 @@ Bitboard MagicBitBoards::getCastling(const int square, const Piece& piece, const
         if (!boards.getPiece(castleSquare).has_value()) { continue ; } // has to be a piece there
         // has to be a castle/rook
         if (boards.getPiece(castleSquare).value() != WR && boards.getPiece(castleSquare).value() != BR) { continue; }
+
+        if (castlingMask & boards.getOccupancy())
+            continue; // can't castle through an occupied square, check all ranks
 
         // now take file c out of the equation, as it doesn't matter if that's attacked
         castlingMask &= ~Constants::FILE_B;

@@ -174,7 +174,6 @@ public:
     Bitboard getBishopAttacks(int square, Bitboard occupancy) const;
 
     Bitboard getMoves(int square, const Piece& piece, const BitBoards& boards);
-    void getMoves(int square, const Piece& piece, const BitBoards& boards, Bitboard& resultMoves);
 
     Rules rules;
     Bitboard findAttacksForColour(const Colours& colourToGetAttacksFor, const BitBoards& boards);

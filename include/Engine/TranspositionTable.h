@@ -21,13 +21,8 @@ public:
 
     TranspositionTable(size_t sizeinMB = 64);
 
-
-    std::vector<TTEntry> vectorTable;
-
-
     void storeVector(TTEntry& entry);
     std::optional<TTEntry> retrieveVector(uint64_t& key);
-
 
     size_t size() const{ return vectorTable.size() * sizeof(TTEntry); }
     size_t entries() const{ return vectorTable.size(); }
@@ -40,7 +35,11 @@ public:
     }
 
     void clear();
+
+private:
+
     size_t maxSize;
+    std::vector<TTEntry> vectorTable;
 };
 
 
