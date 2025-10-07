@@ -22,7 +22,6 @@ public:
 
 private:
 
-    void addPromotionMoves(const Move& move);
     void processPawnPromotion(std::vector<Move>& validMoves, Move& baseMove);
     virtual void
     generateValidMovesFromPosition(const Piece& piece, int startSquare, std::vector<Move>& moveList) override;

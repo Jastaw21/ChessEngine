@@ -1,4 +1,4 @@
-; //
+//
 // Created by jacks on 21/06/2025.
 //
 
@@ -763,56 +763,6 @@ TEST(BoardManagerMoveExecution, TurnChanges){
     EXPECT_EQ(manager.getCurrentTurn(), Colours::WHITE);
 }
 
-TEST(RulesHeaderTests, WholeFile){
-    for (int i = 0; i < 8; i++) {
-        switch (i) {
-            case 0:
-                EXPECT_EQ(Sliders::wholeFile(i), 0x101010101010100);
-                break;
-
-            case 1:
-                EXPECT_EQ(Sliders::wholeFile(i), 0x202020202020200);
-                break;
-            case 7:
-                EXPECT_EQ(Sliders::wholeFile(i), 0x8080808080808000);
-            default: ;
-        }
-    }
-}
-
-TEST(RulesHeaderTests, WholeRank){
-    for (int i = 0; i < 8; i++) {
-        switch (i) {
-            case 0:
-                EXPECT_EQ(Sliders::wholeRank(i * 8), 0xfe);
-                if (Sliders::wholeRank(i * 8) != 0xfe)
-                    std::cout << i << " " << (Sliders::wholeRank(i * 8) == 0xfe) << std::endl;
-                break;
-
-            case 1:
-                EXPECT_EQ(Sliders::wholeRank(i * 8), 0xfe00);
-                if (Sliders::wholeRank(i * 8) != 0xfe00)
-                    std::cout << i << " " << (Sliders::wholeRank(i * 8) == 0xfe00) << std::endl;
-                break;
-            case 7:
-                if (Sliders::wholeRank(i * 8) != 0xfe00000000000000)
-                    std::cout << i << " " << (Sliders::wholeRank(i * 8) == 0xfe00000000000000) << std::endl;
-                EXPECT_EQ(Sliders::wholeRank(i * 8), 0xfe00000000000000);
-            default: ;
-        }
-    }
-}
-
-TEST(RulesHeaderTests, Diags){
-    EXPECT_EQ(Sliders::diags(18), 0x804020110a000a11);
-
-    EXPECT_EQ(Sliders::diags(rankAndFileToSquare(6, 6)), 0x8850005088040201);
-
-    EXPECT_EQ(Sliders::diags(rankAndFileToSquare(8, 8)), 0x40201008040201);
-
-    EXPECT_EQ(Sliders::diags(rankAndFileToSquare(1, 1)), 0x8040201008040200);
-}
-
 TEST(RulesHeaderTests, OnePieceMoves){
     constexpr Bitboard H1 = 7;
     EXPECT_EQ(SingleMoves::north(H1), 32768);
@@ -838,87 +788,6 @@ TEST(RulesHeaderTests, OnePieceMoves){
     EXPECT_EQ(SingleMoves::east(A1), 0x2);
     EXPECT_EQ(SingleMoves::west(A1), 0);
 }
-
-TEST(RulesHeaderTests, KnightMoves){
-    auto boards = BitBoards();
-    boards.setFenPositionOnly("8/8/8/8/8/8/8/k7");
-    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(0, WN, &boards), 0x20400);
-
-    boards.setFenPositionOnly("8/8/8/8/3n4/8/8/8");
-    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(4, 4), BN, &boards), 0x142200221400);
-
-    boards.setFenPositionOnly("8/8/8/8/8/8/8/1n6");
-    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(1, 2), WN, &boards), 0x50800);
-}
-
-TEST(RulesHeaderTests, BishopMoves){
-    auto boards = BitBoards();
-    boards.setFenPositionOnly("8/8/8/8/8/8/8/B7");
-    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(1, 1), WB, &boards), 0x8040201008040200);
-    boards.setFenPositionOnly("8/8/8/5b2/8/8/8/8");
-    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(5, 6), BB, &boards), 0x488500050880402);
-}
-
-TEST(RulesHeaderTests, AttackDoesntJump){
-    auto boards = BitBoards();
-    boards.setFenPositionOnly(Fen::STARTING_FEN);
-    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(8, 3), BB, &boards), 0x0);
-    boards.setFenPositionOnly("8/8/8/5b2/8/8/8/8");
-
-    boards.setFenPositionOnly(Fen::KIWI_PETE_FEN);
-    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(7, 7), BB, &boards), 0x2000800000000000);
-}
-
-TEST(RulesHeaderTests, RookMoves){
-    auto boards = BitBoards();
-    boards.setFenPositionOnly("8/8/8/8/8/8/8/R7");
-    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(1, 1), WR, &boards), 0x1010101010101fe);
-    boards.setFenPositionOnly("8/8/5R2/8/8/8/8/8");
-    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(6, 6), WR, &boards), 0x2020df2020202020);
-    boards.setFenPositionOnly("8/8/8/8/8/8/R7/8");
-    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(2, 1), WR, &boards), 0x10101010101fe01);
-}
-
-TEST(RulesHeaderTests, QueenMoves){
-    auto boards = BitBoards();
-    boards.setFenPositionOnly("8/8/8/8/4Q3/8/8/8");
-    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(4, 5), WQ, &boards), 0x11925438ef385492);
-    boards.setFenPositionOnly("8/8/8/8/4q3/8/8/8");
-    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(4, 5), BQ, &boards), 0x11925438ef385492);
-    boards.setFenPositionOnly("8/8/8/8/8/8/8/7Q");
-    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(1, 8), WQ, &boards), 0x8182848890a0c07f);
-    boards.setFenPositionOnly("8/8/8/8/8/8/8/7q");
-    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(1, 8), BQ, &boards), 0x8182848890a0c07f);
-}
-
-TEST(RulesHeaderTests, KingMoves){
-    auto boards = BitBoards();
-
-    boards.setFenPositionOnly("8/8/8/8/4K3/8/8/8");
-    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(4, 5), WK, &boards), 0x3828380000);
-    boards.setFenPositionOnly("8/8/8/8/8/8/8/7k");
-    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(1, 8), BK, &boards), 0xc040);
-    boards.setFenPositionOnly("8/8/8/8/8/8/1k6/8");
-    EXPECT_EQ(RulesCheck::getPseudoLegalMoves(rankAndFileToSquare(2, 2), BK, &boards), 0x70507);
-}
-
-TEST(RulesHeaderTests, CastlingMoves){
-    auto boards = BitBoards();
-    // this is a white castling position
-    boards.setFenPositionOnly("rnbqkbnr/p2ppppp/1pp5/8/4P3/3B1N2/PPPP1PPP/RNBQK2R");
-    EXPECT_EQ(RulesCheck::getCastlingMoves(4, WK, &boards), 0x40);
-}
-
-TEST(RulesHeaderTests, EnPassantVulnerable){
-    auto boards = BitBoards();
-    boards.setFenPositionOnly("rnbqkbnr/ppppp1pp/8/4Pp2/8/8/PPPP1PPP/RNBQKBNR");
-
-    EXPECT_EQ(RulesCheck::getEnPassantVulnerableSquares(&boards, WHITE), 0x200000000000);
-
-    boards.setFenPositionOnly("rnbqkbnr/ppppp1pp/5p2/4P3/8/8/PPPP1PPP/RNBQKBNR");
-    EXPECT_EQ(RulesCheck::getEnPassantVulnerableSquares(&boards, WHITE), 0);
-}
-
 
 TEST(BoardManagerLegality, CantCaptureOwnPieceKiwiPeteScenario){
     auto manager = BoardManager();

@@ -4,9 +4,6 @@
 
 #include "Engine/MainEngine.h"
 
-
-#include "BoardManager/Rules.h"
-
 constexpr int WHITE_PROMOTION_START = 56;
 constexpr int BLACK_PROMOTION_END = 7;
 constexpr std::array<char, 4> PROMOTED_PIECES_WHITE = {'Q', 'N', 'B', 'R'};
@@ -60,9 +57,10 @@ void MainEngine::generateMovesForPiece(const Piece& piece, std::vector<Move>& mo
 std::vector<Move> MainEngine::generateMoveList(){
     std::vector<Move> moves;
     // check each piece we have
-    for (const auto& pieceName: filteredPieces[internalBoardManager_.getCurrentTurn()]) {
-        generateMovesForPiece(pieceName, moves);
-    }
+    const auto ourPieces = internalBoardManager_.getCurrentTurn() == WHITE
+                               ? std::array{WP, WN, WB, WR, WQ, WK}
+                               : std::array{BP, BN, BB, BR, BQ, BK};
+    for (const auto& pieceName: ourPieces) { generateMovesForPiece(pieceName, moves); }
     return moves;
 }
 
@@ -74,5 +72,3 @@ bool MainEngine::sendCommand(const std::string& command){
 }
 
 std::string MainEngine::readResponse(){ return ""; }
-
-void MainEngine::addPromotionMoves(const Move& move){}
