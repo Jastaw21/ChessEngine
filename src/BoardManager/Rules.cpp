@@ -43,3 +43,54 @@ Rules::Rules(){
     }
 }
 
+Bitboard Rules::getPseudoPawnEP(const Piece& piece, const int fromSquare, const Bitboard& opponentPawnOccupancy){
+    Bitboard opponentPawnStarts = piece == WP ? 0xff00000000 : 0xff000000;
+
+    // need to check if the opponent pawns are even in the right starting places
+    if ((opponentPawnOccupancy & opponentPawnStarts) == 0)
+        return 0ULL;
+
+    // must end up north or south (if black) of the other pawns
+    if (piece == WP) { opponentPawnStarts <<= 8; } else { opponentPawnStarts >>= 8; }
+
+    auto allValidEnPassantTargetSquares = opponentPawnStarts;
+    return getPseudoPawnAttacks(piece, fromSquare) & allValidEnPassantTargetSquares;
+}
+
+Bitboard Rules::getPseudoPawnPushes(const Piece& piece, const int fromSquare){
+    if (piece == WP) { return whitePawnPushes[fromSquare]; }
+    if (piece == BP) { return blackPawnPushes[fromSquare]; }
+    return 0ULL;
+}
+
+Bitboard Rules::getPseudoPawnAttacks(const Piece& piece, const int fromSquare){
+    if (piece == WP) { return whitePawnAttacks[fromSquare]; }
+    if (piece == BP) { return blackPawnAttacks[fromSquare]; }
+    return 0ULL;
+}
+
+Bitboard Rules::getPseudoAttacks(const Piece& piece, const int fromSquare){
+    switch (piece) {
+        case BP:
+        case WP:
+            return getPseudoPawnAttacks(piece, fromSquare);
+        case WN:
+        case BN:
+            return knightAttacks[fromSquare];
+        case WQ:
+        case BQ:
+            return rankAttacks[fromSquare] | fileAttacks[fromSquare] | diagAttacks[fromSquare];
+        case WB:
+        case BB:
+            return diagAttacks[fromSquare];
+        case WR:
+        case BR:
+            return rankAttacks[fromSquare] | fileAttacks[fromSquare];
+
+        case WK:
+        case BK:
+            return kingMoves[fromSquare];
+        default:
+            return 0ULL;
+    }
+}

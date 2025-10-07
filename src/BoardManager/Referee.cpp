@@ -2,8 +2,9 @@
 // Created by jacks on 06/10/2025.
 //
 
-#include "../../include/BoardManager/Referee.h"
-#include "../../include/BoardManager/BitBoards.h"
+#include "BoardManager/Referee.h"
+
+#include "BoardManager/BitBoards.h"
 #include "BoardManager/Move.h"
 
 
