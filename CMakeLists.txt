@@ -46,7 +46,7 @@ add_library(
         include/Engine/EvaluationValues.h
         src/Engine/TranspositionTable.cpp
         src/Engine/RepetitionTable.cpp
-        include/BoardManager/Referee.cpp
+        src/BoardManager/Referee.cpp
         include/BoardManager/Referee.h
         include/BoardManager/Move.h
         src/BoardManager/Move.cpp

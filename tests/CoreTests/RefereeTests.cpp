@@ -38,14 +38,14 @@ TEST(RefereeTests, CheckmatesAreSameInRef){
         manager.getCurrentTurn()
     );
 
+    EXPECT_TRUE(status & BoardStatus::BLACK_CHECKMATE);
+
     manager.setCurrentTurn(BLACK);
     manager.getBitboards()->setFenPositionOnly("rnbqkbnr/pppp1ppp/4p3/8/6P1/5P2/PPPPP2P/RNBQKBNR");
     auto checkMateMove2 = createMove(BQ, "d8h4");
 
     ASSERT_TRUE(manager.tryMove(checkMateMove2));
-
     EXPECT_TRUE(checkMateMove2.resultBits & CHECK_MATE);
-
     status = Referee::checkBoardStatus(
         *manager.getBitboards(),
         *manager.getMagicBitBoards(),

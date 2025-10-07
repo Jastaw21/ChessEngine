@@ -34,19 +34,19 @@ private:
     static bool validateMove(Move& move, const BitBoards& bitboards, MagicBitBoards& magicBitBoards,
                              const int enPassantSquare);
     static bool validatePromotion(const Move& move);
-    static bool lastTurnInCheck(BitBoards& bitboards, MagicBitBoards& magicBitBoards,
-                                Colours currentTurn);
-    static bool currentTurnInCheck(BitBoards& bitboards, MagicBitBoards& magicBitBoards,
-                                   Colours currentTurn);
+
 
     static bool hasLegalMoveToEscapeCheck(BitBoards& bitboards, MagicBitBoards& magicBitBoards,
                                           Colours currentTurn);
-    static void makeMove(const Move& move);
+
     static bool isValidEscapeMove(Move& move, BitBoards& bitboards, MagicBitBoards& magicBitBoards,
                                   Colours currentTurn);
     static bool hasValidMoveFromSquare(Piece piece, int startSquare, Bitboard destinationSquares, BitBoards& bitboards,
                                        MagicBitBoards& magicBitBoards, Colours currentTurn);
     static bool canPieceEscapeCheck(const Piece& pieceName, BitBoards& bitboards, MagicBitBoards& magicBitBoards,
                                     Colours currentTurn);
+
+    static bool isKingInCheck(BitBoards& bitboards, MagicBitBoards& magicBitBoards,
+                              Colours currentTurn);
 };
 #endif //CHESS_REFEREE_H

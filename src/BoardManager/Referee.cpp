@@ -2,8 +2,8 @@
 // Created by jacks on 06/10/2025.
 //
 
-#include "Referee.h"
-#include "BitBoards.h"
+#include "../../include/BoardManager/Referee.h"
+#include "../../include/BoardManager/BitBoards.h"
 #include "BoardManager/Move.h"
 
 
@@ -15,18 +15,18 @@ int Referee::checkBoardStatus(BitBoards& bitboards, MagicBitBoards& magicBitBoar
                               Colours colourToMove){
     int result = 0;
 
-    if (lastTurnInCheck(bitboards, magicBitBoards, colourToMove)) {
+    if (isKingInCheck(bitboards, magicBitBoards, colourToMove)) {
         if (colourToMove == WHITE)
-            result |= BoardStatus::BLACK_CHECK;
-        else
             result |= BoardStatus::WHITE_CHECK;
+        else
+            result |= BoardStatus::BLACK_CHECK;
     }
 
-    if (currentTurnInCheck(bitboards, magicBitBoards, colourToMove)) {
+    if (isKingInCheck(bitboards, magicBitBoards, colourToMove == WHITE ? BLACK : WHITE)) {
         if (colourToMove == WHITE)
-            result |= BoardStatus::WHITE_CHECK;
-        else
             result |= BoardStatus::BLACK_CHECK;
+        else
+            result |= BoardStatus::WHITE_CHECK;
     }
 
     // no checks - can't be checkmate
@@ -43,7 +43,7 @@ int Referee::checkBoardStatus(BitBoards& bitboards, MagicBitBoards& magicBitBoar
 }
 
 bool Referee::boardIsInCheck(BitBoards& bitboards, MagicBitBoards& magicBitBoards, Colours colourToMove){
-    return currentTurnInCheck(bitboards, magicBitBoards, colourToMove);
+    return isKingInCheck(bitboards, magicBitBoards, colourToMove);
 }
 
 
@@ -146,52 +146,7 @@ bool Referee::validatePromotion(const Move& move){
     return true;
 }
 
-bool Referee::lastTurnInCheck(BitBoards& bitboards, MagicBitBoards& magicBitBoards, Colours currentTurn){
-    const Piece lastTurnPiece = currentTurn == BLACK ? WK : BK;
-    const Bitboard& kingLocation = bitboards[lastTurnPiece];
-
-    if (currentTurn == WHITE) {
-        for (const auto& pieceName: {WP, WQ, WK, WR, WB, WN}) {
-            auto startingBoard = bitboards[pieceName];
-            while (startingBoard) {
-                // count trailing zeros to find the index of the first set bit
-                const int startSquare = std::countr_zero(startingBoard);
-                startingBoard &= startingBoard - 1;
-                Bitboard prelimAttacks = 0ULL;
-
-                // see if they can even attack in theory
-                magicBitBoards.rules.getPseudoAttacks(pieceName, startSquare, prelimAttacks);
-                if (!(kingLocation & prelimAttacks))
-                    continue;
-                Bitboard possibleMoves = 0ULL;
-                magicBitBoards.getMoves(startSquare, pieceName, bitboards, possibleMoves);
-                if (possibleMoves & kingLocation) { return true; }
-            }
-        }
-    } else {
-        for (const auto& pieceName: {BP, BQ, BK, BR, BB, BN}) {
-            auto startingBoard = bitboards[pieceName];
-            while (startingBoard) {
-                // count trailing zeros to find the index of the first set bit
-                const int startSquare = std::countr_zero(startingBoard);
-                startingBoard &= startingBoard - 1;
-                Bitboard prelimAttacks = 0ULL;
-
-                // see if they can even attack in theory
-                magicBitBoards.rules.getPseudoAttacks(pieceName, startSquare, prelimAttacks);
-                if (!(kingLocation & prelimAttacks))
-                    continue;
-                Bitboard possibleMoves = 0ULL;
-                magicBitBoards.getMoves(startSquare, pieceName, bitboards, possibleMoves);
-                if (possibleMoves & kingLocation) { return true; }
-            }
-        }
-    }
-
-    return false;
-}
-
-bool Referee::currentTurnInCheck(BitBoards& bitboards, MagicBitBoards& magicBitBoards, Colours currentTurn){
+bool Referee::isKingInCheck(BitBoards& bitboards, MagicBitBoards& magicBitBoards, Colours currentTurn){
     const auto kingToMove = currentTurn == WHITE ? WK : BK;
     const auto opposingPawn = (kingToMove == WK) ? BP : WP;
 
@@ -266,7 +221,7 @@ bool Referee::isValidEscapeMove(Move& move, BitBoards& bitboards, MagicBitBoards
     bitboards.applyMove(move);
 
     // if the move results in, or leaves our king in check we can't do it.
-    if (lastTurnInCheck(bitboards, magicBitBoards, currentTurn == WHITE ? BLACK : WHITE)) {
+    if (isKingInCheck(bitboards, magicBitBoards, currentTurn)) {
         bitboards.undoMove(move);
         return false;
     }
