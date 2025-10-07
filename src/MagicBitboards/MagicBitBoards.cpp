@@ -2,6 +2,7 @@
 // Created by jacks on 10/07/2025.
 //
 
+
 #include "MagicBitboards/MagicBitBoards.h"
 
 void MagicBitBoards::initRookMagics(){
@@ -161,6 +162,7 @@ Bitboard MagicBitBoards::findAttacksForPiece(const Piece piece, const BitBoards&
 }
 
 Bitboard MagicBitBoards::findAttacksForPiece(const Piece piece, const BitBoards& boards, const Bitboard& mask){
+    // masked search to reduce search sp
     Bitboard attacks = 0ULL;
     Bitboard occupancy = boards.getOccupancy(piece) & mask;
 

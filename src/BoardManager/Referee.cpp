@@ -7,6 +7,8 @@
 #include "BoardManager/BitBoards.h"
 #include "BoardManager/Move.h"
 
+#include "Engine/ProcessChessEngine.h"
+
 
 bool Referee::moveIsLegal(Move& move, BitBoards& boardState, MagicBitBoards& mbb, const int enPassantSquare){
     return validateMove(move, boardState, mbb, enPassantSquare);
@@ -148,16 +150,18 @@ bool Referee::validatePromotion(const Move& move){
 }
 
 bool Referee::isKingInCheck(BitBoards& bitboards, MagicBitBoards& magicBitBoards, Colours currentTurn){
+    // will send out attackers of this turn colour to all squares they could possibly attack
+    // and do some caching to avoid expensive multiple checks
+
     const auto kingToMove = currentTurn == WHITE ? WK : BK;
     const auto opposingPawn = (kingToMove == WK) ? BP : WP;
     const auto ourPawn = (kingToMove == WK) ? WP : BP;
 
-    // will send out attackers of this turn colour to all squares they could possibly attack
+    // fake real relates to matching colours with the king of interest. fake = same colour
     const auto fakeAttackers = (kingToMove == WK)
                                    ? std::array{WN, WQ, WR, WB, WK}
                                    : std::array{BN, BQ, BR, BB, BK};
 
-    // need this to then refer to see if the attacks overlap with real pieces
     const auto realAttackers = (kingToMove == BK)
                                    ? std::array{WN, WQ, WR, WB, WK}
                                    : std::array{BN, BQ, BR, BB, BK};
@@ -165,10 +169,6 @@ bool Referee::isKingInCheck(BitBoards& bitboards, MagicBitBoards& magicBitBoards
     const auto kingToMoveLocation = bitboards[kingToMove];
     if (!kingToMoveLocation) { return false; } // king is not on the board
     const auto kingToMoveSquare = std::countr_zero(kingToMoveLocation);
-
-    bool checkFurther = false;
-    std::array<Piece, 6> piecesThatGiveCheck; // only need six pieces
-    std::ranges::fill(piecesThatGiveCheck, PIECE_N);
 
     Bitboard possibleAttacks = 0ULL;
 
@@ -178,25 +178,47 @@ bool Referee::isKingInCheck(BitBoards& bitboards, MagicBitBoards& magicBitBoards
                            : magicBitBoards.rules.blackPawnAttacks.at(kingToMoveSquare);
     if (possibleAttacks & bitboards.getOccupancy(opposingPawn)) { return true; }
 
-    // see if we could in theory get to any of the occupied squares
-    int pieceIndex = 0;
+    // precalc where they are to avoid some double checking
+    auto allAttackerOccupancy = bitboards.getOccupancy(currentTurn == WHITE ? BLACK : WHITE);
+
+    // a place to cache the pieces that could give a theoretical check, to save properly testing everything
+    std::array<Piece, 6> piecesThatGiveCheck; // only need six pieces
+    std::ranges::fill(piecesThatGiveCheck, PIECE_N);
+
+    //if we can get the reachable starting point of attackers, we can narrow down the number of squares to launch full tests on their attack moves from
+    std::array<uint64_t, PIECE_N> realAttackerMask;
+    std::ranges::fill(realAttackerMask, 0ULL);
+
+    bool anyPiecesRequireFurtherCheck = false;
+
+    int pieceIndex = 0; // used to sync the fake->real attacker lookups
     for (const auto& pieceName: fakeAttackers) {
-        const auto realAttacker = realAttackers[pieceIndex];
-        const auto psuedoAttacks = magicBitBoards.rules.getPseudoAttacks(
+        const auto pseudoAttacks = magicBitBoards.rules.getPseudoAttacks(
             pieceName, kingToMoveSquare);
-        if (psuedoAttacks & bitboards.getOccupancy(realAttacker)) {
-            checkFurther = true;
+
+        // no collision with any enemy piece
+        if (!(pseudoAttacks & allAttackerOccupancy)) {
+            pieceIndex++;
+            continue;
+        }
+
+        const auto realAttacker = realAttackers[pieceIndex];
+        const auto realAttackerLocation = bitboards.getOccupancy(realAttacker);
+        if (pseudoAttacks & realAttackerLocation) {
+            anyPiecesRequireFurtherCheck = true;
             piecesThatGiveCheck[pieceIndex] = realAttacker; // cache which pieces so we only have to verify those
+            realAttackerMask[realAttacker] = pseudoAttacks & realAttackerLocation;
+            // cache the location of the attacker so we can avoid double checking
         }
         pieceIndex++;
     }
 
-    if (checkFurther) {
+    if (anyPiecesRequireFurtherCheck) {
         for (const auto& pieceName: piecesThatGiveCheck) {
             if (pieceName == PIECE_N) continue; // this piece can't possibly attack us
 
             // get it's real attacks
-            possibleAttacks |= magicBitBoards.findAttacksForPiece(pieceName, bitboards);
+            possibleAttacks |= magicBitBoards.findAttacksForPiece(pieceName, bitboards, realAttackerMask[pieceName]);
             if (possibleAttacks & kingToMoveLocation) { return true; }
         }
     }
