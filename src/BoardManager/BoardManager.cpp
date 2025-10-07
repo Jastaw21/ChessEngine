@@ -1,5 +1,6 @@
 //ReSharper disable CppTooWideScopeInitStatement
 
+
 #include "BoardManager/BoardManager.h"
 
 #include <iostream>
@@ -56,32 +57,44 @@ bool BoardManager::checkMove(Move& move){
         currentTurn
     );
 
+    // no checks
     if (status == BoardStatus::NORMAL) {
         bitboards.undoMove(move);
         swapTurns();
         return true;
     }
 
-    // if the move results in, or leaves our king in check we can't do it.
-    if (lastTurnInCheck(move)) {
-        undoMove(move);
-        move.resultBits |= ILLEGAL_MOVE;
+    // leaves the turn to move in ce
+    if ((currentTurn == BLACK && ((status & BoardStatus::WHITE_CHECKMATE) || (status & BoardStatus::WHITE_CHECK)))
+        || (currentTurn == WHITE && (status & BoardStatus::BLACK_CHECKMATE || status & BoardStatus::BLACK_CHECK))
+    ) {
+        bitboards.undoMove(move);
+        swapTurns();
+        move.resultBits = ILLEGAL_MOVE;
         return false;
     }
-    // if we give check - see if it's checkmate
-    if (turnToMoveInCheck(move)) {
-        // update the move result
-        move.resultBits |= CHECK;
-        move.resultBits &= ~PUSH;
 
-        // should also check if its mate now
-        if (isNowCheckMate()) {
-            checkMateFlag = true;
-            move.resultBits |= CHECK_MATE;
-        }
+    // we gave check on the last move
+    if (status & BoardStatus::BLACK_CHECK || status & BoardStatus::WHITE_CHECK) {
+        move.resultBits |= CHECK;
+        move.resultBits &= ~PUSH; // undo the push bit
+        bitboards.undoMove(move);
+        swapTurns();
+        return true;
     }
 
-    undoMove(move);
+    // we gave checkmate on the last move
+    if (status & BoardStatus::BLACK_CHECKMATE || status & BoardStatus::WHITE_CHECKMATE) {
+        move.resultBits |= CHECK;
+        move.resultBits &= ~PUSH;
+        move.resultBits |= CHECK_MATE;
+        checkMateFlag = true;
+        bitboards.undoMove(move);
+        swapTurns();
+    }
+
+    bitboards.undoMove(move);
+    swapTurns();
     return true;
 }
 

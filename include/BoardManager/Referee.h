@@ -10,7 +10,7 @@
 struct Move;
 class BitBoards;
 
-enum class BoardStatus {
+enum BoardStatus {
     NORMAL,
     WHITE_CHECK,
     BLACK_CHECK,
@@ -22,8 +22,8 @@ class Referee {
 public:
 
     static bool moveIsLegal(Move& move, BitBoards& boardState, MagicBitBoards& mbb, const int enPassantSquare = -1);
-    static BoardStatus checkBoardStatus(BitBoards& bitboards, MagicBitBoards& magicBitBoards,
-                                        Colours colourToMove);
+    static int checkBoardStatus(BitBoards& bitboards, MagicBitBoards& magicBitBoards,
+                                Colours colourToMove);
 
 private:
 
