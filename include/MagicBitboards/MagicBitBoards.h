@@ -179,6 +179,7 @@ public:
     Rules rules;
     Bitboard findAttacksForColour(const Colours& colourToGetAttacksFor, const BitBoards& boards);
     Bitboard findAttacksForPiece(Piece piece, const BitBoards& boards);
+    Bitboard findAttacksForPiece(Piece piece, const BitBoards& boards, const Bitboard& mask);
     Bitboard getCastling(int square, const Piece& piece, const BitBoards& boards);
 
 private:

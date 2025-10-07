@@ -150,6 +150,7 @@ bool Referee::validatePromotion(const Move& move){
 bool Referee::isKingInCheck(BitBoards& bitboards, MagicBitBoards& magicBitBoards, Colours currentTurn){
     const auto kingToMove = currentTurn == WHITE ? WK : BK;
     const auto opposingPawn = (kingToMove == WK) ? BP : WP;
+    const auto ourPawn = (kingToMove == WK) ? WP : BP;
 
     // will send out attackers of this turn colour to all squares they could possibly attack
     const auto fakeAttackers = (kingToMove == WK)
@@ -162,6 +163,8 @@ bool Referee::isKingInCheck(BitBoards& bitboards, MagicBitBoards& magicBitBoards
                                    : std::array{BN, BQ, BR, BB, BK};
 
     const auto kingToMoveLocation = bitboards[kingToMove];
+    if (!kingToMoveLocation) { return false; } // king is not on the board
+    const auto kingToMoveSquare = std::countr_zero(kingToMoveLocation);
 
     bool checkFurther = false;
     std::array<Piece, 6> piecesThatGiveCheck; // only need six pieces
@@ -170,15 +173,17 @@ bool Referee::isKingInCheck(BitBoards& bitboards, MagicBitBoards& magicBitBoards
     Bitboard possibleAttacks = 0ULL;
 
     // the pawns are the only directional pieces, so have to check the colours the "right" way around
-    possibleAttacks |= magicBitBoards.findAttacksForPiece(opposingPawn, bitboards);
-    if (possibleAttacks & kingToMoveLocation) { return true; }
+    possibleAttacks |= ourPawn == WP
+                           ? magicBitBoards.rules.whitePawnAttacks.at(kingToMoveSquare)
+                           : magicBitBoards.rules.blackPawnAttacks.at(kingToMoveSquare);
+    if (possibleAttacks & bitboards.getOccupancy(opposingPawn)) { return true; }
 
     // see if we could in theory get to any of the occupied squares
     int pieceIndex = 0;
     for (const auto& pieceName: fakeAttackers) {
         const auto realAttacker = realAttackers[pieceIndex];
         const auto psuedoAttacks = magicBitBoards.rules.getPseudoAttacks(
-            pieceName, std::countr_zero(kingToMoveLocation));
+            pieceName, kingToMoveSquare);
         if (psuedoAttacks & bitboards.getOccupancy(realAttacker)) {
             checkFurther = true;
             piecesThatGiveCheck[pieceIndex] = realAttacker; // cache which pieces so we only have to verify those
