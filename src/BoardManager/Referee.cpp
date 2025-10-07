@@ -157,14 +157,13 @@ bool Referee::isKingInCheck(BitBoards& bitboards, MagicBitBoards& magicBitBoards
     const auto opposingPawn = (kingToMove == WK) ? BP : WP;
     const auto ourPawn = (kingToMove == WK) ? WP : BP;
 
-    // fake real relates to matching colours with the king of interest. fake = same colour
-    const auto fakeAttackers = (kingToMove == WK)
-                                   ? std::array{WN, WQ, WR, WB, WK}
-                                   : std::array{BN, BQ, BR, BB, BK};
+    // Use static arrays to avoid repeated construction
+    static constexpr std::array<Piece, 5> whiteAttackers{WN, WQ, WR, WB, WK};
+    static constexpr std::array<Piece, 5> blackAttackers{BN, BQ, BR, BB, BK};
 
-    const auto realAttackers = (kingToMove == BK)
-                                   ? std::array{WN, WQ, WR, WB, WK}
-                                   : std::array{BN, BQ, BR, BB, BK};
+    // fake real relates to matching colours with the king of interest. fake = same colour
+    const auto& fakeAttackers = (kingToMove == WK) ? whiteAttackers : blackAttackers;
+    const auto& realAttackers = (kingToMove == BK) ? whiteAttackers : blackAttackers;
 
     const auto kingToMoveLocation = bitboards[kingToMove];
     if (!kingToMoveLocation) { return false; } // king is not on the board
