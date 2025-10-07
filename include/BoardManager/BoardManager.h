@@ -50,6 +50,8 @@ public:
     MagicBitBoards* getMagicBitBoards(){ return &magicBitBoards; }
     int getEnPassantSquare(){ return boardStateHistory.top().enPassantSquare; }
     ZobristHash* getZobristHash(){ return &zobristHash_; }
+    Colours getCurrentTurn() const{ return currentTurn; }
+    void setCurrentTurn(const Colours current_turn){ currentTurn = current_turn; }
 
     bool tryMove(Move& move);
     bool tryMove(const std::string& moveUCI);
@@ -57,9 +59,6 @@ public:
     bool forceMove(Move& move);
     void undoMove(const Move& move);
     void undoMove();
-
-    bool turnToMoveInCheck(Move& move);
-    bool turnToMoveInCheck();
 
     bool isGameOver();
     int getGameResult();
@@ -82,24 +81,13 @@ public:
     void setFullFen(const FenString& fen);
     std::string getFullFen();
 
-    Colours getCurrentTurn() const{ return currentTurn; }
-    void setCurrentTurn(const Colours current_turn){ currentTurn = current_turn; }
-
-    bool isNowCheckMate();
-
 private:
 
     bool validateMove(Move& move);
-    bool lastTurnInCheck(const Move& move);
 
     // do the move
     void makeMove(Move& move);
 
-
-    bool hasLegalMoveToEscapeCheck();
-    bool canPieceEscapeCheck(const Piece& pieceName);
-    bool hasValidMoveFromSquare(Piece pieceName, int startSquare, Bitboard destinationSquares);
-    bool isValidEscapeMove(Move& move);
     void swapTurns();
 
     // data

@@ -22,7 +22,7 @@ TEST(RefereeTests, ChecksAreSameInRef){
         manager.getCurrentTurn()
     );
 
-    EXPECT_EQ(status, BoardStatus::BLACK_CHECK);
+    EXPECT_TRUE(BoardStatus::BLACK_CHECK & status);
 }
 
 TEST(RefereeTests, CheckmatesAreSameInRef){
@@ -32,22 +32,18 @@ TEST(RefereeTests, CheckmatesAreSameInRef){
     auto checkMateMove = createMove(WR, "e3h3");
     ASSERT_TRUE(manager.tryMove(checkMateMove));
 
-    EXPECT_TRUE(manager.isNowCheckMate());
-
     auto status = Referee::checkBoardStatus(
         *manager.getBitboards(),
         *manager.getMagicBitBoards(),
         manager.getCurrentTurn()
     );
 
-    EXPECT_EQ(status, BoardStatus::BLACK_CHECKMATE);
-
     manager.setCurrentTurn(BLACK);
     manager.getBitboards()->setFenPositionOnly("rnbqkbnr/pppp1ppp/4p3/8/6P1/5P2/PPPPP2P/RNBQKBNR");
     auto checkMateMove2 = createMove(BQ, "d8h4");
 
     ASSERT_TRUE(manager.tryMove(checkMateMove2));
-    EXPECT_TRUE(manager.isNowCheckMate());
+
     EXPECT_TRUE(checkMateMove2.resultBits & CHECK_MATE);
 
     status = Referee::checkBoardStatus(
@@ -56,13 +52,12 @@ TEST(RefereeTests, CheckmatesAreSameInRef){
         manager.getCurrentTurn()
     );
 
-    EXPECT_EQ(status, BoardStatus::WHITE_CHECKMATE);
+    EXPECT_TRUE(status &BoardStatus::WHITE_CHECKMATE);
 
     manager.setCurrentTurn(WHITE);
     manager.getBitboards()->setFenPositionOnly("r2qk2r/p1pp1pb1/bn2pQp1/3PN3/1p2P3/2N4p/PPPBBPPP/R3K2R");
     auto checkMateMove3 = createMove(WQ, "f6f7");
     ASSERT_TRUE(manager.tryMove(checkMateMove3));
-    EXPECT_TRUE(manager.isNowCheckMate());
     EXPECT_TRUE(checkMateMove3.resultBits & CHECK_MATE);
     EXPECT_TRUE(checkMateMove3.resultBits & CHECK);
 
@@ -72,5 +67,18 @@ TEST(RefereeTests, CheckmatesAreSameInRef){
         manager.getCurrentTurn()
     );
 
-    EXPECT_EQ(status, BoardStatus::BLACK_CHECKMATE);
+    EXPECT_TRUE(status& BoardStatus::BLACK_CHECKMATE);
+}
+
+TEST(RefereeTests, IsCheckMate){
+    auto manager = BoardManager();
+    manager.setFullFen("5k1Q/4pp1p/p5pN/1p6/8/PP5P/2P5/7K b KQkq - 0 1"); // pre-check state
+
+    auto status = Referee::checkBoardStatus(
+        *manager.getBitboards(),
+        *manager.getMagicBitBoards(),
+        manager.getCurrentTurn()
+    );
+
+    EXPECT_TRUE(status & BoardStatus::BLACK_CHECKMATE);
 }

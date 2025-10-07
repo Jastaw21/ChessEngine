@@ -14,30 +14,29 @@ bool Referee::moveIsLegal(Move& move, BitBoards& boardState, MagicBitBoards& mbb
 int Referee::checkBoardStatus(BitBoards& bitboards, MagicBitBoards& magicBitBoards,
                               Colours colourToMove){
     int result = 0;
-    result &= BoardStatus::NORMAL;
 
     if (lastTurnInCheck(bitboards, magicBitBoards, colourToMove)) {
         if (colourToMove == WHITE)
-            result &= BoardStatus::BLACK_CHECK;
+            result |= BoardStatus::BLACK_CHECK;
         else
-            result &= BoardStatus::WHITE_CHECK;
+            result |= BoardStatus::WHITE_CHECK;
     }
 
     if (currentTurnInCheck(bitboards, magicBitBoards, colourToMove)) {
         if (colourToMove == WHITE)
-            result &= BoardStatus::WHITE_CHECK;
+            result |= BoardStatus::WHITE_CHECK;
         else
-            result &= BoardStatus::BLACK_CHECK;
+            result |= BoardStatus::BLACK_CHECK;
     }
 
     // no checks - can't be checkmate
-    if (result == BoardStatus::NORMAL) { return result; }
+    if (result == 0) { return BoardStatus::NORMAL; }
 
     if (!hasLegalMoveToEscapeCheck(bitboards, magicBitBoards, colourToMove)) {
         if (colourToMove == WHITE)
-            result &= BoardStatus::WHITE_CHECKMATE;
+            result |= BoardStatus::WHITE_CHECKMATE;
         else
-            result &= BoardStatus::BLACK_CHECKMATE;
+            result |= BoardStatus::BLACK_CHECKMATE;
     }
 
     return result;

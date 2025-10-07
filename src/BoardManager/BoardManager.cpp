@@ -64,23 +64,15 @@ bool BoardManager::checkMove(Move& move){
         return true;
     }
 
-    // leaves the turn to move in ce
-    if ((currentTurn == BLACK && ((status & BoardStatus::WHITE_CHECKMATE) || (status & BoardStatus::WHITE_CHECK)))
-        || (currentTurn == WHITE && (status & BoardStatus::BLACK_CHECKMATE || status & BoardStatus::BLACK_CHECK))
-    ) {
+    bool blackInCheckOrMate = status & (BLACK_CHECK | BLACK_CHECKMATE);
+    bool whiteInCheckOrMate = status & (WHITE_CHECK | WHITE_CHECKMATE);
+
+    // leaves the previous turn to move in check
+    if (blackInCheckOrMate && currentTurn == WHITE || whiteInCheckOrMate && currentTurn == BLACK) {
         bitboards.undoMove(move);
         swapTurns();
         move.resultBits = ILLEGAL_MOVE;
         return false;
-    }
-
-    // we gave check on the last move
-    if (status & BoardStatus::BLACK_CHECK || status & BoardStatus::WHITE_CHECK) {
-        move.resultBits |= CHECK;
-        move.resultBits &= ~PUSH; // undo the push bit
-        bitboards.undoMove(move);
-        swapTurns();
-        return true;
     }
 
     // we gave checkmate on the last move
@@ -91,6 +83,16 @@ bool BoardManager::checkMove(Move& move){
         checkMateFlag = true;
         bitboards.undoMove(move);
         swapTurns();
+        return true;
+    }
+
+    // we gave check on the last move
+    if (status & BoardStatus::BLACK_CHECK || status & BoardStatus::WHITE_CHECK) {
+        move.resultBits |= CHECK;
+        move.resultBits &= ~PUSH; // undo the push bit
+        bitboards.undoMove(move);
+        swapTurns();
+        return true;
     }
 
     bitboards.undoMove(move);
@@ -159,7 +161,6 @@ void BoardManager::makeMove(Move& move){
     }
 
     bitboards.applyMove(move);
-
     swapTurns();
 
     zobristHash_.addMove(move);
@@ -235,17 +236,6 @@ int BoardManager::getGameResult(){
 
         return resultBits;
     }
-    if (moveHistory.size() > 0 && moveHistory.top().resultBits & MoveResult::CHECK_MATE) {
-        resultBits |= GameResult::CHECKMATE;
-
-        if (lastMoveColour == WHITE)
-            resultBits |= WHITE_WINS;
-        else
-            resultBits |= BLACK_WINS;
-
-        return resultBits;
-    }
-
     return resultBits;
 }
 
@@ -268,179 +258,6 @@ void BoardManager::setFullFen(const FenString& fen){
     bitboards.setFenPositionOnly(fenPiecePlacement);
     setCurrentTurn(fenActiveColour == "w" ? WHITE : BLACK);
     zobristHash_.setFen(fen);
-}
-
-bool BoardManager::turnToMoveInCheck(Move& move){
-    const auto kingToMove = getCurrentTurn() == WHITE ? WK : BK;
-    const auto opposingPawn = (kingToMove == WK) ? BP : WP;
-
-    // will send out attackers of this turn colour, to all squares they could possibly attack
-    const auto fakeAttackers = (kingToMove == WK)
-                                   ? std::array{WN, WQ, WR, WB, WK}
-                                   : std::array{BN, BQ, BR, BB, BK};
-
-    // need this, to then refer to to see if the attacks overlap with real pieces
-    const auto realAttackers = (kingToMove == BK)
-                                   ? std::array{WN, WQ, WR, WB, WK}
-                                   : std::array{BN, BQ, BR, BB, BK};
-
-    const auto kingToMoveLocation = bitboards[kingToMove];
-
-    bool checkFurther = false;
-    std::array<Piece, 6> piecesThatGiveCheck; // only need six pieces
-    std::ranges::fill(piecesThatGiveCheck, PIECE_N);
-
-    Bitboard possibleAttacks = 0ULL;
-
-    // the pawns are the only directional pieces, so have to check the colours the "right" way around
-    possibleAttacks |= magicBitBoards.findAttacksForPiece(opposingPawn, bitboards);
-    if (possibleAttacks & kingToMoveLocation) {
-        move.resultBits |= CHECK;
-        move.resultBits &= ~PUSH; // undo the push bit
-        return true;
-    }
-
-    // see if we could in theory get to any of the occupied squares
-    int pieceIndex = 0;
-    for (const auto& pieceName: fakeAttackers) {
-        const auto realAttacker = realAttackers[pieceIndex];
-        const auto psuedoAttacks = magicBitBoards.rules.getPseudoAttacks(
-            pieceName, std::countr_zero(kingToMoveLocation));
-        if (psuedoAttacks & bitboards.getOccupancy(realAttacker)) {
-            checkFurther = true;
-            piecesThatGiveCheck[pieceIndex] = realAttacker; // cache which pieces so we only have to verify those
-        }
-        pieceIndex++;
-    }
-
-    if (checkFurther) {
-        for (const auto& pieceName: piecesThatGiveCheck) {
-            if (pieceName == PIECE_N) continue; // this piece can't possibly attack us
-
-            // get it's real attacks
-            possibleAttacks |= magicBitBoards.findAttacksForPiece(pieceName, bitboards);
-            if (possibleAttacks & kingToMoveLocation) {
-                move.resultBits |= CHECK;
-                move.resultBits &= ~PUSH; // undo the push bit
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
-bool BoardManager::turnToMoveInCheck(){
-    const auto kingToMove = getCurrentTurn() == WHITE ? WK : BK;
-    const auto kingToMoveLocation = bitboards[kingToMove];
-
-    const auto colourToSearch = getCurrentTurn() == WHITE ? BLACK : WHITE;
-
-    const auto possibleAttacks = magicBitBoards.findAttacksForColour(colourToSearch, bitboards);
-    if (possibleAttacks & kingToMoveLocation) { return true; }
-
-    return false;
-}
-
-
-bool BoardManager::isNowCheckMate(){ return !hasLegalMoveToEscapeCheck(); }
-
-bool BoardManager::hasLegalMoveToEscapeCheck(){
-    if (currentTurn == WHITE) {
-        // king first - most likely to escape check I guess?
-        for (const auto& pieceName: {WN, WK, WQ, WR, WB, WP}) { if (canPieceEscapeCheck(pieceName)) { return true; } }
-    } else {
-        for (const auto& pieceName: {BN, BK, BQ, BR, BB, BP}) { if (canPieceEscapeCheck(pieceName)) { return true; } }
-    }
-    return false;
-}
-
-bool BoardManager::canPieceEscapeCheck(const Piece& pieceName){
-    auto startingBoard = bitboards[pieceName];
-    while (startingBoard) {
-        // count trailing zeros to find the index of the first set bit
-        const int startSquare = std::countr_zero(startingBoard);
-        startingBoard &= startingBoard - 1;
-        const auto possibleMoves = magicBitBoards.getMoves(startSquare, pieceName, bitboards);
-        if (hasValidMoveFromSquare(pieceName, startSquare, possibleMoves)) { return true; }
-    }
-    return false;
-}
-
-bool BoardManager::hasValidMoveFromSquare(const Piece pieceName, const int startSquare,
-                                          Bitboard destinationSquares){
-    while (destinationSquares) {
-        // count trailing zeros to find the index of the first set bit
-        const int destinationSquare = std::countr_zero(destinationSquares);
-        destinationSquares &= ~(1ULL << destinationSquare);
-        auto move = Move(pieceName, startSquare, destinationSquare);
-
-        if (isValidEscapeMove(move)) { return true; }
-    }
-
-    return false;
-}
-
-
-bool BoardManager::isValidEscapeMove(Move& move){
-    if (!validateMove(move)) { return false; } // move not even pseudolegal
-    // now we need to check the board state for check mates etc
-    makeMove(move);
-
-    // if the move results in, or leaves our king in check we can't do it.
-    if (lastTurnInCheck(move)) {
-        undoMove(move);
-        move.resultBits |= ILLEGAL_MOVE;
-        return false;
-    }
-
-    undoMove(move);
-    return true;
-}
-
-bool BoardManager::lastTurnInCheck(const Move& move){
-    const Piece lastTurnPiece = currentTurn == BLACK ? WK : BK;
-    const Bitboard& kingLocation = bitboards[lastTurnPiece];
-
-    if (currentTurn == WHITE) {
-        for (const auto& pieceName: {WP, WQ, WK, WR, WB, WN}) {
-            auto startingBoard = bitboards[pieceName];
-            while (startingBoard) {
-                // count trailing zeros to find the index of the first set bit
-                const int startSquare = std::countr_zero(startingBoard);
-                startingBoard &= startingBoard - 1;
-                Bitboard prelimAttacks = 0ULL;
-
-                // see if they can even attack in theory
-                magicBitBoards.rules.getPseudoAttacks(pieceName, startSquare, prelimAttacks);
-                if (!(kingLocation & prelimAttacks))
-                    continue;
-                Bitboard possibleMoves = 0ULL;
-                magicBitBoards.getMoves(startSquare, pieceName, bitboards, possibleMoves);
-                if (possibleMoves & kingLocation) { return true; }
-            }
-        }
-    } else {
-        for (const auto& pieceName: {BP, BQ, BK, BR, BB, BN}) {
-            auto startingBoard = bitboards[pieceName];
-            while (startingBoard) {
-                // count trailing zeros to find the index of the first set bit
-                const int startSquare = std::countr_zero(startingBoard);
-                startingBoard &= startingBoard - 1;
-                Bitboard prelimAttacks = 0ULL;
-
-                // see if they can even attack in theory
-                magicBitBoards.rules.getPseudoAttacks(pieceName, startSquare, prelimAttacks);
-                if (!(kingLocation & prelimAttacks))
-                    continue;
-                Bitboard possibleMoves = 0ULL;
-                magicBitBoards.getMoves(startSquare, pieceName, bitboards, possibleMoves);
-                if (possibleMoves & kingLocation) { return true; }
-            }
-        }
-    }
-
-    return false;
 }
 
 std::string BoardManager::getFullFen(){

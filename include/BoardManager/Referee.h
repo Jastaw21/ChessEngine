@@ -11,11 +11,11 @@ struct Move;
 class BitBoards;
 
 enum BoardStatus {
-    NORMAL,
-    WHITE_CHECK,
-    BLACK_CHECK,
-    WHITE_CHECKMATE,
-    BLACK_CHECKMATE,
+    NORMAL = 1 << 0,
+    WHITE_CHECK = 1 << 1,
+    BLACK_CHECK = 1 << 2,
+    WHITE_CHECKMATE = 1 << 3,
+    BLACK_CHECKMATE = 1 << 4,
 };
 
 class Referee {

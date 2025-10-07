@@ -27,7 +27,7 @@ enum MoveResult {
 struct Move {
     Move() = default;
 
-    Move(const Piece& piece, const int fromSquare, const int toSquare);
+    Move(const Piece& piece, int fromSquare, int toSquare);
 
     Move(const Piece& piece, const int rankFrom, const int fileFrom, const int rankTo, const int fileTo) : piece(piece),
         rankFrom(rankFrom), fileFrom(fileFrom), rankTo(rankTo), fileTo(fileTo){};
@@ -66,6 +66,6 @@ struct Move {
 };
 
 Move createMove(const Piece& piece, const std::string& moveUCI);
-Move createMove(const Piece& piece, const RankAndFile squareFrom, const RankAndFile squareTo,
-                const Piece promotedPiece = PIECE_N);
+Move createMove(const Piece& piece, RankAndFile squareFrom, RankAndFile squareTo,
+                Piece promotedPiece = PIECE_N);
 #endif //CHESS_MOVE_H

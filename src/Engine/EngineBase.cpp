@@ -7,6 +7,8 @@
 #include <cmath>
 #include <future>
 
+#include "BoardManager/Referee.h"
+
 #include "Engine/Evaluation.h"
 
 
@@ -163,9 +165,14 @@ bool EngineBase::evaluateGameState(const int depth, const int ply, float& value1
 float EngineBase::alphaBeta(const int depth, float alpha, const float beta, const int ply, std::vector<Move>& pv,
                             const bool timed){
     pv.clear();
-    if (internalBoardManager_.getGameResult() & GameResult::CHECKMATE) { return -MATE_SCORE + ply; }
-    if (internalBoardManager_.getMoveHistory().size() > 0 && internalBoardManager_.getMoveHistory().top().resultBits &
-        MoveResult::CHECK_MATE) { return -MATE_SCORE + ply; }
+
+    auto status = Referee::checkBoardStatus(
+        *internalBoardManager_.getBitboards(),
+        *internalBoardManager_.getMagicBitBoards(),
+        internalBoardManager_.getCurrentTurn()
+    );
+
+    if (status & BoardStatus::BLACK_CHECKMATE || status & WHITE_CHECKMATE) { return -MATE_SCORE + ply; }
     if (internalBoardManager_.getGameResult() & GameResult::DRAW) { return 0.0f; }
     if (depth == 0) { return evaluator_.evaluate(); }
 

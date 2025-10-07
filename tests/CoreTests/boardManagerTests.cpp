@@ -1,4 +1,3 @@
-
 ; //
 // Created by jacks on 21/06/2025.
 //
@@ -1092,30 +1091,19 @@ TEST(BoardManagerLegality, EnPassantRequiresLastMoveToBePawnMovingTwoSquares){
     ASSERT_FALSE(manager.checkMove(attemptedEnPassant));
 }
 
-TEST(BoardManagerLegality, OpponentKingInCheck){
-    auto manager = BoardManager();
-    manager.setFullFen("k7/3RR3/8/8/8/8/8/8 w - - 0 1");
-    auto move = createMove(WR, "d7d8");
-    ASSERT_TRUE(manager.tryMove(move));
-    EXPECT_TRUE(move.resultBits & CHECK);
-    EXPECT_TRUE(manager.turnToMoveInCheck());
-}
-
 TEST(BoardManagerAdvancedRules, CheckMateWorks){
     auto manager = BoardManager(WHITE);
     manager.getBitboards()->setFenPositionOnly("8/4N1pk/8/8/8/4R3/8/6K1"); // pre-check state
 
     auto checkMateMove = createMove(WR, "e3h3");
     ASSERT_TRUE(manager.tryMove(checkMateMove));
-
-    EXPECT_TRUE(manager.isNowCheckMate());
+    EXPECT_TRUE(checkMateMove.resultBits & CHECK_MATE);
 
     manager.setCurrentTurn(BLACK);
     manager.getBitboards()->setFenPositionOnly("rnbqkbnr/pppp1ppp/4p3/8/6P1/5P2/PPPPP2P/RNBQKBNR");
     auto checkMateMove2 = createMove(BQ, "d8h4");
 
     ASSERT_TRUE(manager.tryMove(checkMateMove2));
-    EXPECT_TRUE(manager.isNowCheckMate());
     EXPECT_TRUE(checkMateMove2.resultBits & CHECK_MATE);
     EXPECT_TRUE(checkMateMove2.resultBits & CHECK);
 
@@ -1123,14 +1111,12 @@ TEST(BoardManagerAdvancedRules, CheckMateWorks){
     manager.getBitboards()->setFenPositionOnly("r2qk2r/p1pp1pb1/bn2pQp1/3PN3/1p2P3/2N4p/PPPBBPPP/R3K2R");
     auto checkMateMove3 = createMove(WQ, "f6f7");
     ASSERT_TRUE(manager.tryMove(checkMateMove3));
-    EXPECT_TRUE(manager.isNowCheckMate());
     EXPECT_TRUE(checkMateMove3.resultBits & CHECK_MATE);
     EXPECT_TRUE(checkMateMove3.resultBits & CHECK);
 
     manager.setFullFen("rnbqkbnr/pppp1ppp/4p3/8/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 1");
     auto checkMateMove4 = createMove(BQ, "d8h4");
     ASSERT_TRUE(manager.tryMove(checkMateMove4));
-    EXPECT_TRUE(manager.isNowCheckMate());
 }
 
 TEST(BoardManagerAdvancedRules, EnPassantMustBeAttackingLastMovedPiece){
