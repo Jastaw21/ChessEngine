@@ -88,7 +88,7 @@ TEST(EngineTests, FindsMateInTwoSteps){
 
     auto result = engine.Search(3);
 
-    std::cout << result.depth;
+    std::cout << result.stats.depth;
 }
 
 TEST(EngineTests, FindsMateInOneStep){
@@ -226,7 +226,8 @@ TEST(EngineTests, GeneratingMovesDoesntResetENPassant){
 TEST(Performance, Depth5WithTT){
     auto engine = MainEngine();
     engine.setFullFen(Fen::FULL_STARTING_FEN);
-    engine.Search(5);
+    auto result = engine.Search(5);
+    result.stats.print();
 }
 
 TEST(EngineTests, TimedSearchGivesSameResult){
@@ -251,10 +252,7 @@ TEST(EngineTests, TimedSearchExitsVaguelyRight){
 
     auto startTime = std::chrono::high_resolution_clock::now();
     auto result = engine.Search(40, 3000);
-    std::cout
-            << "Nodes: " << result.nodesSearched
-            << " Depth: " << result.depth
-            << " Hash Hits: " << result.hashHits << std::endl;
+    result.stats.print();
     auto endTime = std::chrono::high_resolution_clock::now();
 
     // doesn't burst

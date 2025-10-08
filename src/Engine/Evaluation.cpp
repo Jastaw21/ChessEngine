@@ -103,5 +103,6 @@ float Evaluator::evaluate(){
     const auto score = materialScore() + pieceSquareScore();
 
     // centipawns
-    return score / (pieceScoresArray[WP] / 100.f);
+    constexpr auto centiPawn = pieceScoresArray[WP] / 100.f;
+    return score / centiPawn;
 }

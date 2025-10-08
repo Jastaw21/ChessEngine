@@ -24,6 +24,7 @@ int EngineBase::ScoreMove(const Move& move, const Move& ttMove){
     if (move == ttMove) { return 1000000; }
 
     int score = 0;
+    //we actually get better performance with no ordering
     if (move.resultBits & MoveResult::CHECK_MATE)
         score += 100000;
     if (move.resultBits & MoveResult::CHECK)
@@ -87,7 +88,6 @@ SearchResults EngineBase::executeSearch(const int depth, const bool timed){
     float beta = INFINITY;
 
     for (auto& move: moves) {
-        NodesSearched++;
         internalBoardManager_.forceMove(move);
 
         std::vector<Move> thisPV;
@@ -108,20 +108,19 @@ SearchResults EngineBase::executeSearch(const int depth, const bool timed){
         }
     }
 
-    bestResult.depth = depth;
-    bestResult.hashHits = HashHits;
-    bestResult.nodesSearched = NodesSearched;
+    currentSearchStats.depth = depth;
+    bestResult.stats = currentSearchStats;
     return bestResult;
 }
 
 SearchResults EngineBase::Search(const int depth){
     lastSearchEvaluations.reset();
-    currentSearchID++;
+    currentSearchStats.searchID++;;
     return executeSearch(depth);
 }
 
 SearchResults EngineBase::Search(int MaxDepth, int SearchMs){
-    currentSearchID++;
+    currentSearchStats.searchID++;
     const int marginSearch = std::max(50, SearchMs - 50);
     deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(marginSearch);
 
@@ -134,9 +133,8 @@ SearchResults EngineBase::Search(int MaxDepth, int SearchMs){
         maxDepthReached = depth;
     }
 
-    bestResult.hashHits = HashHits;
-    bestResult.nodesSearched = NodesSearched;
-    bestResult.depth = maxDepthReached;
+    currentSearchStats.depth = maxDepthReached;
+    bestResult.stats = currentSearchStats;
 
     return bestResult;
 }
@@ -164,6 +162,7 @@ bool EngineBase::evaluateGameState(const int depth, const int ply, float& value1
 
 float EngineBase::alphaBeta(const int depth, float alpha, const float beta, const int ply, std::vector<Move>& pv,
                             const bool timed){
+    currentSearchStats.nodesSearched++;
     pv.clear();
 
     auto status = Referee::checkBoardStatus(
@@ -182,7 +181,7 @@ float EngineBase::alphaBeta(const int depth, float alpha, const float beta, cons
     Move ttMove;
     if (ttEntry.has_value()) {
         if (ttEntry->depth >= depth) {
-            HashHits++;
+            currentSearchStats.hashHits++;
             return ttEntry->eval;
         }
         ttMove = ttEntry->bestMove;
@@ -202,7 +201,7 @@ float EngineBase::alphaBeta(const int depth, float alpha, const float beta, cons
         if (timed && std::chrono::steady_clock::now() >= deadline) {
             return 0.0f; // bail inside loop
         }
-        NodesSearched++;
+
         // push the move onto the board
         internalBoardManager_.forceMove(move);
         std::vector<Move> thisPV;
@@ -219,14 +218,17 @@ float EngineBase::alphaBeta(const int depth, float alpha, const float beta, cons
 
         if (eval > alpha) { alpha = eval; }
 
-        if (alpha >= beta) { break; }
+        if (alpha >= beta) {
+            currentSearchStats.betaCutoffs++;
+            break;
+        }
     }
     TTEntry newEntry{
                 .key = hash,
                 .eval = bestScore,
                 .bestMove = bestMove,
                 .depth = depth,
-                .age = currentSearchID // Track which search this is from
+                .age = currentSearchStats.searchID // Track which search this is from
             };
     transpositionTable_.storeVector(newEntry);
 

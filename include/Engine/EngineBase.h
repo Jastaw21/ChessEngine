@@ -16,14 +16,27 @@
 
 #include "BoardManager/BoardManager.h"
 
+struct SearchStatistics {
+    int searchID = 0;
+    int nodesSearched = 0;
+    int hashHits = 0;
+    int betaCutoffs = 0;
+    int alphaCutoffs = 0;
+    int depth = 0;
+
+    void print() const{
+        double ebf = std::pow(nodesSearched, 1.0 / depth);
+        std::cout << "Search ID: " << searchID << " N:" << nodesSearched << " hh: " << hashHits << " beta cut " <<
+                betaCutoffs << " ebf: " << ebf << std::endl;
+    }
+};
+
 struct SearchResults {
     float score;
     Move bestMove;
-    int depth;
     std::vector<Move> variation;
 
-    int nodesSearched = 0;
-    int hashHits = 0;
+    SearchStatistics stats;
 };
 
 struct MoveEvaluations {
@@ -118,10 +131,7 @@ private:
     void SortMoves(std::vector<Move>& moves, const Move& ttMove);
     bool evaluateGameState(int depth, int ply, float& value1);
 
-    int currentSearchID = 0;
-    int NodesSearched = 0;
-    int HashHits = 0;
-
+    SearchStatistics currentSearchStats;
     MoveEvaluations lastSearchEvaluations;
 };
 
