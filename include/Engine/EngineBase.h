@@ -16,19 +16,52 @@
 
 #include "BoardManager/BoardManager.h"
 
+inline float percentOf(int numerator, int denominator){ return denominator > 0 ? 100.f * numerator / denominator : 0; }
+
 struct SearchStatistics {
     int searchID = 0;
     int nodesSearched = 0;
-    int hashHits = 0;
-    int betaCutoffs = 0;
-    int alphaCutoffs = 0;
     int depth = 0;
+
+    int endGameExits = 0;
+    int nullMoveCutoffs = 0;
+    int betaCutoffs = 0;
+
+    int ttProbes = 0;
+    int ttHits = 0;
+    int ttCutoffs = 0;
+    int ttStores = 0;
+
+
+    int firstMoveCutoffs = 0;
+
+    int pvHashHits = 0;
+
 
     void print() const{
         double ebf = std::pow(nodesSearched, 1.0 / depth);
-        std::cout << "Search ID: " << searchID << " N:" << nodesSearched << " hh: " << hashHits << " beta cut " <<
-                betaCutoffs << " ebf: " << ebf << std::endl;
+        std::cout << "Search ID: " << searchID << std::endl
+                << "Depth: " << depth << std::endl
+                << "Nodes:" << nodesSearched << std::endl
+                << "ebf: " << ebf << std::endl
+
+                << "tt eval cutoffs: " << ttCutoffs << std::endl
+                << "Beta cutoffs: " << betaCutoffs << " " << percentOf(betaCutoffs, nodesSearched) << std::endl
+                << "Endgame exits: " << endGameExits << std::endl
+                << "Null move cutoffs: " << nullMoveCutoffs << std::endl
+                << "Remaining Nodes: " << nodesSearched - ttCutoffs - betaCutoffs - endGameExits - nullMoveCutoffs <<
+                std::endl
+
+                << "First move cutoffs: " << firstMoveCutoffs << " " << percentOf(firstMoveCutoffs, betaCutoffs) <<
+                std::endl
+
+                << "tt hits: " << ttHits << " " << percentOf(ttHits, ttProbes) << std::endl
+                << "tt stores: " << ttStores
+                << std::endl;
     }
+
+    float firstMovePercent() const{ return betaCutoffs > 0 ? 100.f * firstMoveCutoffs / betaCutoffs : 0; }
+    float cutoffPercent() const{ return betaCutoffs > 0 ? 100.f * betaCutoffs / nodesSearched : 0; }
 };
 
 struct SearchResults {
@@ -69,7 +102,13 @@ public:
     // control flage
     void stop(){ shouldQuit_ = true; }
     void quit(){ shouldQuit_ = true; }
-    void reset(){ internalBoardManager_.resetGame(); }
+
+    void reset(){
+        internalBoardManager_.resetGame();
+        lastSearchEvaluations.reset();
+        transpositionTable_.clear();
+    }
+
     void go(int depth);
     void go(int depth, int wtime, int btime, int winc = 0, int binc = 0);
     bool shouldQuit() const{ return shouldQuit_; }
@@ -82,6 +121,7 @@ public:
     virtual int getSearchDepth() const{ return searchDepth_; }
     virtual void setSearchDepth(const int search_depth){ searchDepth_ = search_depth; }
     MoveEvaluations& getLastSearchEvaluations(){ return lastSearchEvaluations; }
+    TranspositionTable& getTranspositionTable(){ return transpositionTable_; }
 
     // UCI Protocol Interface
     virtual void parseUCI(const std::string& uci);
@@ -125,11 +165,14 @@ private:
     std::chrono::steady_clock::time_point deadline;
 
     SearchResults executeSearch(int depth, bool timed = false);
-    float alphaBeta(int depth, float alpha, float beta, int ply, std::vector<Move>& pv, bool timed = false);
+    float alphaBeta(int depth, float alpha, float beta, int ply, std::vector<Move>& pv, bool timed = false,
+                    bool nullMoveAllowed = false);
 
-    int ScoreMove(const Move& move, const Move& ttMove);
+
     void SortMoves(std::vector<Move>& moves, const Move& ttMove);
     bool evaluateGameState(int depth, int ply, float& value1);
+    bool performNullMoveReduction(int depth, float beta, int ply, bool timed,
+                                  float& evaluatedValue);
 
     SearchStatistics currentSearchStats;
     MoveEvaluations lastSearchEvaluations;

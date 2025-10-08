@@ -11,30 +11,48 @@
 
 #include "Engine/Evaluation.h"
 
+int getPieceValue(Piece piece){
+    switch (piece) {
+        case WP:
+        case BP: return 1;
+        case WN:
+        case BN: return 3;
+        case WB:
+        case BB: return 3;
+        case WR:
+        case BR: return 5;
+        case WQ:
+        case BQ: return 9;
+        case WK:
+        case BK: return 0;
+    }
+    return 0;
+}
 
 void EngineBase::SortMoves(std::vector<Move>& moves, const Move& ttMove){
     std::ranges::stable_sort(moves,
-                             [&ttMove, this](const Move& a, const Move& b) {
-                                 return ScoreMove(a, ttMove) > ScoreMove(b, ttMove);
+                             [&](const Move& a, const Move& b) {
+                                 int scoreA = 0;
+                                 int scoreB = 0;
+
+                                 if (a == ttMove) { return true; }
+                                 if (b == ttMove) { return false; }
+
+                                 if (a.resultBits & MoveResult::CAPTURE) {
+                                     Piece victim = a.capturedPiece;
+                                     Piece attacker = a.piece;
+
+                                     scoreA = 10 * (getPieceValue(victim) - getPieceValue(attacker));
+                                 }
+                                 if (b.resultBits & MoveResult::CAPTURE) {
+                                     Piece victim = b.capturedPiece;
+                                     Piece attacker = b.piece;
+
+                                     scoreB = 10 * (getPieceValue(victim) - getPieceValue(attacker));
+                                 }
+
+                                 return scoreA > scoreB;
                              });
-}
-
-int EngineBase::ScoreMove(const Move& move, const Move& ttMove){
-    // is it the best pv
-    if (move == ttMove) { return 1000000; }
-
-    int score = 0;
-    //we actually get better performance with no ordering
-    if (move.resultBits & MoveResult::CHECK_MATE)
-        score += 100000;
-    if (move.resultBits & MoveResult::CHECK)
-        score += 5000;
-    if (move.resultBits & MoveResult::PROMOTION)
-        score += 1000;
-    if (move.resultBits & MoveResult::CAPTURE)
-        score += 500;
-
-    return score;
 }
 
 EngineBase::EngineBase() : ChessPlayer(ENGINE),
@@ -160,8 +178,27 @@ bool EngineBase::evaluateGameState(const int depth, const int ply, float& value1
     return false;
 }
 
+bool EngineBase::performNullMoveReduction(const int depth, const float beta, const int ply, const bool timed,
+                                          float& evaluatedValue){
+    const int reduction = 3;
+    internalBoardManager_.makeNullMove();
+
+    std::vector<Move> nullPV;
+    float nullScore = -alphaBeta(depth - reduction, -beta, -beta + 1,
+                                 ply + 1, nullPV, timed, false); // Don't allow nested nulls
+    internalBoardManager_.makeNullMove();
+
+    if (nullScore >= beta) {
+        currentSearchStats.nullMoveCutoffs++;
+        evaluatedValue = beta;
+        return true; // Fail-high cutoff
+    }
+
+    return false;
+}
+
 float EngineBase::alphaBeta(const int depth, float alpha, const float beta, const int ply, std::vector<Move>& pv,
-                            const bool timed){
+                            const bool timed, const bool nullMoveAllowed){
     currentSearchStats.nodesSearched++;
     pv.clear();
 
@@ -171,32 +208,56 @@ float EngineBase::alphaBeta(const int depth, float alpha, const float beta, cons
         internalBoardManager_.getCurrentTurn()
     );
 
-    if (status & BoardStatus::BLACK_CHECKMATE || status & WHITE_CHECKMATE) { return -MATE_SCORE + ply; }
-    if (internalBoardManager_.getGameResult() & GameResult::DRAW) { return 0.0f; }
-    if (depth == 0) { return evaluator_.evaluate(); }
+    if (status & BoardStatus::BLACK_CHECKMATE || status & WHITE_CHECKMATE) {
+        currentSearchStats.endGameExits++;
+        return -MATE_SCORE + ply;
+    }
+    if (internalBoardManager_.getGameResult() & GameResult::DRAW) {
+        currentSearchStats.endGameExits++;
+        return 0.0f;
+    }
+    if (depth == 0) {
+        currentSearchStats.endGameExits++;
+        return evaluator_.evaluate();
+    }
+
+    bool inCheck = status & (BoardStatus::BLACK_CHECK | BoardStatus::WHITE_CHECK);
 
     auto hash = boardManager()->getZobristHash()->getHash();
     auto ttEntry = transpositionTable_.retrieveVector(hash);
+    currentSearchStats.ttProbes++;
 
     Move ttMove;
-    if (ttEntry.has_value()) {
-        if (ttEntry->depth >= depth) {
-            currentSearchStats.hashHits++;
-            return ttEntry->eval;
-        }
-        ttMove = ttEntry->bestMove;
+    if (ttEntry.has_value() && ttEntry->depth >= depth) {
+        currentSearchStats.ttCutoffs++;
+
+        TTEntry refreshedEntry = ttEntry.value();
+        refreshedEntry.age = currentSearchStats.searchID;
+        transpositionTable_.storeVector(refreshedEntry);
+
+        return ttEntry->eval;
+    }
+
+    if (ttEntry.has_value()) { ttMove = ttEntry->bestMove; }
+
+    if (nullMoveAllowed && depth >= 3 && !inCheck) {
+        float evaluatedValue;
+        if (performNullMoveReduction(depth, beta, ply, timed, evaluatedValue)) { return evaluatedValue; }
     }
 
     auto moves = generateMoveList();
     SortMoves(moves, ttMove);
 
-    if (moves.empty())
+    if (moves.empty()) {
+        currentSearchStats.endGameExits++;
         return evaluator_.evaluate();
+    }
 
     float bestScore = -MATE_SCORE - 1;
     Move bestMove;
     std::vector<Move> bestPV;
 
+    bool isFirstMove = true;
     for (auto& move: moves) {
         if (timed && std::chrono::steady_clock::now() >= deadline) {
             return 0.0f; // bail inside loop
@@ -206,7 +267,7 @@ float EngineBase::alphaBeta(const int depth, float alpha, const float beta, cons
         internalBoardManager_.forceMove(move);
         std::vector<Move> thisPV;
 
-        float eval = -alphaBeta(depth - 1, -beta, -alpha, ply + 1, thisPV, timed);
+        float eval = -alphaBeta(depth - 1, -beta, -alpha, ply + 1, thisPV, timed, true);
 
         internalBoardManager_.undoMove();
 
@@ -220,9 +281,12 @@ float EngineBase::alphaBeta(const int depth, float alpha, const float beta, cons
 
         if (alpha >= beta) {
             currentSearchStats.betaCutoffs++;
+            if (isFirstMove) { currentSearchStats.firstMoveCutoffs++; }
             break;
         }
+        isFirstMove = false;
     }
+
     TTEntry newEntry{
                 .key = hash,
                 .eval = bestScore,
@@ -231,6 +295,7 @@ float EngineBase::alphaBeta(const int depth, float alpha, const float beta, cons
                 .age = currentSearchStats.searchID // Track which search this is from
             };
     transpositionTable_.storeVector(newEntry);
+    currentSearchStats.ttStores++;
 
     if (bestScore > -MATE_SCORE - 1) {
         pv.push_back(bestMove);

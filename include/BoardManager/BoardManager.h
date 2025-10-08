@@ -60,6 +60,8 @@ public:
     void undoMove(const Move& move);
     void undoMove();
 
+    void makeNullMove();
+
     bool isGameOver();
     int getGameResult();
 

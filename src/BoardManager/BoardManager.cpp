@@ -200,6 +200,8 @@ void BoardManager::undoMove(){
     undoMove(moveHistory.top());
 }
 
+void BoardManager::makeNullMove(){ swapTurns(); }
+
 bool BoardManager::threefoldRepetition(){ return repetitionFlag; }
 
 bool BoardManager::isGameOver(){

@@ -230,6 +230,14 @@ TEST(Performance, Depth5WithTT){
     result.stats.print();
 }
 
+TEST(Performance, Iterative){
+    auto engine = MainEngine();
+    engine.setFullFen(Fen::FULL_STARTING_FEN);
+    auto result = engine.Search(40, 3000);
+    result.stats.print();
+    engine.getTranspositionTable().getStats().print();
+}
+
 TEST(EngineTests, TimedSearchGivesSameResult){
     auto engine = MainEngine();
 
@@ -251,13 +259,13 @@ TEST(EngineTests, TimedSearchExitsVaguelyRight){
     engine.setFullFen(Fen::FULL_KIWI_PETE_FEN);
 
     auto startTime = std::chrono::high_resolution_clock::now();
-    auto result = engine.Search(40, 3000);
+    auto result = engine.Search(40, 1000);
     result.stats.print();
     auto endTime = std::chrono::high_resolution_clock::now();
 
     // doesn't burst
-    EXPECT_LT(std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count(), 3000);
-    EXPECT_GT(std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count(), 2860);
+    EXPECT_LT(std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count(), 1000);
+    EXPECT_GT(std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count(), 860);
     std::cout << result.bestMove.toUCI() << std::endl;
 }
 
@@ -272,4 +280,13 @@ TEST(EngineTests, TTDepth1){
     auto engine = MainEngine();
     engine.setFullFen(Fen::FULL_STARTING_FEN);
     engine.Search(2, 100);
+}
+
+TEST(EngineTests, FindsFunMateIn5){
+    auto position = "4r2k/pp4pp/8/3Q1pN1/3P4/4rP2/P7/R2K4 w - - 0 1";
+    auto engine = MainEngine();
+    engine.setFullFen(position);
+    auto result = engine.Search(5);
+    EXPECT_EQ(result.bestMove.toUCI(), "g5f7");
+    std::cout << result.bestMove.toUCI();
 }
