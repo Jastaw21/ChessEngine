@@ -2,9 +2,13 @@
 // Created by jacks on 01/09/2025.
 //
 
+#include <unordered_set>
+
 #include  <gtest/gtest.h>
-#include "../../include/Engine/ZobristHash.h"
+#include "Engine/ZobristHash.h"
 #include "BoardManager/BoardManager.h"
+
+#include "Engine/MainEngine.h"
 
 TEST(Zobrist, BasicInitAndUpdateState){
     auto zob = ZobristHash(Fen::FULL_STARTING_FEN);
@@ -251,4 +255,34 @@ TEST(Zobrist, UndoCastlingMoves){
     zob.undoMove(move);
 
     EXPECT_EQ(zob.getHash(), preMoveHash);
+}
+
+TEST(Zobrist, CollisionRateTest){
+    auto engine = MainEngine();
+
+    for (int game = 0; game < 10; game++) {
+        engine.reset();
+        engine.setFullFen(Fen::FULL_STARTING_FEN);
+        auto hash = engine.boardManager()->getZobristHash()->getHash();
+        std::vector<Move> movesMade;
+
+        int move = 0;
+
+        while (move < 40) {
+            auto moves = engine.generateMoveList();
+            if (moves.empty()) break;
+
+            Move m = moves[rand() % moves.size()];
+
+            if (engine.boardManager()->checkMove(m)) { move++; }
+
+            engine.boardManager()->forceMove(m);
+            movesMade.push_back(m);
+        }
+        for (auto move: movesMade) { engine.boardManager()->undoMove(); }
+
+        uint64_t hash3 = engine.boardManager()->getZobristHash()->getHash();
+
+        EXPECT_EQ(hash, hash3);
+    }
 }

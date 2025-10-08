@@ -96,6 +96,7 @@ public:
     // Core Engine Interface
     SearchResults Search(int depth = 5);
     SearchResults Search(int MaxDepth, int SearchMs);
+    virtual std::vector<Move> generateMoveList();
 
     Move getBestMove(int depth){ return Search(depth).bestMove; }
 
@@ -138,9 +139,7 @@ public:
 protected:
 
     // Move Generation Interface
-    virtual std::vector<Move> generateMoveList();
-
-    virtual void generateValidMovesFromPosition(
+      virtual void generateValidMovesFromPosition(
         const Piece& piece, int startSquare, std::vector<Move>& moveList) = 0;
     virtual void generateMovesForPiece(const Piece& piece, std::vector<Move>& moveList) = 0;
 

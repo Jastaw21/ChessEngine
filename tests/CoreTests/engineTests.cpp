@@ -233,7 +233,7 @@ TEST(Performance, Depth5WithTT){
 TEST(Performance, Iterative){
     auto engine = MainEngine();
     engine.setFullFen(Fen::FULL_STARTING_FEN);
-    auto result = engine.Search(40, 3000);
+    auto result = engine.Search(40, 10000);
     result.stats.print();
     engine.getTranspositionTable().getStats().print();
 }
