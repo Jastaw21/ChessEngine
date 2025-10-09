@@ -15,6 +15,7 @@
 #include "TranspositionTable.h"
 
 #include "BoardManager/BoardManager.h"
+#include "BoardManager/Referee.h"
 
 inline float percentOf(int numerator, int denominator){ return denominator > 0 ? 100.f * numerator / denominator : 0; }
 
@@ -37,6 +38,8 @@ struct SearchStatistics {
 
     int pvHashHits = 0;
 
+    int noValidMovesFound = 0;
+
 
     void print() const{
         double ebf = std::pow(nodesSearched, 1.0 / depth);
@@ -54,9 +57,8 @@ struct SearchStatistics {
 
                 << "First move cutoffs: " << firstMoveCutoffs << " " << percentOf(firstMoveCutoffs, betaCutoffs) <<
                 std::endl
+                << "No valid moves found: " << noValidMovesFound << "\n"
 
-                << "tt hits: " << ttHits << " " << percentOf(ttHits, ttProbes) << std::endl
-                << "tt stores: " << ttStores
                 << std::endl;
     }
 
@@ -84,6 +86,10 @@ struct MoveEvaluations {
     float getScore(const Move& move){
         for (size_t i = 0; i < moves.size(); i++) { if (moves[i].toUCI() == move.toUCI()) { return scores[i]; } }
         return 0;
+    }
+
+    void print() const{
+        for (size_t i = 0; i < moves.size(); i++) { std::cout << moves[i].toUCI() << " " << scores[i] << std::endl; }
     }
 };
 
@@ -139,7 +145,7 @@ public:
 protected:
 
     // Move Generation Interface
-      virtual void generateValidMovesFromPosition(
+    virtual void generateValidMovesFromPosition(
         const Piece& piece, int startSquare, std::vector<Move>& moveList) = 0;
     virtual void generateMovesForPiece(const Piece& piece, std::vector<Move>& moveList) = 0;
 
@@ -153,6 +159,7 @@ protected:
     Evaluator evaluator_{};
     bool shouldQuit_ = false;
     TranspositionTable transpositionTable_;
+    bool timedOut = false;
 
 private:
 
@@ -169,9 +176,9 @@ private:
 
 
     void SortMoves(std::vector<Move>& moves, const Move& ttMove);
-    bool evaluateGameState(int depth, int ply, float& value1);
+    bool evaluateGameState(int depth, int ply, float& value1, int boardStatus);
     bool performNullMoveReduction(int depth, float beta, int ply, bool timed,
-                                  float& evaluatedValue);
+                                  float& evaluatedValue, int status);
 
     SearchStatistics currentSearchStats;
     MoveEvaluations lastSearchEvaluations;

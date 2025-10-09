@@ -70,7 +70,7 @@ TEST(EPDTests, FirstBatch){
     for (const auto& result: results) {
         totalCount++;
         engine.setFullFen(result.fen);
-        auto move = engine.Search(4);
+        auto move = engine.Search(12, 1000);
 
         const auto matching = move.bestMove.toUCI() == result.move.toUCI();
         const auto correct = result.BestMove ? matching : !matching;
@@ -79,10 +79,13 @@ TEST(EPDTests, FirstBatch){
 
             auto moveEvals = engine.getLastSearchEvaluations().getScore(result.move);
 
-            std::cout << "Id: " << totalCount << " failed, starting fen: " << result.fen << " our move: " << move.
-                    bestMove.toUCI() << " score: " << move.score << " engine wanted: " << result.move.toUCI() <<
-                    " which we scored: " << moveEvals <<
-                    std::endl;
+            std::cout
+                    << "Id: " << totalCount
+                    << " failed, starting fen: " << result.fen
+                    << " our move: " << move.bestMove.toUCI() << " score: " << move.score
+                    << " at depth: " << move.stats.depth
+                    << " engine wanted: " << result.move.toUCI() << " which we scored: " << moveEvals
+                    << std::endl;
         } else { std::cout << "Passed: " << totalCount << std::endl; }
     }
 

@@ -1280,3 +1280,12 @@ TEST(BoardManager, RestoreEnPassantAfterUndo){
     manager.undoMove();
     EXPECT_EQ(manager.getEnPassantSquare(), -1);
 }
+
+TEST(BoardManager, CantFindIllegalMoveInCheck){
+    auto manager = BoardManager();
+    manager.setFullFen("4r2k/pp3Npp/8/3Q1p2/3P4/4rP2/P7/R2K4 b - - 1 1");
+
+    auto attemptedMove = createMove(BR, "e3e1");
+    EXPECT_FALSE(manager.checkMove(attemptedMove));
+}
+

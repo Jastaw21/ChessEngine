@@ -38,6 +38,10 @@ void EngineBase::SortMoves(std::vector<Move>& moves, const Move& ttMove){
                                  if (a == ttMove) { return true; }
                                  if (b == ttMove) { return false; }
 
+                                 if (a.resultBits & CHECK_MATE) { scoreA = 1000000; }
+
+                                 if (b.resultBits & CHECK_MATE) { scoreB = 1000000; }
+
                                  if (a.resultBits & MoveResult::CAPTURE) {
                                      Piece victim = a.capturedPiece;
                                      Piece attacker = a.piece;
@@ -94,13 +98,21 @@ void EngineBase::parseUCI(const std::string& uci){
 
 std::vector<Move> EngineBase::generateMoveList(){ return std::vector<Move>(); }
 
+SearchResults EngineBase::Search(const int depth){
+    lastSearchEvaluations.reset();
+    currentSearchStats.searchID++;;
+    return executeSearch(depth, false);
+}
+
 SearchResults EngineBase::executeSearch(const int depth, const bool timed){
+    lastSearchEvaluations.reset();
     SearchResults bestResult;
     auto moves = generateMoveList();
     if (moves.empty()) { return bestResult; }
 
     bestResult.bestMove = moves[0];
     bestResult.score = -MATE_SCORE - 1;
+    bool foundMove = false;
 
     float alpha = -INFINITY;
     float beta = INFINITY;
@@ -109,11 +121,16 @@ SearchResults EngineBase::executeSearch(const int depth, const bool timed){
         internalBoardManager_.forceMove(move);
 
         std::vector<Move> thisPV;
+
         float eval = -alphaBeta(depth - 1, alpha, beta, 1, thisPV, timed);
-        lastSearchEvaluations.moves.push_back(move);
-        lastSearchEvaluations.scores.push_back(eval);
 
         internalBoardManager_.undoMove();
+
+        if (timedOut) break;
+
+        foundMove = true;
+        lastSearchEvaluations.moves.push_back(move);
+        lastSearchEvaluations.scores.push_back(eval);
 
         if (eval > bestResult.score) {
             bestResult.score = eval;
@@ -124,6 +141,13 @@ SearchResults EngineBase::executeSearch(const int depth, const bool timed){
             bestResult.variation.insert(bestResult.variation.end(),
                                         thisPV.begin(), thisPV.end());
         }
+
+        if (eval > alpha) { alpha = eval; }
+    }
+
+    if (!foundMove) {
+        bestResult.bestMove = moves[0];
+        bestResult.score = 0;
     }
 
     currentSearchStats.depth = depth;
@@ -131,13 +155,8 @@ SearchResults EngineBase::executeSearch(const int depth, const bool timed){
     return bestResult;
 }
 
-SearchResults EngineBase::Search(const int depth){
-    lastSearchEvaluations.reset();
-    currentSearchStats.searchID++;;
-    return executeSearch(depth);
-}
-
 SearchResults EngineBase::Search(int MaxDepth, int SearchMs){
+    timedOut = false;
     currentSearchStats.searchID++;
     const int marginSearch = std::max(50, SearchMs - 50);
     deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(marginSearch);
@@ -146,9 +165,13 @@ SearchResults EngineBase::Search(int MaxDepth, int SearchMs){
     int maxDepthReached = 0;
 
     for (int depth = 1; depth <= MaxDepth; depth++) {
-        if (std::chrono::steady_clock::now() >= deadline) { break; }
+        if (std::chrono::steady_clock::now() >= deadline) {
+            // spacing
+            break;
+        }
         bestResult = executeSearch(depth, true);
         maxDepthReached = depth;
+        if (timedOut) break;
     }
 
     currentSearchStats.depth = maxDepthReached;
@@ -157,34 +180,30 @@ SearchResults EngineBase::Search(int MaxDepth, int SearchMs){
     return bestResult;
 }
 
-bool EngineBase::evaluateGameState(const int depth, const int ply, float& evalValue){
-    auto status = Referee::checkBoardStatus(
-        *internalBoardManager_.getBitboards(),
-        *internalBoardManager_.getMagicBitBoards(),
-        internalBoardManager_.getCurrentTurn()
-    );
-
-    if (status & BoardStatus::BLACK_CHECKMATE || status & WHITE_CHECKMATE) {
+bool EngineBase::evaluateGameState(const int depth, const int ply, float& evalValue, const int boardStatus){
+    if (boardStatus & BoardStatus::BLACK_CHECKMATE || boardStatus & WHITE_CHECKMATE) {
         currentSearchStats.endGameExits++;
         evalValue = -MATE_SCORE + ply;
         return true;
     }
     if (internalBoardManager_.getGameResult() & GameResult::DRAW) {
         currentSearchStats.endGameExits++;
-         evalValue = 0.0f;
+        evalValue = 0.0f;
         return true;
     }
     if (depth == 0) {
         currentSearchStats.endGameExits++;
         evalValue = evaluator_.evaluate();
-         return true;
+        return true;
     }
 
     return false;
 }
 
 bool EngineBase::performNullMoveReduction(const int depth, const float beta, const int ply, const bool timed,
-                                          float& evaluatedValue){
+                                          float& evaluatedValue, const int status){
+    auto inCheck = status & (BoardStatus::BLACK_CHECK | BoardStatus::WHITE_CHECK);
+    if (inCheck || depth < 3) { return false; }
     const int reduction = 3;
     internalBoardManager_.makeNullMove();
 
@@ -205,21 +224,23 @@ bool EngineBase::performNullMoveReduction(const int depth, const float beta, con
 
 float EngineBase::alphaBeta(const int depth, float alpha, const float beta, const int ply, std::vector<Move>& pv,
                             const bool timed, const bool nullMoveAllowed){
-
     pv.clear();
+
+    const int status = Referee::checkBoardStatus(
+        *internalBoardManager_.getBitboards(),
+        *internalBoardManager_.getMagicBitBoards(),
+        internalBoardManager_.getCurrentTurn()
+    );
 
     // is there an end game state?
     float earlyExitEval = 0.f;
-    if (evaluateGameState(depth, ply, earlyExitEval)){
-        return earlyExitEval;
-    }
+    if (evaluateGameState(depth, ply, earlyExitEval, status)) { return earlyExitEval; }
 
     // null move reduction
-    bool inCheck = status & (BoardStatus::BLACK_CHECK | BoardStatus::WHITE_CHECK);
-     if (nullMoveAllowed && depth >= 3 && !inCheck) {
-        float evaluatedValue;
-        if (performNullMoveReduction(depth, beta, ply, timed, evaluatedValue)) { return evaluatedValue; }
-    }    
+    // if (nullMoveAllowed) {
+    //     float evaluatedValue;
+    //     if (performNullMoveReduction(depth, beta, ply, timed, evaluatedValue, status)) { return evaluatedValue; }
+    // }
 
     // retrieve (if we can) this postion
     auto hash = boardManager()->getZobristHash()->getHash();
@@ -239,8 +260,8 @@ float EngineBase::alphaBeta(const int depth, float alpha, const float beta, cons
     }
 
     // use the work done before for move ordering
-    if (ttEntry.has_value()) { ttMove = ttEntry->bestMove; }   
-    
+    if (ttEntry.has_value()) { ttMove = ttEntry->bestMove; }
+
     currentSearchStats.nodesSearched++;
     auto moves = generateMoveList();
     SortMoves(moves, ttMove);
@@ -256,13 +277,8 @@ float EngineBase::alphaBeta(const int depth, float alpha, const float beta, cons
     std::vector<Move> bestPV;
 
     bool isFirstMove = true; // so we can track first move cutoffs
+    bool foundMove = false;
     for (auto& move: moves) {
-        
-        // timed out.
-        if (timed && std::chrono::steady_clock::now() >= deadline) {
-            return 0.0f; // bail inside loop
-        }
-
         // push the move onto the board
         internalBoardManager_.forceMove(move);
 
@@ -271,6 +287,13 @@ float EngineBase::alphaBeta(const int depth, float alpha, const float beta, cons
         float eval = -alphaBeta(depth - 1, -beta, -alpha, ply + 1, thisPV, timed, true);
 
         internalBoardManager_.undoMove();
+
+        if (timed && std::chrono::steady_clock::now() >= deadline) {
+            timedOut = true;
+            break;
+        }
+
+        foundMove = true;
 
         if (eval > bestScore) {
             bestScore = eval;
@@ -288,21 +311,30 @@ float EngineBase::alphaBeta(const int depth, float alpha, const float beta, cons
         isFirstMove = false;
     }
 
-    // store this search
-    TTEntry newEntry{
-                .key = hash,
-                .eval = bestScore,
-                .bestMove = bestMove,
-                .depth = depth,
-                .age = currentSearchStats.searchID 
-            };
-    transpositionTable_.storeVector(newEntry);
-    currentSearchStats.ttStores++;
+    if (timed && !timedOut && foundMove) {
+        // store this search
+        TTEntry newEntry{
+                    .key = hash,
+                    .eval = bestScore,
+                    .bestMove = bestMove,
+                    .depth = depth,
+                    .age = currentSearchStats.searchID
+                };
+        transpositionTable_.storeVector(newEntry);
+        currentSearchStats.ttStores++;
+    }
 
     // build up the PV
-    if (bestScore > -MATE_SCORE - 1) {
-        pv.push_back(bestMove);
-        pv.insert(pv.end(), bestPV.begin(), bestPV.end());
+    if (timed) {
+        if (foundMove && bestScore > -MATE_SCORE - 1) {
+            pv.push_back(bestMove);
+            pv.insert(pv.end(), bestPV.begin(), bestPV.end());
+        }
+    } else {
+        if (bestScore > -MATE_SCORE - 1) {
+            pv.push_back(bestMove);
+            pv.insert(pv.end(), bestPV.begin(), bestPV.end());
+        }
     }
 
     return bestScore;
