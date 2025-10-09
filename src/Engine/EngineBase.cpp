@@ -157,24 +157,29 @@ SearchResults EngineBase::Search(int MaxDepth, int SearchMs){
     return bestResult;
 }
 
-bool EngineBase::evaluateGameState(const int depth, const int ply, float& value1){
-    if (internalBoardManager_.getGameResult() & GameResult::CHECKMATE) {
-        value1 = -MATE_SCORE + ply;
-        return true;
-    }
-    if (!internalBoardManager_.getMoveHistory().empty() && internalBoardManager_.getMoveHistory().top().resultBits &
-        MoveResult::CHECK_MATE) {
-        value1 = -MATE_SCORE + ply;
+bool EngineBase::evaluateGameState(const int depth, const int ply, float& evalValue){
+    auto status = Referee::checkBoardStatus(
+        *internalBoardManager_.getBitboards(),
+        *internalBoardManager_.getMagicBitBoards(),
+        internalBoardManager_.getCurrentTurn()
+    );
+
+    if (status & BoardStatus::BLACK_CHECKMATE || status & WHITE_CHECKMATE) {
+        currentSearchStats.endGameExits++;
+        evalValue = -MATE_SCORE + ply;
         return true;
     }
     if (internalBoardManager_.getGameResult() & GameResult::DRAW) {
-        value1 = 0.0f;
+        currentSearchStats.endGameExits++;
+         evalValue = 0.0f;
         return true;
     }
     if (depth == 0) {
-        value1 = evaluator_.evaluate();
-        return true;
+        currentSearchStats.endGameExits++;
+        evalValue = evaluator_.evaluate();
+         return true;
     }
+
     return false;
 }
 
@@ -188,10 +193,11 @@ bool EngineBase::performNullMoveReduction(const int depth, const float beta, con
                                  ply + 1, nullPV, timed, false); // Don't allow nested nulls
     internalBoardManager_.makeNullMove();
 
+    // we can skip a move, and still be better than the beta
     if (nullScore >= beta) {
         currentSearchStats.nullMoveCutoffs++;
         evaluatedValue = beta;
-        return true; // Fail-high cutoff
+        return true;
     }
 
     return false;
@@ -199,57 +205,49 @@ bool EngineBase::performNullMoveReduction(const int depth, const float beta, con
 
 float EngineBase::alphaBeta(const int depth, float alpha, const float beta, const int ply, std::vector<Move>& pv,
                             const bool timed, const bool nullMoveAllowed){
-    currentSearchStats.nodesSearched++;
+
     pv.clear();
 
-    auto status = Referee::checkBoardStatus(
-        *internalBoardManager_.getBitboards(),
-        *internalBoardManager_.getMagicBitBoards(),
-        internalBoardManager_.getCurrentTurn()
-    );
-
-    if (status & BoardStatus::BLACK_CHECKMATE || status & WHITE_CHECKMATE) {
-        currentSearchStats.endGameExits++;
-        return -MATE_SCORE + ply;
-    }
-    if (internalBoardManager_.getGameResult() & GameResult::DRAW) {
-        currentSearchStats.endGameExits++;
-        return 0.0f;
-    }
-    if (depth == 0) {
-        currentSearchStats.endGameExits++;
-        return evaluator_.evaluate();
+    // is there an end game state?
+    float earlyExitEval = 0.f;
+    if (evaluateGameState(depth, ply, earlyExitEval)){
+        return earlyExitEval;
     }
 
+    // null move reduction
     bool inCheck = status & (BoardStatus::BLACK_CHECK | BoardStatus::WHITE_CHECK);
+     if (nullMoveAllowed && depth >= 3 && !inCheck) {
+        float evaluatedValue;
+        if (performNullMoveReduction(depth, beta, ply, timed, evaluatedValue)) { return evaluatedValue; }
+    }    
 
+    // retrieve (if we can) this postion
     auto hash = boardManager()->getZobristHash()->getHash();
     auto ttEntry = transpositionTable_.retrieveVector(hash);
     currentSearchStats.ttProbes++;
 
     Move ttMove;
+
+    // found an entry, and it's searched deeper than this, use it blindly
     if (ttEntry.has_value() && ttEntry->depth >= depth) {
         currentSearchStats.ttCutoffs++;
-
         TTEntry refreshedEntry = ttEntry.value();
-        refreshedEntry.age = currentSearchStats.searchID;
+        refreshedEntry.age = currentSearchStats.searchID; // keep this node alive
         transpositionTable_.storeVector(refreshedEntry);
 
         return ttEntry->eval;
     }
 
-    if (ttEntry.has_value()) { ttMove = ttEntry->bestMove; }
-
-    if (nullMoveAllowed && depth >= 3 && !inCheck) {
-        float evaluatedValue;
-        if (performNullMoveReduction(depth, beta, ply, timed, evaluatedValue)) { return evaluatedValue; }
-    }
-
+    // use the work done before for move ordering
+    if (ttEntry.has_value()) { ttMove = ttEntry->bestMove; }   
+    
+    currentSearchStats.nodesSearched++;
     auto moves = generateMoveList();
     SortMoves(moves, ttMove);
 
+    // no possible moves - guess this is rare? TODO: Add emptyMove debugging
     if (moves.empty()) {
-        currentSearchStats.endGameExits++;
+        currentSearchStats.noValidMovesFound++;
         return evaluator_.evaluate();
     }
 
@@ -257,16 +255,19 @@ float EngineBase::alphaBeta(const int depth, float alpha, const float beta, cons
     Move bestMove;
     std::vector<Move> bestPV;
 
-    bool isFirstMove = true;
+    bool isFirstMove = true; // so we can track first move cutoffs
     for (auto& move: moves) {
+        
+        // timed out.
         if (timed && std::chrono::steady_clock::now() >= deadline) {
             return 0.0f; // bail inside loop
         }
 
         // push the move onto the board
         internalBoardManager_.forceMove(move);
-        std::vector<Move> thisPV;
 
+        // recursively search it
+        std::vector<Move> thisPV;
         float eval = -alphaBeta(depth - 1, -beta, -alpha, ply + 1, thisPV, timed, true);
 
         internalBoardManager_.undoMove();
@@ -287,16 +288,18 @@ float EngineBase::alphaBeta(const int depth, float alpha, const float beta, cons
         isFirstMove = false;
     }
 
+    // store this search
     TTEntry newEntry{
                 .key = hash,
                 .eval = bestScore,
                 .bestMove = bestMove,
                 .depth = depth,
-                .age = currentSearchStats.searchID // Track which search this is from
+                .age = currentSearchStats.searchID 
             };
     transpositionTable_.storeVector(newEntry);
     currentSearchStats.ttStores++;
 
+    // build up the PV
     if (bestScore > -MATE_SCORE - 1) {
         pv.push_back(bestMove);
         pv.insert(pv.end(), bestPV.begin(), bestPV.end());
