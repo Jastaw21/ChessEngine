@@ -96,6 +96,7 @@ public:
     // Core Engine Interface
     SearchResults Search(int depth = 5);
     SearchResults Search(int MaxDepth, int SearchMs);
+    std::optional<float> evaluateGameState(int depth, int ply, int boardStatus);
     virtual std::vector<Move> generateMoveList();
 
     Move getBestMove(int depth){ return Search(depth).bestMove; }
@@ -139,7 +140,7 @@ public:
 protected:
 
     // Move Generation Interface
-      virtual void generateValidMovesFromPosition(
+    virtual void generateValidMovesFromPosition(
         const Piece& piece, int startSquare, std::vector<Move>& moveList) = 0;
     virtual void generateMovesForPiece(const Piece& piece, std::vector<Move>& moveList) = 0;
 
@@ -169,9 +170,14 @@ private:
 
 
     void SortMoves(std::vector<Move>& moves, const Move& ttMove);
-    bool evaluateGameState(int depth, int ply, float& value1);
+    bool evaluateGameState(int depth, int ply, float& evaluatedValue, int boardStatus);
     bool performNullMoveReduction(int depth, float beta, int ply, bool timed,
                                   float& evaluatedValue);
+    bool getTranspositionTableValue(int depth, uint64_t& hash, Move& ttMove, float& evalResult);
+    void storeTranspositionTableEntry(int depth, float bestScore, Move bestMove);
+    float performSearchLoop(std::vector<Move>& moves, const int depth, float alpha, const float beta,
+                            const int ply, const bool timed, std::vector<Move>& pv
+    );
 
     SearchStatistics currentSearchStats;
     MoveEvaluations lastSearchEvaluations;
