@@ -25,7 +25,7 @@ void CommandHandlerBase::operator()(const GoCommand& cmd, EngineBase* engine){
     const auto depth = cmd.depth.value_or(engine->getSearchDepth());
     const auto hasTimeCommands = cmd.wtime.has_value() && cmd.btime.has_value();
 
-    if (hasTimeCommands) { engine->go(depth, cmd.wtime.value(), cmd.btime.value()); }
+    if (hasTimeCommands) { engine->go(depth, cmd.wtime.value(), cmd.btime.value()); } else { engine->go(depth); }
 }
 
 void CommandHandlerBase::operator()(const PositionCommand& cmd, EngineBase* engine){

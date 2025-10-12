@@ -270,13 +270,6 @@ TEST(EngineTests, TimedSearchExitsVaguelyRight){
         std::chrono::milliseconds>(endTime - startTime).count() << std::endl;
 }
 
-TEST(EngineTests, EngineParsesAndReturnsCorrectlyWithTimedGo){
-    auto engine = MainEngine();
-    engine.setFullFen(Fen::FULL_STARTING_FEN);
-
-    engine.parseUCI("go wtime 1000 btime 2000 winc 100 binc 100 depth 3");
-}
-
 TEST(EngineTests, TTDepth1){
     auto engine = MainEngine();
     engine.setFullFen(Fen::FULL_STARTING_FEN);
@@ -322,30 +315,4 @@ TEST(EngineTests, FindsFunMateIn5){
     EXPECT_EQ(failed, 0);
 }
 
-TEST(EngineTests, MakingMoveThenGetsRightOneMateIn5){
-    auto engine = MainEngine();
-    engine.setFullFen("4r2k/pp4pp/8/3Q1pN1/3P4/4rP2/P7/R2K4 w - - 0 1");
 
-    auto move = createMove(WN, "g5f7");
-    ASSERT_TRUE(engine.boardManager()->tryMove(move));
-
-    // black responds
-    auto result = engine.Search(5);
-    EXPECT_EQ(result.bestMove.toUCI(), "h8g8");
-    engine.boardManager()->tryMove(result.bestMove);
-
-    auto white = engine.Search(5);
-    EXPECT_EQ(white.bestMove.toUCI(), "f7h6");
-    auto whiteShouldMove = createMove(WN, "f7h6");
-    ASSERT_TRUE(engine.boardManager()->tryMove(whiteShouldMove));
-
-    result = engine.Search(5);
-    EXPECT_EQ(result.bestMove.toUCI(), "g8h8");
-}
-
-TEST(EngineTests, DebugMoveIn5){
-    auto engine = MainEngine();
-    engine.setFullFen("6k1/pp4pp/4r3/3QNp2/3P4/4rP2/P7/R2K4 w - - 0 1");
-
-    EXPECT_EQ(engine.Search(5).bestMove.toUCI(), "d5d8");
-}

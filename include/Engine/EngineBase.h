@@ -85,6 +85,10 @@ struct MoveEvaluations {
         for (size_t i = 0; i < moves.size(); i++) { if (moves[i].toUCI() == move.toUCI()) { return scores[i]; } }
         return 0;
     }
+
+    void print() const{
+        for (size_t i = 0; i < moves.size(); i++) { std::cout << moves[i].toUCI() << " " << scores[i] << std::endl; }
+    }
 };
 
 class EngineBase : public ChessPlayer {
@@ -96,7 +100,6 @@ public:
     // Core Engine Interface
     SearchResults Search(int depth = 5);
     SearchResults Search(int MaxDepth, int SearchMs);
-    std::optional<float> evaluateGameState(int depth, int ply, int boardStatus);
     virtual std::vector<Move> generateMoveList();
 
     Move getBestMove(int depth){ return Search(depth).bestMove; }
@@ -159,7 +162,7 @@ private:
 
     int searchDepth_ = 4;
 
-    std::mt19937 rng; // used for randomising the moves if no best move found;
+    std::mt19937 rng;
     std::ofstream searchLogStream;
 
     std::chrono::steady_clock::time_point deadline;
@@ -169,11 +172,11 @@ private:
                     bool nullMoveAllowed = false);
 
 
+    std::optional<float> evaluateGameState(int depth, int ply, int boardStatus);
     void SortMoves(std::vector<Move>& moves, const Move& ttMove);
-    bool evaluateGameState(int depth, int ply, float& evaluatedValue, int boardStatus);
     bool performNullMoveReduction(int depth, float beta, int ply, bool timed,
                                   float& evaluatedValue);
-    bool getTranspositionTableValue(int depth, uint64_t& hash, Move& ttMove, float& evalResult);
+    bool getTranspositionTableValue(int depth, Move& ttMove, float& evalResult);
     void storeTranspositionTableEntry(int depth, float bestScore, Move bestMove);
     float performSearchLoop(std::vector<Move>& moves, const int depth, float alpha, const float beta,
                             const int ply, const bool timed, std::vector<Move>& pv

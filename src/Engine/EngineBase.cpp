@@ -188,8 +188,8 @@ bool EngineBase::performNullMoveReduction(const int depth, const float beta, con
     return false;
 }
 
-bool EngineBase::getTranspositionTableValue(const int depth, uint64_t& hash, Move& ttMove, float& evalResult){
-    hash = boardManager()->getZobristHash()->getHash();
+bool EngineBase::getTranspositionTableValue(const int depth, Move& ttMove, float& evalResult){
+    auto hash = boardManager()->getZobristHash()->getHash();
     auto ttEntry = transpositionTable_.retrieveVector(hash);
     currentSearchStats.ttProbes++;
 
@@ -278,9 +278,8 @@ float EngineBase::alphaBeta(const int depth, float alpha, const float beta, cons
         endGameEvaluation.has_value()) { return endGameEvaluation.value(); }
 
     // query the transposition table
-    uint64_t hash;
     Move ttMove;
-    if (float evalResult; getTranspositionTableValue(depth, hash, ttMove, evalResult)) { return evalResult; }
+    if (float evalResult; getTranspositionTableValue(depth, ttMove, evalResult)) { return evalResult; }
 
     // null move reductions
     if (nullMoveAllowed && depth >= 3 && !(status & (BoardStatus::BLACK_CHECK | BoardStatus::WHITE_CHECK))) {
