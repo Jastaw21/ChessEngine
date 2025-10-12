@@ -259,14 +259,15 @@ TEST(EngineTests, TimedSearchExitsVaguelyRight){
     engine.setFullFen(Fen::FULL_KIWI_PETE_FEN);
 
     auto startTime = std::chrono::high_resolution_clock::now();
-    auto result = engine.Search(40, 1000);
+    auto result = engine.Search(40, 900);
     result.stats.print();
     auto endTime = std::chrono::high_resolution_clock::now();
 
     // doesn't burst
-    EXPECT_LT(std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count(), 1000);
-    EXPECT_GT(std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count(), 860);
-    std::cout << result.bestMove.toUCI() << std::endl;
+    EXPECT_LT(std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count(), 900);
+    EXPECT_GT(std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count(), 800);
+    std::cout << result.bestMove.toUCI() << " " << std::chrono::duration_cast<
+        std::chrono::milliseconds>(endTime - startTime).count() << std::endl;
 }
 
 TEST(EngineTests, EngineParsesAndReturnsCorrectlyWithTimedGo){
@@ -283,10 +284,68 @@ TEST(EngineTests, TTDepth1){
 }
 
 TEST(EngineTests, FindsFunMateIn5){
-    auto position = "4r2k/pp4pp/8/3Q1pN1/3P4/4rP2/P7/R2K4 w - - 0 1";
+    auto positions = std::array{
+                "4r2k/pp4pp/8/3Q1pN1/3P4/4rP2/P7/R2K4 w - - 0 1",
+                "4r1k1/pp3Npp/8/3Q1p2/3P4/4rP2/P7/R2K4 w - - 2 2",
+                "4r2k/pp4pp/7N/3Q1p2/3P4/4rP2/P7/R2K4 w - - 4 3",
+                "6rk/pp4pp/7N/5p2/3P4/4rP2/P7/R2K4 w - - 0 4"
+            };
+
+    auto bestMoves = std::array{
+                "g5f7",
+                "f7h6",
+                "d5g8",
+                "h6f7"
+            };
+
     auto engine = MainEngine();
-    engine.setFullFen(position);
+
+    int failed = 0;
+    for (int i = 0; i < positions.size(); i++) {
+        engine.setFullFen(positions[i]);
+        auto result = engine.Search(5);
+        auto success = result.bestMove.toUCI() == bestMoves[i];
+
+        if (!success) {
+            failed++;
+            std::cout << "FAILED " << i << std::endl;
+            std::cout << positions[i] << std::endl;
+            std::cout << "Our Move: " << result.bestMove.toUCI() << std::endl;
+            std::cout << "Should See: " << bestMoves[i] << std::endl;
+
+            std::string pv = "PV: ";
+            for (const auto& move: result.variation) { pv += move.toUCI() + " "; }
+            std::cout << pv << std::endl;
+            engine.getLastSearchEvaluations().print();
+        }
+    }
+    EXPECT_EQ(failed, 0);
+}
+
+TEST(EngineTests, MakingMoveThenGetsRightOneMateIn5){
+    auto engine = MainEngine();
+    engine.setFullFen("4r2k/pp4pp/8/3Q1pN1/3P4/4rP2/P7/R2K4 w - - 0 1");
+
+    auto move = createMove(WN, "g5f7");
+    ASSERT_TRUE(engine.boardManager()->tryMove(move));
+
+    // black responds
     auto result = engine.Search(5);
-    EXPECT_EQ(result.bestMove.toUCI(), "g5f7");
-    std::cout << result.bestMove.toUCI();
+    EXPECT_EQ(result.bestMove.toUCI(), "h8g8");
+    engine.boardManager()->tryMove(result.bestMove);
+
+    auto white = engine.Search(5);
+    EXPECT_EQ(white.bestMove.toUCI(), "f7h6");
+    auto whiteShouldMove = createMove(WN, "f7h6");
+    ASSERT_TRUE(engine.boardManager()->tryMove(whiteShouldMove));
+
+    result = engine.Search(5);
+    EXPECT_EQ(result.bestMove.toUCI(), "g8h8");
+}
+
+TEST(EngineTests, DebugMoveIn5){
+    auto engine = MainEngine();
+    engine.setFullFen("6k1/pp4pp/4r3/3QNp2/3P4/4rP2/P7/R2K4 w - - 0 1");
+
+    EXPECT_EQ(engine.Search(5).bestMove.toUCI(), "d5d8");
 }
