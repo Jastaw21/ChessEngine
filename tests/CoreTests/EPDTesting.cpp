@@ -62,7 +62,7 @@ TEST(ParsingPNG, PawnCapturesWork){
     EXPECT_EQ(parsedPNG.toUCI(), pawnCaptureMove.toUCI());
 }
 
-TEST(EPDTests, FirstBatch){
+TEST(Perft, FirstBatch){
     auto results = ParseEPDFile("C:/Users/jacks/source/repos/Chess/tests/CoreTests/TestPositions.txt");
     auto engine = MainEngine();
     int totalCount = 0;

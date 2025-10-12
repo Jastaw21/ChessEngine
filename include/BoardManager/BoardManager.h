@@ -45,7 +45,7 @@ public:
     BoardManager() = default;
     explicit BoardManager(const Colours colour) : currentTurn(colour){}
 
-    BitBoards* getBitboards(){ return &bitboards; }
+    BitBoards* getBitboards(){ return &magicBitBoards.bitBoards; }
     std::stack<Move>& getMoveHistory(){ return moveHistory; }
     MagicBitBoards* getMagicBitBoards(){ return &magicBitBoards; }
     int getEnPassantSquare(){ return boardStateHistory.top().enPassantSquare; }
@@ -53,19 +53,18 @@ public:
     Colours getCurrentTurn() const{ return currentTurn; }
     void setCurrentTurn(const Colours current_turn){ currentTurn = current_turn; }
 
+    // move interface
     bool tryMove(Move& move);
     bool tryMove(const std::string& moveUCI);
     bool checkMove(Move& move);
     bool forceMove(Move& move);
     void undoMove(const Move& move);
     void undoMove();
-
     void makeNullMove();
 
     bool isGameOver();
     int getGameResult();
 
-    bool threefoldRepetition();
 
     void resetGame(){
         setFullFen(Fen::FULL_STARTING_FEN);
@@ -91,9 +90,10 @@ private:
     void makeMove(Move& move);
 
     void swapTurns();
+    bool threefoldRepetition();
 
     // data
-    BitBoards bitboards{};
+    BitBoards& bitboards(){ return magicBitBoards.bitBoards; }
     std::stack<Move> moveHistory;
     std::stack<BoardState> boardStateHistory;
     RepetitionTable repetitionTable_New_;

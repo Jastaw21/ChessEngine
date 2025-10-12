@@ -181,6 +181,8 @@ public:
     Bitboard findAttacksForPiece(Piece piece, const BitBoards& boards, const Bitboard& mask);
     Bitboard getCastling(int square, const Piece& piece, const BitBoards& boards);
 
+    BitBoards bitBoards{};
+
 private:
 
     Bitboard calculateAttacksForPiece(int square, const Piece& piece, const BitBoards& boards);

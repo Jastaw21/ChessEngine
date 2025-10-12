@@ -21,7 +21,7 @@ bool BoardManager::validateMove(Move& move){
     move.resultBits = 0; // reset the move result tracker
     return Referee::moveIsLegal(
         move,
-        bitboards,
+        bitboards(),
         magicBitBoards,
         boardStateHistory.top().enPassantSquare
     );
@@ -42,24 +42,24 @@ bool BoardManager::checkMove(Move& move){
     const bool isPseudoLegal =
             Referee::moveIsLegal(
                 move,
-                bitboards,
+                bitboards(),
                 magicBitBoards,
                 boardStateHistory.top().enPassantSquare
             );
     if (!isPseudoLegal) { return false; } // move not even pseudolegal
 
     // now we need to check the board state for check mates etc
-    bitboards.applyMove(move);
+    bitboards().applyMove(move);
     swapTurns();
     auto status = Referee::checkBoardStatus(
-        bitboards,
+        bitboards(),
         magicBitBoards,
         currentTurn
     );
 
     // no checks
     if (status == BoardStatus::NORMAL) {
-        bitboards.undoMove(move);
+        bitboards().undoMove(move);
         swapTurns();
         return true;
     }
@@ -69,7 +69,7 @@ bool BoardManager::checkMove(Move& move){
 
     // leaves the previous turn to move in check
     if (blackInCheckOrMate && currentTurn == WHITE || whiteInCheckOrMate && currentTurn == BLACK) {
-        bitboards.undoMove(move);
+        bitboards().undoMove(move);
         swapTurns();
         move.resultBits = ILLEGAL_MOVE;
         return false;
@@ -81,7 +81,7 @@ bool BoardManager::checkMove(Move& move){
         move.resultBits &= ~PUSH;
         move.resultBits |= CHECK_MATE;
         checkMateFlag = true;
-        bitboards.undoMove(move);
+        bitboards().undoMove(move);
         swapTurns();
         return true;
     }
@@ -90,12 +90,12 @@ bool BoardManager::checkMove(Move& move){
     if (status & BoardStatus::BLACK_CHECK || status & BoardStatus::WHITE_CHECK) {
         move.resultBits |= CHECK;
         move.resultBits &= ~PUSH; // undo the push bit
-        bitboards.undoMove(move);
+        bitboards().undoMove(move);
         swapTurns();
         return true;
     }
 
-    bitboards.undoMove(move);
+    bitboards().undoMove(move);
     swapTurns();
     return true;
 }
@@ -119,7 +119,7 @@ bool BoardManager::tryMove(Move& move){
 **/
 bool BoardManager::tryMove(const std::string& moveUCI){
     const auto fromSquare = Fen::FenToSquare(moveUCI);
-    const auto optionalPiece = bitboards.getPiece(fromSquare);
+    const auto optionalPiece = bitboards().getPiece(fromSquare);
     if (!optionalPiece.has_value()) {
         std::cout << "Error: No piece at location " << fromSquare << std::endl;
         return false;
@@ -160,7 +160,7 @@ void BoardManager::makeMove(Move& move){
         enPassantSquareState = -1;
     }
 
-    bitboards.applyMove(move);
+    bitboards().applyMove(move);
     swapTurns();
 
     zobristHash_.addMove(move);
@@ -181,7 +181,7 @@ void BoardManager::swapTurns(){
 }
 
 void BoardManager::undoMove(const Move& move){
-    bitboards.undoMove(move);
+    bitboards().undoMove(move);
 
     moveHistory.pop();
     boardStateHistory.pop();
@@ -257,13 +257,13 @@ void BoardManager::setFullFen(const FenString& fen){
 
     const auto enPassantSquare = fenEnPassant == "-" ? -1 : Fen::FenToSquare(fenEnPassant);
     boardStateHistory.emplace(BoardState{.enPassantSquare = enPassantSquare});
-    bitboards.setFenPositionOnly(fenPiecePlacement);
+    bitboards().setFenPositionOnly(fenPiecePlacement);
     setCurrentTurn(fenActiveColour == "w" ? WHITE : BLACK);
     zobristHash_.setFen(fen);
 }
 
 std::string BoardManager::getFullFen(){
-    const auto baseFen = bitboards.getFenPositionOnly();
+    const auto baseFen = bitboards().getFenPositionOnly();
     const auto enPassantSquareString = (boardStateHistory.top().enPassantSquare == -1)
                                            ? "-"
                                            : Fen::squareToFen(boardStateHistory.top().enPassantSquare);
