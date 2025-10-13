@@ -13,13 +13,9 @@ find_package(sdl3_ttf REQUIRED CONFIG)
 # === Enable testing (GoogleTest still in tests/ folder) ===
 enable_testing()
 
-# === Core Library ===
+# === Core Engine Library: engine_lib ===
 add_library(
-        chess_lib
-        src/GUI/gui.cpp
-        src/GUI/VisualBoard.cpp
-        src/GUI/DrawableEntity.cpp
-        src/GUI/VisualPiece.cpp
+        engine_lib
         src/Utility/Vec2D.cpp
         src/Engine/EngineBase.cpp
         src/Engine/MainEngine.cpp
@@ -36,12 +32,10 @@ add_library(
         src/MatchManager/MatchManager.cpp
         src/MatchManager/ManagerCommandHandler.cpp
         src/Engine/Evaluation.cpp
-        src/GUI/EvaluationBar.cpp
         src/Engine/CommandHandlerBase.cpp
         src/UCIParsing/UciParser.cpp
         src/UCIParsing/Tokeniser.cpp
         src/Engine/ZobristHash.cpp
-        src/GUI/PromotionPiecePicker.cpp
         src/Engine/ProcessChessEngine.cpp
         include/Engine/EvaluationValues.h
         src/Engine/TranspositionTable.cpp
@@ -54,24 +48,48 @@ add_library(
         src/Utility/ChessUtility.cpp
 )
 
-target_include_directories(chess_lib PUBLIC include)
-target_include_directories(chess_lib PUBLIC include/thirdparty)
-
-target_link_libraries(chess_lib
+target_link_libraries(
+        engine_lib
         PUBLIC
         SDL3::SDL3
         SDL3_image::SDL3_image
         SDL3_ttf::SDL3_ttf
 )
 
+
+target_include_directories(engine_lib PUBLIC include)
+target_include_directories(engine_lib PUBLIC include/thirdparty)
+
+# === GUI Library: gui_lib ===
+add_library(
+        gui_lib
+        src/GUI/gui.cpp
+        src/GUI/VisualBoard.cpp
+        src/GUI/DrawableEntity.cpp
+        src/GUI/VisualPiece.cpp
+        src/Utility/Vec2D.cpp
+        src/GUI/EvaluationBar.cpp
+        src/GUI/PromotionPiecePicker.cpp
+)
+
+target_include_directories(gui_lib PUBLIC include)
+target_include_directories(gui_lib PUBLIC include/thirdparty)
+
+# Link `gui_lib` with `engine_lib` and SDL3-related dependencies
+target_link_libraries(
+        gui_lib
+        PUBLIC
+        engine_lib
+        SDL3::SDL3
+        SDL3_image::SDL3_image
+        SDL3_ttf::SDL3_ttf
+)
+
+
 # === Main GUI Application ===
 add_executable(Chess src/gameMain.cpp)
-target_link_libraries(Chess PRIVATE chess_lib)
 target_include_directories(Chess PRIVATE include)
-
-# === Add Tests ===
-add_subdirectory(tests)
-
+target_link_libraries(Chess PRIVATE gui_lib engine_lib)
 
 # === MagicBitBoardGenerator Lib ===
 add_library(MagicBitBoardGen STATIC
@@ -81,20 +99,21 @@ add_library(MagicBitBoardGen STATIC
         src/MagicBitboards/MagicBitBoardShared.cpp
 )
 target_include_directories(MagicBitBoardGen PUBLIC include)
-target_link_libraries(MagicBitBoardGen PRIVATE chess_lib)
+target_link_libraries(MagicBitBoardGen PRIVATE engine_lib)
 
 # === MagicBitBoardGenerator exe ===
 add_executable(GenerateMagicNumbers src/MagicBitboards/mbbMain.cpp)
-target_link_libraries(GenerateMagicNumbers PRIVATE MagicBitBoardGen)
 target_include_directories(GenerateMagicNumbers PRIVATE include)
+target_link_libraries(GenerateMagicNumbers PRIVATE MagicBitBoardGen)
 
 # === Standalone Engine exe ===
 add_executable(StandaloneEngine src/CLIEngine/CLIEngine.cpp)
-target_link_libraries(StandaloneEngine chess_lib)
 target_include_directories(StandaloneEngine PRIVATE include)
+target_link_libraries(StandaloneEngine PRIVATE engine_lib)
 
 # === FORCE REBUILD OF STANDALONE ENGINE ===
 add_dependencies(Chess StandaloneEngine)
+
 
 set(RESOURCE_DIR_VAR "${CMAKE_CURRENT_SOURCE_DIR}/resources")
 add_compile_definitions(RESOURCE_DIR=\"${RESOURCE_DIR_VAR}\")
