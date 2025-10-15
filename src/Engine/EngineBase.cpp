@@ -10,6 +10,7 @@
 #include "BoardManager/Referee.h"
 
 #include "Engine/Evaluation.h"
+#include "Engine/MoveGenerator.h"
 
 int getPieceValue(Piece piece){
     switch (piece) {
@@ -92,11 +93,19 @@ void EngineBase::parseUCI(const std::string& uci){
     std::visit(visitor, *command);
 }
 
-std::vector<Move> EngineBase::generateMoveList(){ return std::vector<Move>(); }
+
+std::vector<Move> EngineBase::generateMoveList(){ return MoveGenerator::getMoves(internalBoardManager_); }
+
+bool EngineBase::sendCommand(const std::string& command){
+    parseUCI(command);
+    return true;
+}
+
+std::string EngineBase::readResponse(){ return ""; }
 
 SearchResults EngineBase::executeSearch(const int depth, const bool timed){
     SearchResults bestResult;
-    auto moves = generateMoveList();
+    auto moves = MoveGenerator::getMoves(internalBoardManager_);
     if (moves.empty()) { return bestResult; }
 
     bestResult.bestMove = moves[0];
@@ -287,7 +296,7 @@ float EngineBase::alphaBeta(const int depth, float alpha, const float beta, cons
         if (performNullMoveReduction(depth, beta, ply, timed, evaluatedValue)) { return evaluatedValue; }
     }
 
-    auto moves = generateMoveList();
+    auto moves = MoveGenerator::getMoves(internalBoardManager_);
     SortMoves(moves, ttMove);
 
     if (moves.empty()) {
@@ -304,7 +313,7 @@ PerftResults EngineBase::perft(const int depth){
     if (depth == 0) return PerftResults{1, 0, 0, 0, 0, 0};
 
     PerftResults result{0, 0, 0, 0, 0, 0};
-    auto moves = generateMoveList();
+    auto moves = MoveGenerator::getMoves(internalBoardManager_);
 
     for (auto& move: moves) {
         // moves should be checked for legality already at this point so don't even worry
@@ -331,7 +340,7 @@ PerftResults EngineBase::perft(const int depth){
 }
 
 std::vector<PerftResults> EngineBase::perftDivide(const int depth){
-    auto moves = generateMoveList();
+    auto moves = MoveGenerator::getMoves(internalBoardManager_);
     std::vector<PerftResults> results;
 
     for (auto& move: moves) {
@@ -361,7 +370,7 @@ int EngineBase::simplePerft(const int depth){
         return 1;
 
     int nodes = 0;
-    auto moves = generateMoveList();
+    auto moves = MoveGenerator::getMoves(internalBoardManager_);
     for (Move& move: moves) {
         internalBoardManager_.forceMove(move);
         nodes += simplePerft(depth - 1);

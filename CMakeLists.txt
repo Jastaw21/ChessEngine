@@ -10,7 +10,6 @@ find_package(SDL3_image REQUIRED CONFIG)
 find_package(sdl3_ttf REQUIRED CONFIG)
 
 
-# === Enable testing (GoogleTest still in tests/ folder) ===
 enable_testing()
 
 # === Core Engine Library: engine_lib ===
@@ -46,6 +45,9 @@ add_library(
         src/BoardManager/Move.cpp
         include/Utility/ChessUtility.h
         src/Utility/ChessUtility.cpp
+        src/Engine/SearchHelpers.cpp
+        src/Engine/MoveGenerator.cpp
+        include/Engine/MoveGenerator.h
 )
 
 target_link_libraries(
@@ -55,8 +57,6 @@ target_link_libraries(
         SDL3_image::SDL3_image
         SDL3_ttf::SDL3_ttf
 )
-
-
 target_include_directories(engine_lib PUBLIC include)
 target_include_directories(engine_lib PUBLIC include/thirdparty)
 
@@ -71,11 +71,9 @@ add_library(
         src/GUI/EvaluationBar.cpp
         src/GUI/PromotionPiecePicker.cpp
 )
-
 target_include_directories(gui_lib PUBLIC include)
 target_include_directories(gui_lib PUBLIC include/thirdparty)
 
-# Link `gui_lib` with `engine_lib` and SDL3-related dependencies
 target_link_libraries(
         gui_lib
         PUBLIC
@@ -84,7 +82,6 @@ target_link_libraries(
         SDL3_image::SDL3_image
         SDL3_ttf::SDL3_ttf
 )
-
 
 # === Main GUI Application ===
 add_executable(Chess src/gameMain.cpp)
@@ -114,7 +111,10 @@ target_link_libraries(StandaloneEngine PRIVATE engine_lib)
 # === FORCE REBUILD OF STANDALONE ENGINE ===
 add_dependencies(Chess StandaloneEngine)
 
+# === INCLUDE TESTS ===
+add_subdirectory(tests)
 
+# === THIS STORES THE RESOURCE DIRECTORY TO BE REFERRED TO IN CODE ===
 set(RESOURCE_DIR_VAR "${CMAKE_CURRENT_SOURCE_DIR}/resources")
 add_compile_definitions(RESOURCE_DIR=\"${RESOURCE_DIR_VAR}\")
 

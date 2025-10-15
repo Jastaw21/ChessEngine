@@ -32,7 +32,8 @@ set_target_properties(chess_tests PROPERTIES CXX_STANDARD 20)
 
 target_link_libraries(chess_tests
         PRIVATE
-        chess_lib
+        engine_lib
+        gui_lib
         gtest_main
 )
 

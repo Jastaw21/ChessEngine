@@ -7,7 +7,7 @@
 #include "Engine/MainEngine.h"
 #include "Engine/Evaluation.h"
 
-#include "../../include/Engine/ProcessChessEngine.h"
+#include "Engine/ProcessChessEngine.h"
 
 #include "Utility/Fen.h"
 
@@ -38,12 +38,12 @@ TEST(EngineTests, ObviousChecksWork){
 
     engine.setFullFen("rnbqkbnr/pppp1ppp/4p3/8/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 1");
 
-    auto bestMove = engine.getBestMove(3);
+    auto bestMove = engine.Search(3).bestMove;
     EXPECT_EQ(bestMove.toUCI(), "d8h4");
 
     engine.reset();
     engine.setFullFen("rnbqkbnr/ppppp2p/8/5pp1/4P3/2N5/PPPP1PPP/R1BQKBNR w KQkq - 0 3");
-    auto bestMove2 = engine.getBestMove(3);
+    auto bestMove2 = engine.Search(3).bestMove;
     EXPECT_EQ(bestMove2.toUCI(), "d1h5");
 
     engine.reset();
@@ -122,7 +122,7 @@ TEST(EngineTests, FindsQuickestMate){
 
     engine.setFullFen("4k3/2ppppp1/2ppppp1/8/8/8/3PPP2/1Q2KQ2 w - - 0 1");
 
-    const auto bestMove = engine.getBestMove(3);
+    const auto bestMove = engine.Search(3).bestMove;
     EXPECT_EQ(bestMove.toUCI(), "b1b8");
 
     auto bestMoveWithResult = engine.Search(3);
@@ -243,13 +243,13 @@ TEST(EngineTests, TimedSearchGivesSameResult){
 
     engine.setFullFen("rnbqkbnr/pppp1ppp/4p3/8/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 1");
 
-    auto bestMove = engine.getBestMove(5);
+    auto bestMove = engine.Search(5).bestMove;
     auto TimedBestMove = engine.Search(5, 5000);
     EXPECT_EQ(bestMove.toUCI(), TimedBestMove.bestMove.toUCI());
 
     engine.reset();
     engine.setFullFen("rnbqkbnr/ppppp2p/8/5pp1/4P3/2N5/PPPP1PPP/R1BQKBNR w KQkq - 0 3");
-    auto bestMove2 = engine.getBestMove(3);
+    auto bestMove2 = engine.Search(3).bestMove;
     auto TimedBestMove2 = engine.Search(3, 5000);
     EXPECT_EQ(bestMove2.toUCI(), TimedBestMove2.bestMove.toUCI());
 }
