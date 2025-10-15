@@ -5,7 +5,7 @@
 // ReSharper disable CppMemberFunctionMayBeConst
 #include "MatchManager/ManagerCommandHandler.h"
 #include "MatchManager/MatchManager.h"
-#include "Engine/EngineBase.h"
+#include "Engine/ChessEngine.h"
 #include "GUI/gui.h"
 
 

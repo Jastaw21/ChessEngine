@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <fstream>
 #include <ranges>
-#include "Engine/MainEngine.h"
+#include "Engine/ChessEngine.h"
 #include "Utility/Fen.h"
 #include "../../include/Engine/PerftResults.h"
 
@@ -213,7 +213,7 @@ inline bool divideTest(const FenString& desiredFen, const std::string& outputFil
     auto externalEngineMoves = getDivideResults(outputFile);
 
     // get our own starting moves
-    MainEngine whiteEngine;
+    ChessEngine whiteEngine;
     whiteEngine.setFullFen(desiredFen);
     std::vector<PerftResults> engineResults = whiteEngine.runDivideTest(depth);
 
@@ -272,7 +272,7 @@ inline bool divideTest(const FenString& desiredFen, const std::string& outputFil
 }
 
 inline bool compareMoveList(const FenString& startingFen, const Colours& colourtoMove, const std::string& outputFile){
-    auto engine = MainEngine();
+    auto engine = ChessEngine();
     engine.setFullFen(startingFen);
 
     auto ourMoves = engine.generateMoveList();

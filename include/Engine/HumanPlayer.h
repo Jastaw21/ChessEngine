@@ -6,7 +6,7 @@
 #define HUMANPLAYER_H
 
 #include "ChessPlayer.h"
-#include "BoardManager/BoardManager.h"
+#include "../BoardManager/BoardManager.h"
 
 class BoardManager;
 

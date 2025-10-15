@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 
-#include "HumanPlayer.h"
+#include "../../include/Engine/HumanPlayer.h"
 #include "GUI/gui.h"
 #include "Utility/Fen.h"
 
@@ -22,6 +22,3 @@ protected:
     HumanPlayer blackPlayer{BLACK};
     ChessGui gui{&whitePlayer, &blackPlayer};
 };
-
-
-

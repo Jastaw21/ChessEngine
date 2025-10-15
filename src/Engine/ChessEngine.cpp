@@ -2,7 +2,7 @@
 // Created by jacks on 16/06/2025.
 //
 
-#include "Engine/EngineBase.h"
+#include "Engine/ChessEngine.h"
 
 #include <cmath>
 #include <future>
@@ -30,7 +30,7 @@ int getPieceValue(Piece piece){
     return 0;
 }
 
-void EngineBase::SortMoves(std::vector<Move>& moves, const Move& ttMove){
+void ChessEngine::SortMoves(std::vector<Move>& moves, const Move& ttMove){
     std::ranges::stable_sort(moves,
                              [&](const Move& a, const Move& b) {
                                  int scoreA = 0;
@@ -56,8 +56,8 @@ void EngineBase::SortMoves(std::vector<Move>& moves, const Move& ttMove){
                              });
 }
 
-EngineBase::EngineBase() : ChessPlayer(ENGINE),
-                           rng(std::chrono::system_clock::now().time_since_epoch().count()){
+ChessEngine::ChessEngine() : ChessPlayer(ENGINE),
+                             rng(std::chrono::system_clock::now().time_since_epoch().count()){
     auto path = std::filesystem::current_path();
     std::string suffix = "";
     suffix += rng() % 26 + 65;
@@ -67,14 +67,14 @@ EngineBase::EngineBase() : ChessPlayer(ENGINE),
     evaluator_.setBoardManager(&internalBoardManager_);
 }
 
-void EngineBase::loadFEN(const std::string& fen){ boardManager()->setFullFen(fen); }
+void ChessEngine::loadFEN(const std::string& fen){ boardManager()->setFullFen(fen); }
 
-void EngineBase::go(const int depth){
+void ChessEngine::go(const int depth){
     const auto bestMove = Search(depth).bestMove;
     std::cout << "bestmove " << bestMove.toUCI() << std::endl;
 }
 
-void EngineBase::go(const int depth, const int wtime, const int btime, const int winc, const int binc){
+void ChessEngine::go(const int depth, const int wtime, const int btime, const int winc, const int binc){
     const auto relevantTimeRemaining = internalBoardManager_.getCurrentTurn() == WHITE ? wtime : btime;
     const auto relevantTimeIncrement = internalBoardManager_.getCurrentTurn() == WHITE ? winc : binc;
 
@@ -84,7 +84,7 @@ void EngineBase::go(const int depth, const int wtime, const int btime, const int
     std::cout << "bestmove " << bestMove.toUCI() << std::endl;
 }
 
-void EngineBase::parseUCI(const std::string& uci){
+void ChessEngine::parseUCI(const std::string& uci){
     auto command = parser.parse(uci);
     // Create a visitor lambda that captures 'this' and forwards to the command handler
     auto visitor = [this](const auto& cmd) { this->commandHandler(cmd, this); };
@@ -94,16 +94,16 @@ void EngineBase::parseUCI(const std::string& uci){
 }
 
 
-std::vector<Move> EngineBase::generateMoveList(){ return MoveGenerator::getMoves(internalBoardManager_); }
+std::vector<Move> ChessEngine::generateMoveList(){ return MoveGenerator::getMoves(internalBoardManager_); }
 
-bool EngineBase::sendCommand(const std::string& command){
+bool ChessEngine::sendCommand(const std::string& command){
     parseUCI(command);
     return true;
 }
 
-std::string EngineBase::readResponse(){ return ""; }
+std::string ChessEngine::readResponse(){ return ""; }
 
-SearchResults EngineBase::executeSearch(const int depth, const bool timed){
+SearchResults ChessEngine::executeSearch(const int depth, const bool timed){
     SearchResults bestResult;
     auto moves = MoveGenerator::getMoves(internalBoardManager_);
     if (moves.empty()) { return bestResult; }
@@ -140,13 +140,13 @@ SearchResults EngineBase::executeSearch(const int depth, const bool timed){
     return bestResult;
 }
 
-SearchResults EngineBase::Search(const int depth){
+SearchResults ChessEngine::Search(const int depth){
     lastSearchEvaluations.reset();
     currentSearchStats.searchID++;;
     return executeSearch(depth);
 }
 
-SearchResults EngineBase::Search(int MaxDepth, int SearchMs){
+SearchResults ChessEngine::Search(int MaxDepth, int SearchMs){
     currentSearchStats.searchID++;
     const int marginSearch = std::max(50, SearchMs - 50);
     deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(marginSearch);
@@ -166,7 +166,7 @@ SearchResults EngineBase::Search(int MaxDepth, int SearchMs){
     return bestResult;
 }
 
-std::optional<float> EngineBase::evaluateGameState(const int depth, const int ply, const int boardStatus){
+std::optional<float> ChessEngine::evaluateGameState(const int depth, const int ply, const int boardStatus){
     if (boardStatus & BoardStatus::BLACK_CHECKMATE || boardStatus & WHITE_CHECKMATE) {
         currentSearchStats.endGameExits++;
         return -MATE_SCORE + ply;
@@ -178,8 +178,8 @@ std::optional<float> EngineBase::evaluateGameState(const int depth, const int pl
 }
 
 
-bool EngineBase::performNullMoveReduction(const int depth, const float beta, const int ply, const bool timed,
-                                          float& evaluatedValue){
+bool ChessEngine::performNullMoveReduction(const int depth, const float beta, const int ply, const bool timed,
+                                           float& evaluatedValue){
     const int reduction = 3;
     internalBoardManager_.makeNullMove();
 
@@ -197,7 +197,7 @@ bool EngineBase::performNullMoveReduction(const int depth, const float beta, con
     return false;
 }
 
-bool EngineBase::getTranspositionTableValue(const int depth, Move& ttMove, float& evalResult){
+bool ChessEngine::getTranspositionTableValue(const int depth, Move& ttMove, float& evalResult){
     auto hash = boardManager()->getZobristHash()->getHash();
     auto ttEntry = transpositionTable_.retrieveVector(hash);
     currentSearchStats.ttProbes++;
@@ -217,7 +217,7 @@ bool EngineBase::getTranspositionTableValue(const int depth, Move& ttMove, float
     return false;
 }
 
-void EngineBase::storeTranspositionTableEntry(const int depth, float bestScore, Move bestMove){
+void ChessEngine::storeTranspositionTableEntry(const int depth, float bestScore, Move bestMove){
     TTEntry newEntry{
                 .key = boardManager()->getZobristHash()->getHash(),
                 .eval = bestScore,
@@ -229,8 +229,8 @@ void EngineBase::storeTranspositionTableEntry(const int depth, float bestScore, 
     currentSearchStats.ttStores++;
 }
 
-float EngineBase::performSearchLoop(std::vector<Move>& moves, const int depth, float alpha, const float beta,
-                                    const int ply, const bool timed, std::vector<Move>& pv){
+float ChessEngine::performSearchLoop(std::vector<Move>& moves, const int depth, float alpha, const float beta,
+                                     const int ply, const bool timed, std::vector<Move>& pv){
     float bestScore = -MATE_SCORE - 1;
     Move bestMove;
     std::vector<Move> bestPV;
@@ -272,8 +272,8 @@ float EngineBase::performSearchLoop(std::vector<Move>& moves, const int depth, f
     return bestScore;
 }
 
-float EngineBase::alphaBeta(const int depth, float alpha, const float beta, const int ply, std::vector<Move>& pv,
-                            const bool timed, const bool nullMoveAllowed){
+float ChessEngine::alphaBeta(const int depth, float alpha, const float beta, const int ply, std::vector<Move>& pv,
+                             const bool timed, const bool nullMoveAllowed){
     pv.clear();
 
     // if the game is over, or bottom depth - exit now
@@ -309,7 +309,7 @@ float EngineBase::alphaBeta(const int depth, float alpha, const float beta, cons
 }
 
 
-PerftResults EngineBase::perft(const int depth){
+PerftResults ChessEngine::perft(const int depth){
     if (depth == 0) return PerftResults{1, 0, 0, 0, 0, 0};
 
     PerftResults result{0, 0, 0, 0, 0, 0};
@@ -339,7 +339,7 @@ PerftResults EngineBase::perft(const int depth){
     return result;
 }
 
-std::vector<PerftResults> EngineBase::perftDivide(const int depth){
+std::vector<PerftResults> ChessEngine::perftDivide(const int depth){
     auto moves = MoveGenerator::getMoves(internalBoardManager_);
     std::vector<PerftResults> results;
 
@@ -365,7 +365,7 @@ std::vector<PerftResults> EngineBase::perftDivide(const int depth){
     return results;
 }
 
-int EngineBase::simplePerft(const int depth){
+int ChessEngine::simplePerft(const int depth){
     if (depth == 0)
         return 1;
 
@@ -380,14 +380,14 @@ int EngineBase::simplePerft(const int depth){
     return nodes;
 }
 
-PerftResults EngineBase::runPerftTest(const std::string& Fen, const int depth){
+PerftResults ChessEngine::runPerftTest(const std::string& Fen, const int depth){
     internalBoardManager_.getBitboards()->setFenPositionOnly(Fen);
     return perft(depth);
 }
 
-std::vector<PerftResults> EngineBase::runDivideTest(const std::string& Fen, const int depth){
+std::vector<PerftResults> ChessEngine::runDivideTest(const std::string& Fen, const int depth){
     internalBoardManager_.getBitboards()->setFenPositionOnly(Fen);
     return perftDivide(depth);
 }
 
-std::vector<PerftResults> EngineBase::runDivideTest(const int depth){ return perftDivide(depth); }
+std::vector<PerftResults> ChessEngine::runDivideTest(const int depth){ return perftDivide(depth); }

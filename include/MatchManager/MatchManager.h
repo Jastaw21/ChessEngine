@@ -7,7 +7,7 @@
 
 #include <queue>
 
-#include "ChessPlayer.h"
+#include "../Engine/ChessPlayer.h"
 #include "ManagerCommandHandler.h"
 #include "BoardManager/BoardManager.h"
 #include "UCIParsing/UciParser.h"

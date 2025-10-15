@@ -5,7 +5,7 @@
 #include "EPDParser.h"
 #include <gtest/gtest.h>
 
-#include "Engine/MainEngine.h"
+#include "Engine/ChessEngine.h"
 
 
 TEST(ParsingEPD, BasicParsing){
@@ -64,7 +64,7 @@ TEST(ParsingPNG, PawnCapturesWork){
 
 TEST(Perft, FirstBatch){
     auto results = ParseEPDFile("C:/Users/jacks/source/repos/Chess/tests/CoreTests/TestPositions.txt");
-    auto engine = MainEngine();
+    auto engine = ChessEngine();
     int totalCount = 0;
     int failureCount = 0;
     for (const auto& result: results) {

@@ -7,23 +7,23 @@
 #include "UCIParsing/UciParser.h"
 
 
-class EngineBase;
+class ChessEngine;
 
 class CommandHandlerBase {
 public:
 
     virtual ~CommandHandlerBase() = default;
 
-    virtual void operator()(const UCICommand& cmd, EngineBase* engine);
-    virtual void operator()(const StopCommand& cmd, EngineBase* engine);
-    void operator()(const IsReadyCommand& cmd, EngineBase* engine);
-    virtual void operator()(const QuitCommand& cmd, EngineBase* engine);
-    virtual void operator()(const GoCommand& cmd, EngineBase* engine);
-    virtual void operator()(const PositionCommand& cmd, EngineBase* engine);
-    virtual void operator()(const BestMoveCommand& cmd, EngineBase* engine);
-    virtual void operator()(const NewGameCommand& cmd, EngineBase* engine);
-    void operator()(const IDCommand& cmd, EngineBase* engine);
-    void operator()(const SetIDCommand& cmd, EngineBase* engine);
+    virtual void operator()(const UCICommand& cmd, ChessEngine* engine);
+    virtual void operator()(const StopCommand& cmd, ChessEngine* engine);
+    void operator()(const IsReadyCommand& cmd, ChessEngine* engine);
+    virtual void operator()(const QuitCommand& cmd, ChessEngine* engine);
+    virtual void operator()(const GoCommand& cmd, ChessEngine* engine);
+    virtual void operator()(const PositionCommand& cmd, ChessEngine* engine);
+    virtual void operator()(const BestMoveCommand& cmd, ChessEngine* engine);
+    virtual void operator()(const NewGameCommand& cmd, ChessEngine* engine);
+    void operator()(const IDCommand& cmd, ChessEngine* engine);
+    void operator()(const SetIDCommand& cmd, ChessEngine* engine);
 };
 
 

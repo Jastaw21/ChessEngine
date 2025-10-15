@@ -18,11 +18,11 @@
 #include "BoardManager/BoardManager.h"
 
 
-class EngineBase : public ChessPlayer {
+class ChessEngine : public ChessPlayer {
 public:
 
     // Constructor
-    explicit EngineBase();
+    explicit ChessEngine();
 
     // Core Engine Interface
     SearchResults Search(int depth = 5);

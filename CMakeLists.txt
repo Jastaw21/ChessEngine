@@ -16,8 +16,7 @@ enable_testing()
 add_library(
         engine_lib
         src/Utility/Vec2D.cpp
-        src/Engine/EngineBase.cpp
-        src/Engine/MainEngine.cpp
+        src/Engine/ChessEngine.cpp
         src/BoardManager/BitBoards.cpp
         src/BoardManager/BoardManager.cpp
         src/Engine/Piece.cpp

@@ -16,7 +16,7 @@ class Evaluator;
 class VisualPiece;
 class DrawableEntity;
 class VisualBoard;
-class EngineBase;
+class ChessEngine;
 class ChessPlayer;
 
 

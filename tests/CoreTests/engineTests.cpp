@@ -4,7 +4,7 @@
 
 
 #include <gtest/gtest.h>
-#include "Engine/MainEngine.h"
+#include "Engine/ChessEngine.h"
 #include "Engine/Evaluation.h"
 
 #include "Engine/ProcessChessEngine.h"
@@ -12,7 +12,7 @@
 #include "Utility/Fen.h"
 
 TEST(EngineTests, BasicEvaluation){
-    auto engine = MainEngine();
+    auto engine = ChessEngine();
 
     engine.setFullFen(Fen::FULL_STARTING_FEN);
 
@@ -24,7 +24,7 @@ TEST(EngineTests, BasicEvaluation){
 }
 
 TEST(EngineTests, LikeForLikeSwapStillGood){
-    auto engine = MainEngine();
+    auto engine = ChessEngine();
     engine.setFullFen("r3k2r/p1pp1pb1/bn1qpnp1/2QPN3/1p2P3/2N4p/PPPBBPPP/R3K2R w KQkq - 0 1");
     auto move = createMove(WQ, "c5d6");
 
@@ -34,7 +34,7 @@ TEST(EngineTests, LikeForLikeSwapStillGood){
 }
 
 TEST(EngineTests, ObviousChecksWork){
-    auto engine = MainEngine();
+    auto engine = ChessEngine();
 
     engine.setFullFen("rnbqkbnr/pppp1ppp/4p3/8/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 1");
 
@@ -79,7 +79,7 @@ TEST(EngineTests, ObviousChecksWork){
 }
 
 TEST(EngineTests, FindsMateInTwoSteps){
-    auto engine = MainEngine();
+    auto engine = ChessEngine();
 
     engine.setFullFen("6k1/4pp1p/p5p1/1p1q4/4b1N1/P1Q4P/1PP3P1/7K w - - 0 1");
 
@@ -92,7 +92,7 @@ TEST(EngineTests, FindsMateInTwoSteps){
 }
 
 TEST(EngineTests, FindsMateInOneStep){
-    auto engine = MainEngine();
+    auto engine = ChessEngine();
 
     engine.setFullFen("5k2/4pp1p/p5pN/1p6/8/PPQ4P/2P5/7K w KQkq - 0 1");
 
@@ -101,7 +101,7 @@ TEST(EngineTests, FindsMateInOneStep){
 }
 
 TEST(EngineTests, GeneratesPromotionMoves){
-    auto engine = MainEngine();
+    auto engine = ChessEngine();
     engine.setFullFen("8/P6k/8/8/6r1/8/3B4/5K2 w - - 0 1");
 
     auto queening = createMove(WP, "a7a8Q");
@@ -118,7 +118,7 @@ TEST(EngineTests, GeneratesPromotionMoves){
 }
 
 TEST(EngineTests, FindsQuickestMate){
-    auto engine = MainEngine();
+    auto engine = ChessEngine();
 
     engine.setFullFen("4k3/2ppppp1/2ppppp1/8/8/8/3PPP2/1Q2KQ2 w - - 0 1");
 
@@ -131,7 +131,7 @@ TEST(EngineTests, FindsQuickestMate){
 }
 
 TEST(EngineTests, FindsObviousMatesAfterMoveString){
-    auto engine = MainEngine();
+    auto engine = ChessEngine();
 
     engine.parseUCI(
         "position rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 moves a2a3 a7a5 b2b3 a5a4 c2c3 a4b3 d1b3 b7b6 d2d3 c7c5 e2e3 e7e5 g2g3 f7f5 b3d5 b8c6 f2f3 b6b5 h2h3 a8a3 b1a3 b5b4 d5c6 d7c6 c3b4 c5b4 d3d4 b4a3 d4e5 a3a2 a1a2 f5f4 e3f4 c8h3 g1h3 c6c5 g3g4 c5c4 f1c4 g7g5 c4g8 h8g8 f4g5 g8g5 h3g5 d8g5 c1g5 h7h5 g4h5 f8a3 a2a3 e8d7 f3f4 d7c6 f4f5 c6b5 e5e6 b5b4 f5f6 b4a3 h5h6 a3a2 e6e7 a2a1 f6f7 a1b1 h6h7 b1a1 e7e8Q a1b1 f7f8Q b1a1 h7h8Q a1b1 g5c1 b1c1 h1f1 c1b1 f1g1 b1c1 g1f1 c1b1 f1g1 b1c1 g1f1 c1b1");
@@ -142,7 +142,7 @@ TEST(EngineTests, FindsObviousMatesAfterMoveString){
 }
 
 TEST(EngineTests, DoesntDoWeirdStuffWithMoveString){
-    auto engine = MainEngine();
+    auto engine = ChessEngine();
     engine.parseUCI(
         "position rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 moves a2a3 a7a5 b2b3 a5a4 c2c3 a4b3 d1b3 b7b6 d2d3 c7c5 e2e3 e7e5 g2g3 f7f5 b3d5 b8c6 f2f3 b6b5 h2h3 b5b4 a3a4 b4b3 c3c4 b3b2 d3d4 b2a1q e3e4 c5d4 f3f4 d4d3 g3g4 d3d2 b1d2 e5f4 h3h4 f4f3 a4a5 f3f2 e1d1 f2g1q c4c5 f5e4 g4g5 e4e3 h4h5 e3d2 a5a6 d2c1q d1e2 d7d6 c5d6 g7g6 h5g6 h7h5 g5h6 c6b4 a6a7 b4a2 d6d7 c8d7 g6g7 a2c3");
 
@@ -152,7 +152,7 @@ TEST(EngineTests, DoesntDoWeirdStuffWithMoveString){
 }
 
 TEST(EngineTests, DoesntGenerateIllegalMoves){
-    auto engine = MainEngine();
+    auto engine = ChessEngine();
 
     engine.parseUCI(
         "position rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 moves a2a3 a7a5 b2b3 a5a4 c2c3 a4b3 d1b3 b7b6 d2d3 c7c5 e2e3 e7e5 g2g3 f7f5 b3d5 b8c6 f2f3 b6b5 h2h3 b5b4 a3a4 b4b3 c3c4 b3b2 d3d4 b2a1q e3e4 c5d4 f3f4 d4d3 g3g4 d3d2 b1d2 e5f4 h3h4 f4f3 a4a5 f3f2 e1d1 f2g1q c4c5 f5e4 g4g5 e4e3 h4h5 e3d2 a5a6 d2c1q d1e2 d7d6 c5d6 g7g6 h5g6 h7h5 g5h6 c6b4 a6a7 b4a2 d6d7 c8d7 g6g7 a2c3");
@@ -163,14 +163,14 @@ TEST(EngineTests, DoesntGenerateIllegalMoves){
 }
 
 TEST(EngineTests, CanSetID){
-    MainEngine whiteEngine;
+    ChessEngine whiteEngine;
 
     whiteEngine.parseUCI("set id white");
     EXPECT_EQ(whiteEngine.engineID(), "white");
 }
 
 TEST(EngineTests, DoesntGeneratePromotionsForOpponent){
-    auto engine = MainEngine();
+    auto engine = ChessEngine();
     engine.setFullFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/P1N2Q2/1PPBBPpP/R3K2R w KQkq - 0 1");
 
     auto moves = engine.generateMoveList();
@@ -183,7 +183,7 @@ TEST(EngineTests, DoesntGeneratePromotionsForOpponent){
 }
 
 TEST(EngineTests, BoardStateRestoresInSearch){
-    auto engine = MainEngine();
+    auto engine = ChessEngine();
     engine.setFullFen(Fen::FULL_STARTING_FEN);
     auto preFen = engine.boardManager()->getFullFen();
 
@@ -194,7 +194,7 @@ TEST(EngineTests, BoardStateRestoresInSearch){
 }
 
 TEST(EngineTests, RefinedUndoState){
-    auto engine = MainEngine();
+    auto engine = ChessEngine();
     engine.setFullFen(Fen::FULL_STARTING_FEN);
 
     auto move = createMove(WP, "a2a3");
@@ -214,7 +214,7 @@ TEST(EngineTests, RefinedUndoState){
 }
 
 TEST(EngineTests, GeneratingMovesDoesntResetENPassant){
-    auto engine = MainEngine();
+    auto engine = ChessEngine();
     engine.setFullFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/Pp2P3/2N2Q1p/1PPBBPPP/R3K2R b KQkq a3 0 1");
 
     auto moves = engine.generateMoveList();
@@ -224,14 +224,14 @@ TEST(EngineTests, GeneratingMovesDoesntResetENPassant){
 }
 
 TEST(Performance, Depth5WithTT){
-    auto engine = MainEngine();
+    auto engine = ChessEngine();
     engine.setFullFen(Fen::FULL_STARTING_FEN);
     auto result = engine.Search(5);
     result.stats.print();
 }
 
 TEST(Performance, Iterative){
-    auto engine = MainEngine();
+    auto engine = ChessEngine();
     engine.setFullFen(Fen::FULL_STARTING_FEN);
     auto result = engine.Search(40, 10000);
     result.stats.print();
@@ -239,7 +239,7 @@ TEST(Performance, Iterative){
 }
 
 TEST(EngineTests, TimedSearchGivesSameResult){
-    auto engine = MainEngine();
+    auto engine = ChessEngine();
 
     engine.setFullFen("rnbqkbnr/pppp1ppp/4p3/8/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 1");
 
@@ -255,7 +255,7 @@ TEST(EngineTests, TimedSearchGivesSameResult){
 }
 
 TEST(EngineTests, TimedSearchExitsVaguelyRight){
-    auto engine = MainEngine();
+    auto engine = ChessEngine();
     engine.setFullFen(Fen::FULL_KIWI_PETE_FEN);
 
     auto startTime = std::chrono::high_resolution_clock::now();
@@ -271,7 +271,7 @@ TEST(EngineTests, TimedSearchExitsVaguelyRight){
 }
 
 TEST(EngineTests, TTDepth1){
-    auto engine = MainEngine();
+    auto engine = ChessEngine();
     engine.setFullFen(Fen::FULL_STARTING_FEN);
     engine.Search(2, 100);
 }
@@ -291,7 +291,7 @@ TEST(EngineTests, FindsFunMateIn5){
                 "h6f7"
             };
 
-    auto engine = MainEngine();
+    auto engine = ChessEngine();
 
     int failed = 0;
     for (int i = 0; i < positions.size(); i++) {

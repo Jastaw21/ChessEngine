@@ -2,9 +2,9 @@
 #include <SDL3_ttf/SDL_ttf.h>
 
 #include "GUI/gui.h"
-#include "ChessPlayer.h"
-#include "HumanPlayer.h"
-#include "Engine/EngineBase.h"
+#include "../../include/Engine/ChessPlayer.h"
+#include "../../include/Engine/HumanPlayer.h"
+#include "Engine/ChessEngine.h"
 
 #include "GUI/DrawableEntity.h"
 #include "GUI/VisualBoard.h"

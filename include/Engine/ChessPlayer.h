@@ -8,8 +8,8 @@
 
 #include <memory>
 
-#include "Engine/Piece.h"
-#include "Engine/CommandHandlerBase.h"
+#include "Piece.h"
+#include "CommandHandlerBase.h"
 
 class CommunicatorBase;
 

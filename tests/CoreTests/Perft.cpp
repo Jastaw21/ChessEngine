@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 #include "perftTestUtility.h"
-#include "Engine/MainEngine.h"
+#include "Engine/ChessEngine.h"
 #include "Utility/Fen.h"
 
 TEST(Divide, kiwiPeteDivide){
@@ -71,21 +71,21 @@ TEST(Divide, position3Divide2){
 }
 
 TEST(Perft, perft1){
-    MainEngine blackEngine;
+    ChessEngine blackEngine;
     auto blackResultDepth1 = blackEngine.runPerftTest(Fen::STARTING_FEN, 1);
     EXPECT_EQ(blackResultDepth1.nodes, 20);
     EXPECT_EQ(blackResultDepth1.captures, 0);
 }
 
 TEST(Perft, perft2){
-    MainEngine whiteEngine;
+    ChessEngine whiteEngine;
     auto whiteResultDepth1 = whiteEngine.runPerftTest(Fen::STARTING_FEN, 2);
     EXPECT_EQ(whiteResultDepth1.nodes, 400);
     EXPECT_EQ(whiteResultDepth1.captures, 0);
 }
 
 TEST(Perft, perft3){
-    MainEngine whiteEngine;
+    ChessEngine whiteEngine;
     auto whiteResultDepth1 = whiteEngine.runPerftTest(Fen::STARTING_FEN, 3);
     EXPECT_EQ(whiteResultDepth1.nodes, 8902);
     EXPECT_EQ(whiteResultDepth1.captures, 34);
@@ -94,7 +94,7 @@ TEST(Perft, perft3){
 }
 
 TEST(Perft, perft4){
-    MainEngine blackEngine;
+    ChessEngine blackEngine;
 
     auto blackResultDepth1 = blackEngine.runPerftTest(Fen::STARTING_FEN, 4);
     EXPECT_EQ(blackResultDepth1.nodes, 197281);
@@ -106,7 +106,7 @@ TEST(Perft, perft4){
 }
 
 TEST(Perft, kiwiPete1){
-    MainEngine blackEngine;
+    ChessEngine blackEngine;
     auto blackResultDepth1 = blackEngine.runPerftTest(Fen::KIWI_PETE_FEN, 1);
     EXPECT_EQ(blackResultDepth1.nodes, 48);
     EXPECT_EQ(blackResultDepth1.captures, 8);
@@ -114,7 +114,7 @@ TEST(Perft, kiwiPete1){
 }
 
 TEST(Perft, kiwiPete2){
-    MainEngine whiteEngine;
+    ChessEngine whiteEngine;
     auto perftResults = whiteEngine.runPerftTest(Fen::KIWI_PETE_FEN, 2);
     EXPECT_EQ(perftResults.nodes, 2039);
     EXPECT_EQ(perftResults.captures, 351);
@@ -124,7 +124,7 @@ TEST(Perft, kiwiPete2){
 }
 
 TEST(Perft, kiwiPete3){
-    MainEngine whiteEngine;
+    ChessEngine whiteEngine;
     auto perftResults = whiteEngine.runPerftTest(Fen::KIWI_PETE_FEN, 3);
     EXPECT_EQ(perftResults.nodes, 97862);
     EXPECT_EQ(perftResults.captures, 17102);
@@ -136,7 +136,7 @@ TEST(Perft, kiwiPete3){
 }
 
 TEST(Perft, position3Depth1){
-    MainEngine engine;
+    ChessEngine engine;
     auto perftResults = engine.runPerftTest(Fen::POSITION_3_FEN, 1);
     EXPECT_EQ(perftResults.nodes, 14);
     EXPECT_EQ(perftResults.captures, 1);
@@ -144,7 +144,7 @@ TEST(Perft, position3Depth1){
 }
 
 TEST(Perft, position3Depth2){
-    MainEngine engine;
+    ChessEngine engine;
     auto perftResults = engine.runPerftTest(Fen::POSITION_3_FEN, 2);
     EXPECT_EQ(perftResults.nodes, 191);
     EXPECT_EQ(perftResults.captures, 14);

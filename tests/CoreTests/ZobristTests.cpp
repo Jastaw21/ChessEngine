@@ -8,7 +8,7 @@
 #include "Engine/ZobristHash.h"
 #include "BoardManager/BoardManager.h"
 
-#include "Engine/MainEngine.h"
+#include "Engine/ChessEngine.h"
 
 TEST(Zobrist, BasicInitAndUpdateState){
     auto zob = ZobristHash(Fen::FULL_STARTING_FEN);
@@ -258,7 +258,7 @@ TEST(Zobrist, UndoCastlingMoves){
 }
 
 TEST(Zobrist, CollisionRateTest){
-    auto engine = MainEngine();
+    auto engine = ChessEngine();
 
     for (int game = 0; game < 10; game++) {
         engine.reset();
