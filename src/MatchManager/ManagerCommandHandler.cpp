@@ -76,7 +76,16 @@ void ManagerCommandHandler::operator()(const BestMoveCommand& cmd, MatchManager*
     matchManager->swapPlayers();
 
     matchManager->currentPlayer()->sendCommand(fullPositionCommand); // send to engine
-    matchManager->currentPlayer()->sendCommand("go");
+
+    std::string goCommand = "go ";
+    goCommand += "go wtime ";
+    goCommand += std::to_string(matchManager->getTimeInfo().whiteTime);
+    goCommand += " btime ";
+    goCommand += std::to_string(matchManager->getTimeInfo().blackTime);
+    goCommand += " winc 1";
+    goCommand += " binc 1";
+
+    matchManager->currentPlayer()->sendCommand(goCommand);
 }
 
 void ManagerCommandHandler::operator()(const NewGameCommand& cmd, MatchManager* matchManager){}

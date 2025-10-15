@@ -2,12 +2,12 @@
 // Created by jacks on 19/07/2025.
 //
 
-#include "../../include/MatchManager/MatchManager.h"
+#include "MatchManager/MatchManager.h"
 
 #include <filesystem>
 #include <fstream>
 
-#include "../../include/Engine/ProcessChessEngine.h"
+#include "Engine/ProcessChessEngine.h"
 
 #include "GUI/gui.h"
 
@@ -57,7 +57,7 @@ void MatchManager::processGameResult(){
     restartGame();
 }
 
-void MatchManager::tick(){
+void MatchManager::tick(const int deltaTime){
     if (gamesPlayed == gamesToPlay) { std::cout << "Game count: " << gamesPlayed << std::endl; }
     if (boardManager.isGameOver()) {
         processGameResult();
@@ -67,6 +67,8 @@ void MatchManager::tick(){
         // handle the inbound command
         parseUCI(message);
     }
+
+    if (currentPlayer_ == whitePlayer) { timeInfo.whiteTime -= deltaTime; } else { timeInfo.blackTime -= deltaTime; }
 }
 
 void MatchManager::parseUCI(const std::string& uci){

@@ -111,7 +111,7 @@ void ChessGui::updateGame(const int deltaTime_){
 
     runningTime += deltaTime_;
     if (runningTime >= 100) {
-        matchManager_->tick();
+        matchManager_->tick(deltaTime_);
         runningTime = 0;
     }
 

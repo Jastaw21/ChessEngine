@@ -3,7 +3,7 @@
 //
 
 
-#include "../../include/MagicBitboards/MagicNumberGenerator.h"
+#include "MagicBitboards/MagicNumberGenerator.h"
 
 
 int main(){

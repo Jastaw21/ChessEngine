@@ -14,9 +14,15 @@
 #include "Utility/Fen.h"
 
 class ChessGui;
-class CommunicatorBase;
+
 using MessageQueue = std::queue<std::string>;
 
+struct TimeInfo {
+    int whiteTime;
+    int blackTime;
+    int whiteInc;
+    int blackInc;
+};
 
 class MatchManager {
 public:
@@ -35,11 +41,10 @@ public:
 
     void startGame();
     void processGameResult();
-    void tick();
+    void tick(int deltaTime);
 
     std::stack<Move>& getMoveHistory();
     void swapPlayers(){ std::swap(currentPlayer_, otherPlayer_); }
-    void setCommunicator(CommunicatorBase* communicator_base){ communicator_ = communicator_base; }
     void addMove(const std::string& moveUCI);
 
 
@@ -60,7 +65,6 @@ private:
     UCIParser parser;
     ManagerCommandHandler commandHandler;
     BoardManager boardManager;
-    CommunicatorBase* communicator_ = nullptr;
     ChessGui* gui_ = nullptr;
 
     FenString startingFen_ = Fen::FULL_STARTING_FEN;
@@ -75,6 +79,8 @@ private:
     int blackWins = 0;
     int draws = 0;
 
+    TimeInfo timeInfo;
+
 public:
 
     [[nodiscard]] FenString startingFen() const{ return startingFen_; }
@@ -86,6 +92,7 @@ public:
     BitBoards* getBitboards(){ return boardManager.getBitboards(); }
     void setGUI(ChessGui* gui){ gui_ = gui; }
     ChessGui* getGui(){ return gui_; }
+    TimeInfo& getTimeInfo(){ return timeInfo; }
 };
 
 
