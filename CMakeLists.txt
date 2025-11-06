@@ -117,3 +117,5 @@ add_subdirectory(tests)
 set(RESOURCE_DIR_VAR "${CMAKE_CURRENT_SOURCE_DIR}/resources")
 add_compile_definitions(RESOURCE_DIR=\"${RESOURCE_DIR_VAR}\")
 
+set(OPENING_BOOK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/resources/ob.bok")
+add_compile_definitions(OPENING_BOOK_FILE=\"${OPENING_BOOK_DIR}\")
