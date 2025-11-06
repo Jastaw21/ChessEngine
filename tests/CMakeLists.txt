@@ -26,6 +26,7 @@ add_executable(chess_tests
         CoreTests/EPDParser.h
         CoreTests/EPDTesting.cpp
         CoreTests/RefereeTests.cpp
+        CoreTests/OpeningBookTests.cpp
 )
 
 set_target_properties(chess_tests PROPERTIES CXX_STANDARD 20)

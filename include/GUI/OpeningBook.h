@@ -2,19 +2,18 @@
 #define OPENINGBOOK_H
 #include <random>
 #include <filesystem>
+#include <fstream>
 
-class OpeningBook
-{
+#include "Utility/Fen.h"
 
+class OpeningBook {
 public:
-    OpeningBook() 
-    : rng(std::chrono::system_clock::now().time_since_epoch().count()) 
-    {
-        obFile = std::ifstream(OPENING_BOOK_FILE);
+
+    OpeningBook()
+        : rng(std::chrono::system_clock::now().time_since_epoch().count()){
+        obFile = std::ifstream(OPENING_BOOK_DIR);
         std::string line;
-        while (std::getline(obFile, line)){
-        openingPositions.push_back(line);
-        }
+        while (std::getline(obFile, line)) { openingPositions.push_back(line); }
     }
 
 
@@ -24,13 +23,11 @@ public:
     }
 
 private:
+
     std::mt19937 rng;
     std::ifstream obFile;
- 
-
     std::vector<FenString> openingPositions;
 };
-
 
 
 #endif

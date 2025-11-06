@@ -69,6 +69,7 @@ add_library(
         src/Utility/Vec2D.cpp
         src/GUI/EvaluationBar.cpp
         src/GUI/PromotionPiecePicker.cpp
+        include/GUI/OpeningBook.h
 )
 target_include_directories(gui_lib PUBLIC include)
 target_include_directories(gui_lib PUBLIC include/thirdparty)
@@ -117,5 +118,9 @@ add_subdirectory(tests)
 set(RESOURCE_DIR_VAR "${CMAKE_CURRENT_SOURCE_DIR}/resources")
 add_compile_definitions(RESOURCE_DIR=\"${RESOURCE_DIR_VAR}\")
 
-set(OPENING_BOOK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/resources/ob.bok")
-add_compile_definitions(OPENING_BOOK_FILE=\"${OPENING_BOOK_DIR}\")
+set(OPENING_BOOK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/resources/AmundsenFen.bok")
+add_compile_definitions(OPENING_BOOK_DIR=\"${OPENING_BOOK_DIR}\")
+
+# Ensure this is added to all relevant targets
+target_compile_definitions(engine_lib PUBLIC OPENING_BOOK_DIR=\"${OPENING_BOOK_DIR}\")
+target_compile_definitions(gui_lib PUBLIC RESOURCE_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/resources\")

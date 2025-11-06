@@ -3,11 +3,11 @@
 //
 
 
-#include "../../include/Engine/MainEngine.h"
+#include "Engine/ChessEngine.h"
 
 
 int main(){
-    auto engine = MainEngine();
+    auto engine = ChessEngine();
     while (!engine.shouldQuit()) {
         char input[1024];
         std::cin.getline(input, 1024);
