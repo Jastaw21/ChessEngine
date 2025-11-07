@@ -10,6 +10,7 @@
 #include "Engine/ProcessChessEngine.h"
 
 #include "GUI/gui.h"
+#include "MatchManager.h"
 
 MatchManager::MatchManager(ChessPlayer* startingPlayer, ChessPlayer* otherPlayer){
     currentPlayer_ = startingPlayer;
@@ -57,6 +58,20 @@ void MatchManager::processGameResult(){
     restartGame();
 }
 
+void MatchManager::processGameResult(GameResult forcedResult)
+{
+    const auto result = forcedResult;
+    std::string gameResult = "";
+    if (result & DRAW) { draws++; }
+    if (result & WHITE_WINS) { whiteWins++; }
+    if (result & BLACK_WINS) { blackWins++; }
+
+    std::cout << "Game Over " << "W: " << whiteWins << " B: " << blackWins << " D: " << draws << std::endl;
+
+    gamesPlayed++;
+    restartGame();
+}
+
 void MatchManager::tick(const int deltaTime){
     if (gamesPlayed == gamesToPlay) { std::cout << "Game count: " << gamesPlayed << std::endl; }
     if (boardManager.isGameOver()) {
@@ -71,6 +86,12 @@ void MatchManager::tick(const int deltaTime){
     if (currentPlayer_ == whitePlayer) { timeInfo.whiteTime -= deltaTime; } else { timeInfo.blackTime -= deltaTime; }
 }
 
+void MatchManager::handleNoMove()
+{
+    // Just assume that a no-move, i.e "bestmove 0000" command is a draw
+    processGameResult(GameResult::DRAW);
+
+}
 void MatchManager::parseUCI(const std::string& uci){
     const size_t start = uci.find_first_not_of("\t\r\n");
     const size_t end = uci.find_last_not_of("\t\r\n");

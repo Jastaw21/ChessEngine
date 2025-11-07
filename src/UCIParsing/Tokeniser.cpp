@@ -106,8 +106,14 @@ bool Tokeniser::isMove(const std::string& token){
         return false;
     bool isMove = false;
 
+    // bestmove is invalid, i.e the engine can't find a move.
+    if (token == "0000"){
+        return true;
+    }
+
     if (token.size() == 4 || token.size() == 5) { isMove = true; }
 
+    // the fifth token must be a promotion move, check it's valid
     if (token.size() == 5) {
         char fifth = token[4];
         if (fifth != 'Q' && fifth != 'q' && fifth != 'N' && fifth != 'n' && fifth != 'B' && fifth != 'b'
