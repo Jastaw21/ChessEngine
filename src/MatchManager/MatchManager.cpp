@@ -40,6 +40,10 @@ void MatchManager::startGame(){
 
     if (currentPlayer_->playerType == HUMAN) { return; }
 
+    FenString pos = openingBook.GetRandomFen();
+    boardManager.resetGame(pos);
+    startingFen_ = pos;
+
     currentPlayer()->sendCommand("position " + boardManager.getFullFen());
     currentPlayer()->sendCommand("go");
 }
@@ -90,7 +94,6 @@ void MatchManager::notifyGUIofMove(const Move& move){}
 
 void MatchManager::restartGame(){
     dumpGameLog();
-    boardManager.resetGame(startingFen()); // reset our internal state
 
     currentPlayer_ = whitePlayer;
     otherPlayer_ = blackPlayer;

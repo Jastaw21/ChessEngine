@@ -15,10 +15,10 @@ void runGame(){
 }
 
 void runEngineStandaloneGame(){
-    ProcessChessEngine whiteEngine{"StandaloneEngine.exe", "w"};
+    ProcessChessEngine whiteEngine{"C:/Users/jacks/source/repos/Chess/Builds/V1.exe", "w"};
     whiteEngine.setEngineID("White");
 
-    ProcessChessEngine blackEngine{"StandaloneEngine.exe", "b"};
+    ProcessChessEngine blackEngine{"C:/Users/jacks/source/repos/Chess/Builds/V2 Regressed.exe", "b"};
     blackEngine.setEngineID("Black");
 
     auto gui = ChessGui(&whiteEngine, &blackEngine);

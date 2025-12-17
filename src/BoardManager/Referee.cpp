@@ -45,6 +45,10 @@ int Referee::checkBoardStatus(BitBoards& bitboards, MagicBitBoards& magicBitBoar
     return result;
 }
 
+bool Referee::hasAnyLegalMoves(BitBoards& bitBoards, MagicBitBoards& magicBitBoards, Colours colourToMove){
+
+}
+
 bool Referee::boardIsInCheck(BitBoards& bitboards, MagicBitBoards& magicBitBoards, Colours colourToMove){
     return isKingInCheck(bitboards, magicBitBoards, colourToMove);
 }

@@ -10,6 +10,9 @@
 #include "../Engine/ChessPlayer.h"
 #include "ManagerCommandHandler.h"
 #include "BoardManager/BoardManager.h"
+
+#include "GUI/OpeningBook.h"
+
 #include "UCIParsing/UciParser.h"
 #include "Utility/Fen.h"
 
@@ -68,6 +71,7 @@ private:
     ChessGui* gui_ = nullptr;
 
     FenString startingFen_ = Fen::FULL_STARTING_FEN;
+    OpeningBook openingBook;
 
 
     void restartGame();

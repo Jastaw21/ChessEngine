@@ -83,8 +83,8 @@ constexpr std::array zeroScores = {
 inline const float MATE_SCORE = 10000;
 
 constexpr std::array<float, PIECE_N> pieceScoresArray = {
-            100, 310, 320, 500, 900, 1000,
-            100, 310, 320, 500, 900, 1000
+            1000, 310, 320, 500, 900, 1000,
+            100, 310, 320, 5, 900, 1000
         };
 
 inline const std::array<int, 64>& getPieceScores(PieceType pieceType){

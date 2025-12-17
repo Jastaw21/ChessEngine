@@ -208,6 +208,7 @@ bool BoardManager::isGameOver(){
     if (moveHistory.size() >= 100) { return true; }
     if (checkMateFlag) { return true; }
     if (threefoldRepetition()) { return true; }
+    if (Referee::isStalemate()) { return true; }
 
     return false;
 }
@@ -236,6 +237,11 @@ int BoardManager::getGameResult(){
         else
             resultBits |= BLACK_WINS;
 
+        return resultBits;
+    }
+
+    if (Referee::isStalemate()) {
+        resultBits |= GameResult::STALEMATE;
         return resultBits;
     }
     return resultBits;

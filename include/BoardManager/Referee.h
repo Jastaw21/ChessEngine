@@ -24,6 +24,9 @@ public:
     static bool moveIsLegal(Move& move, BitBoards& boardState, MagicBitBoards& mbb, const int enPassantSquare = -1);
     static int checkBoardStatus(BitBoards& bitboards, MagicBitBoards& magicBitBoards,
                                 Colours colourToMove);
+    bool isStalemate();
+    static bool hasAnyLegalMoves(BitBoards& bitBoards, MagicBitBoards& magicBitBoards,
+                                 Colours colourToMove);
 
 private:
 
