@@ -44,7 +44,10 @@ public:
 
     void startGame();
     void processGameResult();
+    void processGameResult(GameResult forcedResult);
     void tick(int deltaTime);
+
+    void handleNoMove();
 
     std::stack<Move>& getMoveHistory();
     void swapPlayers(){ std::swap(currentPlayer_, otherPlayer_); }
